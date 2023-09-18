@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: login,todolist
+
+server:
+  port: 8082
+  servlet:
+    context-path: "/api"

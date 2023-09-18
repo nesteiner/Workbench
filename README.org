@@ -1,0 +1,13 @@
+#+title: trace of making workbench
+
+* backend
+** login module test
+1. start application
+2. which port ?
+3. get token
+4. GET /user with no exist id
+5. POST /authenticate with error password
+
+* Scaffold
+** Student
+add @JsonIgnore to passwordHash
