@@ -1,15 +1,17 @@
 package com.steiner.workbench.login.controller
 
+import com.steiner.workbench.common.ROLE_ADMIN
 import com.steiner.workbench.common.exception.BadRequestException
 import com.steiner.workbench.common.util.Page
 import com.steiner.workbench.common.util.Response
+import com.steiner.workbench.login.exception.PermissionDeniedException
 import com.steiner.workbench.login.model.User
 import com.steiner.workbench.login.request.PostUserRequest
 import com.steiner.workbench.login.request.UpdateUserRequest
 import com.steiner.workbench.login.service.UserService
 import jakarta.validation.Valid
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.validation.BindingResult
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,12 +32,26 @@ class UserController {
 
     @PostMapping("/register")
     fun insertOne(@RequestBody @Valid request: PostUserRequest, bindingResult: BindingResult): Response<User> {
-        return Response.Ok("insert ok", userService.insertOne(request))
+        val requestAdmin = request.roles.any {
+            it.name == ROLE_ADMIN
+        }
+
+        if (requestAdmin) {
+            throw PermissionDeniedException("you have no such permission to create a admin")
+        } else {
+            return Response.Ok("insert ok", userService.insertOne(request))
+        }
     }
 
     @PutMapping
     fun updateOne(@RequestBody @Valid request: UpdateUserRequest, bindingResult: BindingResult): Response<User> {
-        return Response.Ok("update ok", userService.updateOne(request))
+        val userdetail = SecurityContextHolder.getContext().authentication
+        val username = userdetail.name
+
+        val currentUser = userService.findOne(username)!!
+        val userid = currentUser.id
+
+        return Response.Ok("update ok", userService.updateOne(request, userid))
     }
 
     @GetMapping(params = ["page", "size"])

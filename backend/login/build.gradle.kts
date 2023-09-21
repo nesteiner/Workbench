@@ -13,3 +13,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation(project(":common"))
 }
+
+tasks.withType<Test>() {
+    useJUnitPlatform()
+}

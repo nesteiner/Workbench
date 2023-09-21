@@ -1,5 +1,6 @@
 package com.steiner.workbench.login.controller
 
+import com.steiner.workbench.common.util.Response
 import com.steiner.workbench.login.exception.LoginException
 import com.steiner.workbench.login.exception.UserNotEnabledException
 import com.steiner.workbench.login.request.LoginRequest
@@ -8,7 +9,6 @@ import com.steiner.workbench.login.service.UserService
 import com.steiner.workbench.login.util.JwtTokenUtil
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -29,7 +29,7 @@ class AuthenticationController {
     lateinit var userService: UserService
 
     @PostMapping("/authenticate")
-    fun createToken(@RequestBody @Valid request: LoginRequest, result: BindingResult): ResponseEntity<LoginResponse> {
+    fun createToken(@RequestBody @Valid request: LoginRequest, result: BindingResult): Response<LoginResponse> {
         try {
             val userdetail = userService.loadUserByUsername(request.username)
             val user = userService.findOne(request.username)!!
@@ -46,7 +46,7 @@ class AuthenticationController {
             SecurityContextHolder.getContext().authentication = authentication
 
             val token = jwtTokenUtil.generateToken(userdetail)
-            return ResponseEntity.ok(LoginResponse(token))
+            return Response.Ok("login success", LoginResponse(token))
         } catch (exception: DisabledException) {
             throw LoginException("user disabled")
         } catch (exception: BadCredentialsException) {

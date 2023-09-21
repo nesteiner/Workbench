@@ -170,8 +170,8 @@ class UserService: UserDetailsService {
         }
     }
 
-    fun updateOne(request: UpdateUserRequest): User {
-        Users.update({Users.id eq request.id}) {
+    fun updateOne(request: UpdateUserRequest, id: Int): User {
+        Users.update({Users.id eq id}) {
             if (request.name != null) {
                 it[name] = request.name
             }
@@ -189,12 +189,12 @@ class UserService: UserDetailsService {
                 }
 
                 UserRole.deleteWhere {
-                    userid eq request.id
+                    userid eq id
                 }
 
                 for (role in request.roles) {
                     UserRole.insert {
-                        it[userid] = request.id
+                        it[userid] = id
                         it[roleid] = role.id
                     }
                 }
@@ -209,24 +209,30 @@ class UserService: UserDetailsService {
             }
         }
 
-        return findOne(request.id) ?: throw BadRequestException("no such user with id: ${request.id}")
+        return findOne(id) ?: throw BadRequestException("no such user with id: $id")
     }
 
     fun insertOne(request: PostUserRequest): User {
-        val userid = Users.insert {
-            it[name] = request.name
-            it[email] = request.email
-            it[passwordHash] = request.passwordHash
-            it[enabled] = request.enabled
-        } get Users.id
+        val user = findOne(request.name)
 
-        request.roles.forEach { role ->
-            UserRole.insert {
-                it[UserRole.userid] = userid
-                it[roleid] = role.id
+        return if (user == null) {
+            val userid = Users.insert {
+                it[name] = request.name
+                it[email] = request.email
+                it[passwordHash] = request.passwordHash
+                it[enabled] = request.enabled
+            } get Users.id
+
+            request.roles.forEach { role ->
+                UserRole.insert {
+                    it[UserRole.userid] = userid
+                    it[roleid] = role.id
+                }
             }
-        }
 
-        return findOne(request.name)!!
+            findOne(request.name)!!
+        } else {
+            throw BadRequestException("username duplicate")
+        }
     }
 }

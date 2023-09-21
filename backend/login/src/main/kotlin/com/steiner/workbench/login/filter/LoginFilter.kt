@@ -1,6 +1,9 @@
 package com.steiner.workbench.login.filter
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.steiner.workbench.common.AUTHORIZATIOIN
+import com.steiner.workbench.common.JWTTOKEN_ATTRIBUTE
+import com.steiner.workbench.common.USERNAME_ATTRIBUTE
 import com.steiner.workbench.common.util.Response
 import com.steiner.workbench.login.util.JwtTokenUtil
 import io.jsonwebtoken.ExpiredJwtException
@@ -18,15 +21,16 @@ class LoginFilter: OncePerRequestFilter() {
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         response.contentType = "application/json; charset=utf-8"
-        val requestTokenHeader = request.getHeader("Authorization")
+        val requestTokenHeader = request.getHeader(AUTHORIZATIOIN)
         val objectMapper = ObjectMapper()
         // enter request logic
         if(requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+            logger.info("enter request logic")
             val jwtToken = requestTokenHeader.split(" ")[1].trim()
             try {
                 val username = jwtTokenUtil.getUsernameFromToken(jwtToken)
-                request.setAttribute("username", username)
-                request.setAttribute("jwtToken", jwtToken)
+                request.setAttribute(USERNAME_ATTRIBUTE, username)
+                request.setAttribute(JWTTOKEN_ATTRIBUTE, jwtToken)
             } catch (exception: IllegalArgumentException) {
                 logger.error("unable to get jwt token")
                 val result = Response.Err("no token found")

@@ -3,7 +3,7 @@ spring:
     url: "jdbc:postgresql://localhost/workbench"
     driver-class-name: "org.postgresql.Driver"
     username: "steiner"
-    password: 779151714
+    password: "779151714"
   exposed:
     generate-ddl: true
     show-sql: true

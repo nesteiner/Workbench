@@ -7,6 +7,22 @@
 3. get token
 4. GET /user with no exist id
 5. POST /authenticate with error password
+6. how about register ?
+
+** todolist module
+- [ ] schdule: delete unreferenced image
+- [ ] test validator
+- [ ] series of deleteAll function
+- [ ] deleteOne task-project, task-group, task
+- [ ] image-item-controller
+** TODO before launch
+- [ ] insert a imageitem with id 1, as default avatar
+- [ ] set storage path in application.yaml of *app* module
+
+
+* frontend
+** token refresh
+- [ ] 定时更换 token
 
 * Scaffold
 ** Student

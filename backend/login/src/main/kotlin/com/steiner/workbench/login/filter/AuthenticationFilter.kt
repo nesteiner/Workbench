@@ -1,7 +1,8 @@
 package com.steiner.workbench.login.filter
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.steiner.workbench.common.exception.BadRequestException
+import com.steiner.workbench.common.JWTTOKEN_ATTRIBUTE
+import com.steiner.workbench.common.USERNAME_ATTRIBUTE
 import com.steiner.workbench.common.util.Response
 import com.steiner.workbench.login.exception.UserNotEnabledException
 import com.steiner.workbench.login.service.UserService
@@ -25,8 +26,8 @@ class AuthenticationFilter: OncePerRequestFilter() {
     lateinit var userService: UserService
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        val username = request.getAttribute("username") as String?
-        val jwttoken = request.getAttribute("jwttoken") as String?
+        val username = request.getAttribute(USERNAME_ATTRIBUTE) as String?
+        val jwttoken = request.getAttribute(JWTTOKEN_ATTRIBUTE) as String?
 
         if (username != null && jwttoken != null && SecurityContextHolder.getContext().authentication == null) {
             try {
