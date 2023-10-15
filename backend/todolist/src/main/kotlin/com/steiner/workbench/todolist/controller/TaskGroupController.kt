@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/taskgroup")
+@RequestMapping("/todolist/taskgroup")
 @Validated
 class TaskGroupController {
     @Autowired
@@ -29,6 +29,11 @@ class TaskGroupController {
     @PostMapping
     fun insertOne(@RequestBody @Valid request: PostTaskGroupRequest, bindingResult: BindingResult): Response<TaskGroup> {
         return Response.Ok("insert ok", taskgroupService.insertOne(request))
+    }
+
+    @PostMapping(params = ["after"])
+    fun insertOne(@RequestBody @Valid request: PostTaskGroupRequest, @RequestParam("after") after: Int, bindingResult: BindingResult): Response<TaskGroup> {
+        return Response.Ok("insert ok", taskgroupService.insertOne(request, after))
     }
 
     @DeleteMapping("/{id}")

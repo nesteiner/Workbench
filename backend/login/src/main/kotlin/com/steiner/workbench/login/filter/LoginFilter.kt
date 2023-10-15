@@ -25,7 +25,6 @@ class LoginFilter: OncePerRequestFilter() {
         val objectMapper = ObjectMapper()
         // enter request logic
         if(requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            logger.info("enter request logic")
             val jwtToken = requestTokenHeader.split(" ")[1].trim()
             try {
                 val username = jwtTokenUtil.getUsernameFromToken(jwtToken)

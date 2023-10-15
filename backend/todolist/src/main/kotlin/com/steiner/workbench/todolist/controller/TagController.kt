@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/tag")
+@RequestMapping("/todolist/tag")
 @Validated
 class TagController {
     @Autowired

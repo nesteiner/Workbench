@@ -3,6 +3,7 @@ package com.steiner.workbench.todolist.controller
 import com.steiner.workbench.common.util.Response
 import com.steiner.workbench.todolist.model.Task
 import com.steiner.workbench.todolist.request.PostTaskRequest
+import com.steiner.workbench.todolist.request.PostTaskTagRequest
 import com.steiner.workbench.todolist.request.UpdateTaskRequest
 import com.steiner.workbench.todolist.service.TaskService
 import jakarta.validation.Valid
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/task")
+@RequestMapping("/todolist/task")
 @Validated
 class TaskController {
     @Autowired
@@ -26,6 +27,12 @@ class TaskController {
     @PostMapping
     fun insertOne(@RequestBody @Valid request: PostTaskRequest, bindingResult: BindingResult): Response<Task> {
         return Response.Ok("insert ok", taskService.insertOne(request))
+    }
+
+    @PostMapping("/tag")
+    fun insertTag(@RequestBody request: PostTaskTagRequest): Response<Unit> {
+        taskService.insertTag(request)
+        return Response.Ok("insert tag ok", Unit)
     }
 
     @DeleteMapping("/{id}")

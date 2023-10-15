@@ -1,5 +1,6 @@
 package com.steiner.workbench.todolist.request
 
+import com.steiner.workbench.common.SIMPLE_DATETIME_FORMAT
 import com.steiner.workbench.todolist.model.Tag
 import com.steiner.workbench.todolist.validator.DateValid
 import jakarta.validation.constraints.Min
@@ -15,10 +16,10 @@ class PostTaskRequest(
         val priority: Int,
         val tags: List<Tag>?,
 
-        @DateValid(message = "deadline format error")
+        @DateValid(format = SIMPLE_DATETIME_FORMAT, message = "deadline format error")
         val deadline: String?,
 
-        @DateValid(message = "notify-time format error")
+        @DateValid(format = SIMPLE_DATETIME_FORMAT, message = "notify-time format error")
         val notifyTime: String?,
 
         @Min(1L, message = "expect time must greater than 0")

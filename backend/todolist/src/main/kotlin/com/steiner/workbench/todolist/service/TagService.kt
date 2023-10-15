@@ -24,7 +24,7 @@ class TagService {
 
         val iftag = Tags.select(Tags.name eq request.name)
                 .firstOrNull()?.let {
-                    Tag(it[Tags.id].value, it[Tags.name], it[Tags.parentid].value)
+                    Tag(it[Tags.id].value, it[Tags.name], it[Tags.parentid].value, it[Tags.color])
                 }
 
 
@@ -34,9 +34,10 @@ class TagService {
             val id = Tags.insert {
                 it[name] = request.name
                 it[parentid] = request.parentid
+                it[color] = request.color
             } get Tags.id
 
-            Tag(id.value, request.name, request.parentid)
+            Tag(id.value, request.name, request.parentid, request.color)
         }
     }
 
@@ -57,15 +58,15 @@ class TagService {
     fun findAllOfTask(taskid: Int): List<Tag> {
         return TaskTag.select(TaskTag.taskid eq taskid).map {
             val id = it[TaskTag.tagid]
-            Tags.slice(Tags.name, Tags.parentid).select(Tags.id eq id).first().let {
-                Tag(id.value, it[Tags.name], it[Tags.parentid].value)
+            Tags.select(Tags.id eq id).first().let {
+                Tag(id.value, it[Tags.name], it[Tags.parentid].value, it[Tags.color])
             }
         }
     }
 
     fun findAllOfProject(projectid: Int): List<Tag> {
         return Tags.select(Tags.parentid eq projectid).map {
-            Tag(it[Tags.id].value, it[Tags.name], it[Tags.parentid].value)
+            Tag(it[Tags.id].value, it[Tags.name], it[Tags.parentid].value, it[Tags.color])
         }
     }
 
@@ -73,7 +74,7 @@ class TagService {
         return Tags.select(Tags.id eq id)
                 .firstOrNull()
                 ?.let {
-                    Tag(id, it[Tags.name], it[Tags.parentid].value)
+                    Tag(id, it[Tags.name], it[Tags.parentid].value, it[Tags.color])
                 }
     }
 }

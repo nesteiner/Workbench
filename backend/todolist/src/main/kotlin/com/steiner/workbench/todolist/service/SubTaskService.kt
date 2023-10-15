@@ -7,11 +7,8 @@ import com.steiner.workbench.todolist.request.UpdateSubTaskRequest
 import com.steiner.workbench.todolist.table.SubTasks
 import com.steiner.workbench.todolist.table.Tasks
 import com.steiner.workbench.todolist.util.mustExistIn
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.update
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,7 +19,13 @@ class SubTaskService {
     fun findAll(parentid: Int): List<SubTask> {
         return SubTasks.select(SubTasks.parentid eq  parentid)
                 .map {
-                    SubTask(it[SubTasks.id].value, it[SubTasks.name], it[SubTasks.isdone], parentid)
+                    SubTask(
+                            id = it[SubTasks.id].value,
+                            name = it[SubTasks.name],
+                            index = it[SubTasks.index],
+                            isdone = it[SubTasks.isdone],
+                            parentid = it[SubTasks.parentid].value
+                    )
                 }
     }
 
@@ -30,14 +33,27 @@ class SubTaskService {
         return SubTasks.select(SubTasks.id eq id)
                 .firstOrNull()
                 ?.let {
-                    SubTask(id, it[SubTasks.name], it[SubTasks.isdone], it[SubTasks.parentid].value)
+                    SubTask(
+                            id = id,
+                            name = it[SubTasks.name],
+                            index = it[SubTasks.index],
+                            isdone = it[SubTasks.isdone],
+                            parentid = it[SubTasks.parentid].value
+                    )
                 }
     }
 
     fun insertOne(request: PostSubTaskRequest): SubTask {
         mustExistIn(request.parentid, Tasks)
 
+        SubTasks.update({ SubTasks.parentid eq request.parentid }) {
+            with (SqlExpressionBuilder) {
+                it.update(index, index + 1)
+            }
+        }
+
         val id = SubTasks.insert {
+            it[index] = 1
             it[parentid] = request.parentid
             it[name] = request.name
         } get SubTasks.id
@@ -58,6 +74,20 @@ class SubTaskService {
     }
 
     fun updateOne(request: UpdateSubTaskRequest): SubTask {
+        mustExistIn(request.id, SubTasks)
+
+        if (request.reorderAt != null) {
+            val parentid = SubTasks.slice(SubTasks.parentid).select(SubTasks.id eq request.id).first().let {
+                it[SubTasks.parentid]
+            }
+
+            SubTasks.update({ (SubTasks.parentid eq parentid) and (SubTasks.index greaterEq request.reorderAt) }) {
+                with (SqlExpressionBuilder) {
+                    it.update(index, index + 1)
+                }
+            }
+        }
+
         SubTasks.update({ SubTasks.id eq request.id }) {
             if (request.name != null) {
                 it[name] = request.name

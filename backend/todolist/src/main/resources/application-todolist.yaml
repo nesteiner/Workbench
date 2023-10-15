@@ -8,6 +8,6 @@ spring:
     generate-ddl: true
     show-sql: true
 
-storage:
-  file:
+file:
+  storage:
     url: "/home/steiner/workspace/workbench/storage"

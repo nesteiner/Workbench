@@ -7,9 +7,9 @@ import com.steiner.workbench.login.table.Users
 import com.steiner.workbench.todolist.model.TaskProject
 import com.steiner.workbench.todolist.request.PostTaskProjectRequest
 import com.steiner.workbench.todolist.request.UpdateTaskProjectRequest
-import com.steiner.workbench.todolist.table.TaskGroups
 import com.steiner.workbench.todolist.table.TaskProjects
 import com.steiner.workbench.todolist.util.mustExistIn
+import com.steiner.workbench.todolist.util.now
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -28,12 +28,33 @@ class TaskProjectService {
 
     fun insertOne(request: PostTaskProjectRequest): TaskProject {
         mustExistIn(request.userid, Users)
+        val iftaskgroup = TaskProjects
+                .slice(TaskProjects.id)
+                .select(TaskProjects.name eq request.name)
+                .firstOrNull()
 
+        if (iftaskgroup != null) {
+            throw BadRequestException("duplicate name of taskproject")
+        }
+
+        TaskProjects.update({ TaskProjects.userid eq request.userid }) {
+            with (SqlExpressionBuilder) {
+                it.update(index, index + 1)
+            }
+        }
+
+        val nowInstant = now()
         val id = TaskProjects.insert {
             it[name] = request.name
+            it[index] = 1
             it[avatarid] = request.avatarid ?: DEFAULT_AVATAR_ID
-
             it[userid] = request.userid
+            it[createTime] = nowInstant
+            it[updateTime] = nowInstant
+
+            if (request.profile != null) {
+                it[profile] = request.profile
+            }
         } get TaskProjects.id
 
         return findOne(id.value)!!
@@ -65,6 +86,8 @@ class TaskProjectService {
     }
 
     fun updateOne(request: UpdateTaskProjectRequest): TaskProject {
+        mustExistIn(request.id, TaskProjects)
+
         TaskProjects.update({ TaskProjects.id eq request.id }) {
             if (request.name != null) {
                 it[name] = request.name
@@ -73,9 +96,15 @@ class TaskProjectService {
             if (request.avatarid != null) {
                 it[avatarid] = request.avatarid
             }
+
+            it[updateTime] = now()
+
+            if (request.profile != null) {
+                it[profile] = request.profile
+            }
         }
 
-        return findOne(request.id) ?: throw BadRequestException("no such task project")
+        return findOne(request.id)!!
     }
 
     fun findOne(id: Int): TaskProject? {
@@ -85,21 +114,30 @@ class TaskProjectService {
                     TaskProject(
                             id = id,
                             name = it[TaskProjects.name],
+                            index = it[TaskProjects.index],
                             avatarid = it[TaskProjects.avatarid].value,
-                            userid = it[TaskProjects.userid].value
+                            profile = it[TaskProjects.profile],
+                            userid = it[TaskProjects.userid].value,
+                            createTime = it[TaskProjects.createTime],
+                            updateTime = it[TaskProjects.updateTime]
                     )
                 }
     }
 
     fun findAll(userid: Int): List<TaskProject> {
         return TaskProjects.select(TaskProjects.userid eq userid)
+                .orderBy(TaskProjects.index)
                 .map {
                     val projectid = it[TaskProjects.id].value
                     TaskProject(
                             id = projectid,
                             name = it[TaskProjects.name],
+                            index = it[TaskProjects.index],
                             avatarid = it[TaskProjects.avatarid].value,
-                            userid = userid
+                            profile = it[TaskProjects.profile],
+                            userid = userid,
+                            createTime = it[TaskProjects.createTime],
+                            updateTime = it[TaskProjects.updateTime]
                     )
                 }
     }
@@ -112,8 +150,12 @@ class TaskProjectService {
                     TaskProject(
                             id = projectid,
                             name = it[TaskProjects.name],
+                            index = it[TaskProjects.index],
                             avatarid = it[TaskProjects.avatarid].value,
-                            userid = userid
+                            profile = it[TaskProjects.profile],
+                            userid = userid,
+                            createTime = it[TaskProjects.createTime],
+                            updateTime = it[TaskProjects.updateTime]
                     )
                 }
 

@@ -64,9 +64,19 @@ class UserController {
         return Response.Ok("all users", userService.findAll())
     }
 
-    @GetMapping("/{id}")
-    fun findOne(@PathVariable("id") id: Int): Response<User> {
+    @GetMapping(params = ["id"])
+    fun findOne(@RequestParam("id") id: Int): Response<User> {
         val user = userService.findOne(id)
+        return if (user == null) {
+            throw BadRequestException("no such user")
+        } else {
+            Response.Ok("this user", user)
+        }
+    }
+
+    @GetMapping(params = ["name"])
+    fun findOne(@RequestParam("name") name: String): Response<User> {
+        val user = userService.findOne(name)
         return if (user == null) {
             throw BadRequestException("no such user")
         } else {

@@ -2,9 +2,14 @@ package com.steiner.workbench.todolist.validator
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
+import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 
 class DateValidator: ConstraintValidator<DateValid, String> {
+    companion object {
+        val logger = LoggerFactory.getLogger(DateValidator::class.java)
+    }
+
     lateinit var format: String
     override fun initialize(constraintAnnotation: DateValid) {
         format = constraintAnnotation.format
@@ -17,8 +22,6 @@ class DateValidator: ConstraintValidator<DateValid, String> {
 
         return try {
             val sdf = SimpleDateFormat(format)
-            sdf.isLenient = false
-
             sdf.parse(value)
             true
         } catch (exception: Exception) {

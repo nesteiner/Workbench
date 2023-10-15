@@ -42,7 +42,7 @@ subprojects {
 	}
 
 	val exposedVersion: String by project
-	val postgresqlVersion: String by project
+
 	dependencies {
 		implementation("org.springframework.boot:spring-boot-starter")
 		implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -52,6 +52,6 @@ subprojects {
 		// java 版本过高
 		implementation("javax.xml.bind:jaxb-api:2.3.0")
 		implementation("org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion")
-		implementation("org.postgresql:postgresql:$postgresqlVersion")
+		implementation("org.postgresql:postgresql")
 	}
 }

@@ -38,4 +38,16 @@ class ImageItemService {
                     )
                 }
     }
+
+    fun findOne(name: String): ImageItem? {
+        return ImageItems.select(ImageItems.name eq name)
+                .firstOrNull()
+                ?.let {
+                    ImageItem(
+                            id = it[ImageItems.id].value,
+                            name = name,
+                            path = it[ImageItems.path]
+                    )
+                }
+    }
 }

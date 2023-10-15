@@ -5,6 +5,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
 object Tasks: IntIdTable() {
+    val index = integer("index")
     val name = varchar("name", TASK_NAME_LENGTH)
     val isdone = bool("isdone")
     val priority = integer("priority")

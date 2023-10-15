@@ -9,5 +9,6 @@ class UpdateSubTaskRequest(
         @Length(max = SUBTASK_NAME_LENGTH, message = "length of subtask name must less than $SUBTASK_NAME_LENGTH")
         val name: String?,
 
-        val isdone: Boolean?
+        val isdone: Boolean?,
+        val reorderAt: Int?
 )

@@ -17,3 +17,5 @@ open:
   urls:
     - "/authenticate"
     - "/user/register"
+    - "/todolist/image/download/*"
+    - "/test"

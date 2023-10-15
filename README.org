@@ -11,19 +11,112 @@
 
 ** todolist module
 - [ ] schdule: delete unreferenced image
-- [ ] test validator
-- [ ] series of deleteAll function
-- [ ] deleteOne task-project, task-group, task
-- [ ] image-item-controller
-** TODO before launch
-- [ ] insert a imageitem with id 1, as default avatar
-- [ ] set storage path in application.yaml of *app* module
+- [X] test validator
+- [X] series of deleteAll function
+- [X] deleteOne task-project, task-group, task
+- [X] image-item-controller
+- [X] def: parseFrom(string): Instant | parse string into kotlinx.datetime.Instant
+- [X] constant, format
+- [X] kotlinx.datetime.Instant to yyyy-MM-dd HH:mm
+- [ ] now instance always wrong
+** DONE todolist reorder
+*** TaskService
+**** insertOne
+- set index start from 1
+- rest of tasks index += 1
+**** updateOne
+- tasks that index >= reorderAt set index += 1
+- set this task index = reorderAt
+
+*** TaskGroupService
+**** insertOne
+**** updateOne
+*** TaskProjectService
+**** insertOne
+**** updateOne
 
 
+** TODO samba module
+
+** before launch
+- [X] use application runner
 * frontend
+** api test
+- [ ] need cors ??
+- [X] test transform from json
+- [X] request.toJson
+- [X] test series of findAll function
+- [X] design top-level operation of CRUD
+- [ ] test snapshot.error
+
+
+** size overflow
+- [X] overflow when resizing
+  *using stack*
+
+** TaskBoard
+- [-] reorder taskgroup
+  - [X] 前后端动作不协调
+  - [X] currentIndex split two part
+  - [ ] use drag and droptarget 
+
+- [ ] state consume the data
+  - [ ] taskgroup with tasks, use Selector<GlobalState, List<TaskGroup>>
+  - [ ] another reorder 
+
+    
+- [-] 菜单
+  - [X] image uploader
+  - [X] 更换封面
+  - [X] 项目信息
+  - [X] 项目简介
+  - [X] actions on submit
+  - [X] image not fill, need to ask
+  - [X] image path with utf-8
+  - [X] not update after upload image
+  - [X] 删除
+  - [X] create task-project
+  - [X] 删除部分 text wrap
+
+  - [X] ImageUploader
+    - [X] crop size
+    - [X] crop position
+    - [X] actions
+    - [X] buttons 
+      
+  - [ ] 排序
+  foreach(sort, taskgroups)
+  - [ ] 默认
+  - [ ] 最近创建
+  - [ ] 最近更新
+  - [ ] 优先级
+
+- [ ] 筛选
+  - [ ] 标签
+  - [ ] 是否完成
+    
+- [ ] reorder and move task widget
+** TaskWidget
+
+** TaskDetail
+
+** TODO adjust widget and decorate
+- [ ] code: buildDesktop
+- [ ] code: buildMobile
 ** token refresh
 - [ ] 定时更换 token
+** logout position
+* Problem
+- [X] ApplicationRunner
+- [ ] tag order
+- [ ] mongodb insert at
 
+** Debug
+- [ ] application runner
+- [ ] pacman
 * Scaffold
 ** Student
 add @JsonIgnore to passwordHash
+** WebSecurityConfigurer
+order of filters
+

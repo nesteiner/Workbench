@@ -1,23 +1,26 @@
 package com.steiner.workbench.todolist.model
 
-import java.sql.Timestamp
+import kotlinx.datetime.Instant
 
 class Task(
         val id: Int,
-        var name: String,
-        var isdone: Boolean,
-        var priority: TaskPriority,
-        var note: String?,
-        var subtasks: List<SubTask>?,
-        val createTime: Timestamp,
-        var updateTime: Timestamp,
+        val index: Int,
+        val name: String,
+        val isdone: Boolean,
 
-        var expectTime: Int,
-        var finishTime: Int,
+        // 0: low, 1: normal, 2: high
+        val priority: Int,
+        val note: String?,
+        val subtasks: List<SubTask>?,
+        val createTime: Instant,
+        var updateTime: Instant,
 
-        var deadline: Timestamp?,
-        var notifyTime: Timestamp?,
+        val expectTime: Int,
+        val finishTime: Int,
 
-        var tags: List<Tag>?,
+        val deadline: Instant?,
+        val notifyTime: Instant?,
 
+        val tags: List<Tag>?,
+        val parentid: Int
 )

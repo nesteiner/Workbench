@@ -9,5 +9,8 @@ class PostTagRequest(
         @Length(max = TAG_NAME_LENGTH, message = "length of name must less than $TAG_NAME_LENGTH")
         val name: String,
 
-        val parentid: Int
+        val parentid: Int,
+
+        val color: String
+
 )

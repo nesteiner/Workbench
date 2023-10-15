@@ -1,28 +1,26 @@
 package com.steiner.workbench.todolist.service
 
 import com.steiner.workbench.common.exception.BadRequestException
+import com.steiner.workbench.common.formatDateFormat
+import com.steiner.workbench.common.parseDateFormat
 import com.steiner.workbench.todolist.model.Task
-import com.steiner.workbench.todolist.model.TaskPriority
 import com.steiner.workbench.todolist.request.PostTaskRequest
+import com.steiner.workbench.todolist.request.PostTaskTagRequest
 import com.steiner.workbench.todolist.request.UpdateTaskRequest
 import com.steiner.workbench.todolist.table.SubTasks
 import com.steiner.workbench.todolist.table.TaskGroups
 import com.steiner.workbench.todolist.table.TaskTag
 import com.steiner.workbench.todolist.table.Tasks
 import com.steiner.workbench.todolist.util.mustExistIn
-import kotlinx.datetime.Clock
+import com.steiner.workbench.todolist.util.now
 import kotlinx.datetime.Instant
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.deleteWhere
 
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.update
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.sql.Timestamp
 
 @Service
 @Transactional
@@ -35,17 +33,24 @@ class TaskService {
     fun insertOne(request: PostTaskRequest): Task {
         mustExistIn(request.parentid, TaskGroups)
 
+        Tasks.update({ Tasks.parentid eq request.parentid }) {
+            with (SqlExpressionBuilder) {
+                it.update(index, index + 1)
+            }
+        }
+
+        val nowInstant = now()
         val id = Tasks.insert {
             it[name] = request.name
+            it[index] = 1
             it[isdone] = false
             it[parentid] = request.parentid
             if (request.note != null) {
                 it[note] = request.note
             }
 
-            val now = Clock.System.now()
-            it[createTime] = now
-            it[updateTime] = now
+            it[createTime] = nowInstant
+            it[updateTime] = nowInstant
 
             it[priority] = request.priority
 
@@ -53,11 +58,11 @@ class TaskService {
             it[finishTime] = 0
 
             if (request.deadline != null) {
-                it[deadline] = Instant.parse(request.deadline)
+                it[deadline] = parseFrom(request.deadline)
             }
 
             if (request.notifyTime != null) {
-                it[notifyTime] = Instant.parse(request.notifyTime)
+                it[notifyTime] = parseFrom(request.notifyTime)
             }
         } get Tasks.id
 
@@ -71,6 +76,13 @@ class TaskService {
         return findOne(id.value)!!
     }
 
+    fun insertTag(request: PostTaskTagRequest) {
+        TaskTag.insert {
+            it[taskid] = request.taskid
+            it[tagid] = request.tagid
+        }
+    }
+
     fun deleteOne(id: Int) {
         SubTasks.deleteWhere {
             parentid eq id
@@ -80,8 +92,22 @@ class TaskService {
             taskid eq id
         }
 
+        val taskIndex = Tasks
+                .slice(Tasks.index)
+                .select(Tasks.id eq id)
+                .first()
+                .let {
+                    it[Tasks.index]
+                }
+
         Tasks.deleteWhere {
             Tasks.id eq id
+        }
+
+        Tasks.update({ Tasks.index greater taskIndex}) {
+            with (SqlExpressionBuilder) {
+                it.update(index, index - 1)
+            }
         }
     }
 
@@ -105,6 +131,18 @@ class TaskService {
     }
 
     fun updateOne(request: UpdateTaskRequest): Task {
+        mustExistIn(request.id, Tasks)
+        mustExistIn(request.parentid, TaskGroups)
+
+        if (request.reorderAt != null && request.parentid != null) {
+            Tasks.update({ (Tasks.parentid eq request.parentid) and (Tasks.index greaterEq request.reorderAt) }) {
+                with (SqlExpressionBuilder) {
+                    it.update(index, index + 1)
+                }
+            }
+
+        }
+
         Tasks.update({ Tasks.id eq request.id }) {
             if (request.name != null) {
                 it[name] = request.name
@@ -115,11 +153,11 @@ class TaskService {
             }
 
             if (request.deadline != null) {
-                it[deadline] = Instant.parse(request.deadline)
+                it[deadline] = parseFrom(request.deadline)
             }
 
             if (request.notifyTime != null) {
-                it[notifyTime] = Instant.parse(request.notifyTime)
+                it[notifyTime] = parseFrom(request.notifyTime)
             }
 
             if (request.note != null) {
@@ -141,6 +179,8 @@ class TaskService {
             if (request.parentid != null) {
                 it[parentid] = request.parentid
             }
+
+            it[updateTime] = now()
         }
 
         return findOne(request.id) ?: throw BadRequestException("no such task")
@@ -153,38 +193,21 @@ class TaskService {
                     val taskid = it[Tasks.id].value
                     Task(
                             id = taskid,
+                            index = it[Tasks.index],
                             name = it[Tasks.name],
                             isdone =  it[Tasks.isdone],
-                            priority = it[Tasks.priority].let { priority ->
-                                when (priority) {
-                                    0 -> TaskPriority.LOW
-                                    1 -> TaskPriority.NORMAL
-                                    2 -> TaskPriority.HIGH
-                                    else -> TaskPriority.UNKNOWN
-                                }
-                            },
-
+                            priority = it[Tasks.priority],
                             subtasks = subtaskService.findAll(taskid),
-                            createTime = it[Tasks.createTime].let {
-                                Timestamp.valueOf(it.toString())
-                            },
-
-                            updateTime = it[Tasks.updateTime].let {
-                                Timestamp.valueOf(it.toString())
-                            },
+                            createTime = it[Tasks.createTime],
+                            updateTime = it[Tasks.updateTime],
 
                             expectTime = it[Tasks.expectTime],
                             finishTime = it[Tasks.finishTime],
-                            deadline = it[Tasks.deadline]?.let {
-                                Timestamp.valueOf(it.toString())
-                            },
-
-                            notifyTime = it[Tasks.notifyTime]?.let {
-                                Timestamp.valueOf(it.toString())
-                            },
-
+                            deadline = it[Tasks.deadline],
+                            notifyTime = it[Tasks.notifyTime],
                             note = it[Tasks.note],
-                            tags = tagService.findAllOfTask(taskid)
+                            tags = tagService.findAllOfTask(taskid),
+                            parentid = it[Tasks.parentid].value
                     )
 
                 }
@@ -192,43 +215,35 @@ class TaskService {
 
     fun findAll(taskgroupid: Int): List<Task> {
         return Tasks.select(Tasks.parentid eq taskgroupid)
+                .orderBy(Tasks.index)
                 .map {
                     val taskid = it[Tasks.id].value
                     Task(
                             id = taskid,
                             name = it[Tasks.name],
+                            index = it[Tasks.index],
                             isdone =  it[Tasks.isdone],
-                            priority = it[Tasks.priority].let { priority ->
-                                when (priority) {
-                                    0 -> TaskPriority.LOW
-                                    1 -> TaskPriority.NORMAL
-                                    2 -> TaskPriority.HIGH
-                                    else -> TaskPriority.UNKNOWN
-                                }
-                            },
-
+                            priority = it[Tasks.priority],
                             subtasks = subtaskService.findAll(taskid),
-                            createTime = it[Tasks.createTime].let {
-                                Timestamp.valueOf(it.toString())
-                            },
-
-                            updateTime = it[Tasks.updateTime].let {
-                                Timestamp.valueOf(it.toString())
-                            },
+                            createTime = it[Tasks.createTime],
+                            updateTime = it[Tasks.updateTime],
 
                             expectTime = it[Tasks.expectTime],
                             finishTime = it[Tasks.finishTime],
-                            deadline = it[Tasks.deadline]?.let {
-                                Timestamp.valueOf(it.toString())
-                            },
+                            deadline = it[Tasks.deadline],
 
-                            notifyTime = it[Tasks.notifyTime]?.let {
-                                Timestamp.valueOf(it.toString())
-                            },
+                            notifyTime = it[Tasks.notifyTime],
 
                             note = it[Tasks.note],
-                            tags = tagService.findAllOfTask(taskid)
+                            tags = tagService.findAllOfTask(taskid),
+                            parentid = it[Tasks.parentid].value
                     )
                 }
+    }
+
+    private fun parseFrom(datetimeString: String): Instant {
+        val datetime = parseDateFormat.parse(datetimeString)
+        val isostring = formatDateFormat.format(datetime)
+        return Instant.parse(isostring)
     }
 }

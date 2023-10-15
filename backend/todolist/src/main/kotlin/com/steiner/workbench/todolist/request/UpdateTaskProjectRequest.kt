@@ -7,5 +7,6 @@ class UpdateTaskProjectRequest(
         val id: Int,
         @Length(max = TASK_PROJECT_NAME_LENGTH, message = "length of task project name must less than $TASK_PROJECT_NAME_LENGTH")
         val name: String?,
-        val avatarid: Int?
+        val avatarid: Int?,
+        val profile: String?
 )
