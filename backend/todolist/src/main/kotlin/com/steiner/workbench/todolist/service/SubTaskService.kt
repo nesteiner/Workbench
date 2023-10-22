@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class SubTaskService {
     fun findAll(parentid: Int): List<SubTask> {
-        return SubTasks.select(SubTasks.parentid eq  parentid)
+        return SubTasks.select(SubTasks.parentid eq parentid)
+                .orderBy(SubTasks.index)
                 .map {
                     SubTask(
                             id = it[SubTasks.id].value,
@@ -56,6 +57,7 @@ class SubTaskService {
             it[index] = 1
             it[parentid] = request.parentid
             it[name] = request.name
+            it[isdone] = false
         } get SubTasks.id
 
         return findOne(id.value)!!
@@ -77,13 +79,27 @@ class SubTaskService {
         mustExistIn(request.id, SubTasks)
 
         if (request.reorderAt != null) {
-            val parentid = SubTasks.slice(SubTasks.parentid).select(SubTasks.id eq request.id).first().let {
-                it[SubTasks.parentid]
+            val (parentid, currentIndex) = SubTasks.slice(SubTasks.parentid, SubTasks.index).select(SubTasks.id eq request.id).first().let {
+                listOf(it[SubTasks.parentid].value, it[SubTasks.index])
             }
 
-            SubTasks.update({ (SubTasks.parentid eq parentid) and (SubTasks.index greaterEq request.reorderAt) }) {
-                with (SqlExpressionBuilder) {
-                    it.update(index, index + 1)
+            if (currentIndex < request.reorderAt) {
+                SubTasks.update(
+                        {
+                            (SubTasks.parentid eq parentid) and (SubTasks.index lessEq request.reorderAt) and (SubTasks.index greater currentIndex)
+                        }) {
+                    with (SqlExpressionBuilder) {
+                        it.update(index, index - 1)
+                    }
+                }
+            } else if (currentIndex > request.reorderAt) {
+                SubTasks.update(
+                        {
+                            (SubTasks.parentid eq parentid) and (SubTasks.index greaterEq request.reorderAt) and (SubTasks.index less currentIndex)
+                        }) {
+                    with(SqlExpressionBuilder) {
+                        it.update(index, index + 1)
+                    }
                 }
             }
         }
@@ -95,6 +111,10 @@ class SubTaskService {
 
             if (request.isdone != null) {
                 it[isdone] = request.isdone
+            }
+
+            if (request.reorderAt != null) {
+                it[index] = request.reorderAt
             }
         }
 

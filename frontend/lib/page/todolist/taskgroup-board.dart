@@ -99,7 +99,7 @@ class TaskGroupBoard extends StatelessWidget {
           }
 
 
-          // final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("taskgroup-${e.id}"), taskgroup: e)).toList();
+          final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("taskgroup-${e.id}"), taskgroup: e)).toList();
           return Selector<GlobalState, String>(
             // in this way, reorder will not flash
             // any way, don't build expensive widget in builder
@@ -131,6 +131,68 @@ class TaskGroupBoard extends StatelessWidget {
 
             },
           );
+
+          // return Selector<GlobalState, String>(
+          //   selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
+          //   builder: (_, value, child) =>
+          //       StatefulBuilder(builder: (context, setState) => ListView.builder(
+          //         shrinkWrap: true,
+          //         scrollDirection: Axis.horizontal,
+          //         itemCount: state.taskgroups.length,
+          //         itemBuilder: (context, index) {
+          //           final currentTaskGroup = state.taskgroups[index];
+          //           final child = TaskGroupWidget(taskgroup: currentTaskGroup,);
+          //           final feedback = Opacity(opacity: 0.5, child: child,);
+          //           return Stack(
+          //             children: [
+          //               Draggable<TaskGroup>(
+          //                 data: currentTaskGroup,
+          //                 child: child,
+          //                 feedback: Material(child: feedback),
+          //                 childWhenDragging: Material(child: feedback),
+          //               ),
+          //
+          //               DragTarget<TaskGroup>(
+          //                 onWillAccept: (from) => from?.id != currentTaskGroup.id,
+          //                 onAccept: (from) async {
+          //                   final oldindex = state.taskgroups.indexWhere((element) => element.id == from.id);
+          //                   int newindex = index;
+          //
+          //                   if (newindex > oldindex) {
+          //                     newindex -= 1;
+          //                   }
+          //
+          //                   setState(() {
+          //                     final item = state.taskgroups.removeAt(oldindex);
+          //                     state.taskgroups.insert(newindex, item);
+          //                   });
+          //
+          //                   await state.reorderTaskGroup(from, oldindex, newindex + 1);
+          //                 },
+          //
+          //                 builder: (context, datas, rejectedData) {
+          //                   final child = Container(
+          //                     width: settings["widget.taskgroup.width"],
+          //                   );
+          //
+          //                   if (datas.isEmpty) {
+          //                     return child;
+          //                   }
+          //
+          //                   return Row(
+          //                     children: [
+          //                       child,
+          //                       SizedBox(width: 4,),
+          //                       ...datas.map((e) => TaskGroupWidget(taskgroup: currentTaskGroup)).toList()
+          //                     ],
+          //                   );
+          //                 },
+          //               )
+          //           ],
+          //         );
+          //       },
+          //     )
+          //   ));
         }
     );
   }
@@ -232,7 +294,7 @@ class TaskGroupBoard extends StatelessWidget {
             final request = UpdateTaskProjectRequest(id: taskproject.id);
 
             if (nameController.text.isNotEmpty) {
-              request.name = nameController.text;
+              request.name = nameController.text.trim();
 
               setStateName(() {
                 taskproject.name = nameController.text;
@@ -240,7 +302,7 @@ class TaskGroupBoard extends StatelessWidget {
             }
 
             if (profileController.text.isNotEmpty) {
-              request.profile = profileController.text;
+              request.profile = profileController.text.trim();
             }
 
 
@@ -424,7 +486,7 @@ class TaskGroupBoard extends StatelessWidget {
 
       ListenableBuilder(listenable: disabled, builder: (context, child) => TextButton(
         onPressed: disabled.value ? null : () async {
-          final request = PostTaskGroupRequest(parentid: state.currentProject!.id, name: controller.text);
+          final request = PostTaskGroupRequest(parentid: state.currentProject!.id, name: controller.text.trim());
           await state.insertTaskGroup(request);
           navigatorKey.currentState?.pop();
         },

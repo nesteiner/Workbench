@@ -47,6 +47,7 @@ Map<String, dynamic> settings = {
   ),
 
   "page.taskdetail.note.padding": const EdgeInsets.all(4),
+  "page.taskdetail.subtask.padding": const EdgeInsets.only(top: 2, right: 24, bottom: 2, left: 16),
   "widget.image-uploader.border-radius": const BorderRadius.all(Radius.circular(8)),
   "widget.image-uploader.width": 266.0,
   "widget.image-uploader.height": 106.39,
@@ -70,14 +71,19 @@ Map<String, dynamic> settings = {
   ),
 
   "widget.task.form.priority.padding": const EdgeInsets.all(4),
-  "widget.task.form.tag.margin": const EdgeInsets.symmetric(horizontal: 4),
+  "widget.task.form.tag.margin": const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
   "widget.task.form.tag.padding": const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  "widget.task.form.tag.close.margin-right": 4.0,
   "widget.task.form.tag.search-create.input.decoration": InputDecoration(
     contentPadding: const EdgeInsets.only(left: 8),
     border: OutlineInputBorder(),
 
     hintText: "添加标签",
   ),
+  "widget.task.content.padding": const EdgeInsets.only(top: 14, right: 16, bottom: 14, left: 0),
+  "widget.task.attach.padding": const EdgeInsets.only(bottom: 14),
+  "widget.task.attach.font-size": 10.0,
+  "widget.task.attach.height": 20.0,
   "widget.task.left-line.width": 3.0,
   "widget.task.left-line.hover.width": 6.0,
   "widget.task.left-line.border-radius": const BorderRadius.only(topLeft: Radius.circular(4), bottomLeft: Radius.circular(4)),
@@ -101,10 +107,7 @@ Map<String, dynamic> settings = {
   "widget.task.form.menu.tag.height": 40.0,
   "widget.task.form.priority.border-radius": const BorderRadius.all(Radius.circular(4)),
   "widget.task.form.tag.border-radius": const BorderRadius.all(Radius.circular(8)),
-  "widget.task.subtask.decoration": BoxDecoration(
-      color: Color.fromRGBO(0, 0, 0, 0.05),
-      borderRadius: BorderRadius.all(Radius.circular(4))
-  ),
+
 
   "widget.task.subtask.border-radius": const BorderRadius.all(Radius.circular(4)),
   "widget.taskgroup.padding": const EdgeInsets.symmetric(horizontal: 12),

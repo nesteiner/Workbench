@@ -26,7 +26,7 @@ class GlobalState extends ChangeNotifier {
    * for counter
    */
   Timer? timer;
-  // this is only for pomodoro, not for todolist
+  // this is for pomodoro and todolist
   TaskGroup? currentTaskGroup;
   Task? currentTask;
 
@@ -53,8 +53,9 @@ class GlobalState extends ChangeNotifier {
         timer.cancel();
 
         if (counter.focusState != FocusState.pomodoro && currentTask != null) {
+          currentTask?.finishTime += 1;
           final request = UpdateTaskRequest(id: currentTask!.id, finishTime: currentTask!.finishTime + 1);
-          await updateTask(request, currentTaskGroup!.index);
+          await updateTask(request);
         }
       } else {
         counter.countDownOnce();
@@ -107,6 +108,10 @@ class GlobalState extends ChangeNotifier {
     taskgroups = await api.findAllTaskGroups(taskproject.id);
   }
 
+  void setCurrentTaskGroupAt(int index) {
+    currentTaskGroup = taskgroups[index];
+  }
+
   Future<void> login(String username, String password) async {
     final user = await api.login(username, password);
     this.user = user;
@@ -131,26 +136,55 @@ class GlobalState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateTask(UpdateTaskRequest request, int taskgroupIndex) async {
-    Task task = await api.updateTask(request);
-    TaskGroup oldTaskGroup = taskgroups[taskgroupIndex];
+  Future<void> updateTask(UpdateTaskRequest request) async {
+    /// please modify task in parent code, you can think this `updateTask` as commit
+    await api.updateTask(request);
+    notifyListeners();
+  }
 
-    /**
-     * if you edit task in TaskDetail page
-     * then you should write editing code in TaskDetail
-     */
+  Future<void> removeDeadline(int id) async {
+    await api.removeDeadline(id);
+  }
 
-    if (request.parentid != null && request.reorderAt != null) {
-      // request.parentid !+ null: 移动了task to another taskgroup
-      TaskGroup newTaskGroup = taskgroups.where((element) => element.id == request.parentid).first;
-      newTaskGroup.tasks.insert(request.reorderAt!, task);
-    } else if (request.parentid == null && request.reorderAt != null) {
-      oldTaskGroup.tasks.insert(request.reorderAt!, task);
-    } else {
+  Future<void> removeNotifyTime(int id) async {
+    await api.removeNotifyTime(id);
+  }
 
-    }
+  Future<void> removeTag(int tagid, Task task) async {
+    // edit task in parent code block first
+    await api.removeTag(task.id, tagid);
+    notifyListeners();
+  }
+
+  Future<void> insertSubTask(PostSubTaskRequest request, Task task) async {
+    final subtask = await api.insertSubTask(request);
+    task.subtasks?.insert(0, subtask);
+    notifyListeners();
+  }
+
+  Future<void> deleteSubTask(int id, Task task) async {
+    await api.deleteSubTask(id);
+    task.subtasks?.removeWhere((element) => element.id == id);
 
     notifyListeners();
+  }
+
+  Future<void> updateSubTask(UpdateSubTaskRequest request, Task task) async {
+    final subtask = await api.updateSubTask(request);
+    final index = task.subtasks?.indexWhere((element) => element.id == subtask.id);
+
+    if (request.reorderAt == null) {
+      if (index != null && index != -1) {
+        task.subtasks![index] = subtask;
+      }
+
+      notifyListeners();
+    } else {
+      if (index != null && index != -1) {
+        task.subtasks?.removeAt(index);
+        task.subtasks?.insert(request.reorderAt! - 1, subtask);
+      }
+    }
   }
 
   Future<void> loadTaskProjects() async {
@@ -220,45 +254,55 @@ class GlobalState extends ChangeNotifier {
    final item = taskgroups.removeAt(oldindex);
    taskgroups.insert(newindex - 1, item);
 
-   notifyListeners();
  }
 
- Future<void> updateTaskGroup(UpdateTaskGroupRequest request, [int? index = null]) async {
+ Future<void> updateTaskGroup(UpdateTaskGroupRequest request, int index) async {
     TaskGroup taskgroup = await api.updateTaskGroup(request);
 
     if (request.reorderAt != null) {
 
-    }
-
-    if (index != null) {
+    } else {
       taskgroups[index] = taskgroup;
+      notifyListeners();
     }
-
-    notifyListeners();
  }
 
- Future<void> toggleIsDone(Task task, bool value, int taskgroupIndex) async {
-    UpdateTaskRequest request = UpdateTaskRequest(id: task.id, isdone: value);
-    await updateTask(request, taskgroupIndex);
-    task.isdone = value;
-    notifyListeners();
- }
-
- Future<void> insertTagNotExists(PostTagRequest request, Task task) async {
+  Future<void> insertTagNotExists(PostTagRequest request, Task task) async {
     final tag = await api.insertTag(request);
-    final request1 = PostTaskTagRequest(taskid: task.id, tagid: tag.id);
-    await api.insertTaskTag(request1);
-    task.tags?.add(tag);
-    currentTags?.add(tag);
-    notifyListeners();
- }
 
- Future<void> insertTagExists(Tag tag, Task task) async {
+    final index = currentTags?.indexWhere((element) => element.id == tag.id);
+
+    if (index == null || index == -1) {
+      final request1 = PostTaskTagRequest(taskid: task.id, tagid: tag.id);
+      await api.insertTaskTag(request1);
+      task.tags?.add(tag);
+      currentTags?.add(tag);
+      notifyListeners();
+    }
+  }
+
+  Future<void> insertTagExists(Tag tag, Task task) async {
     final request = PostTaskTagRequest(taskid: task.id, tagid: tag.id);
     await api.insertTaskTag(request);
     task.tags?.add(tag);
 
     notifyListeners();
- }
+  }
+
+  Future<void> updateTag(UpdateTagRequest request, Task task) async {
+    final tag = await api.updateTag(request);
+    int? index0 = currentTags?.indexWhere((element) => element.id == tag.id);
+    if (index0 != null && index0 != -1) {
+      currentTags![index0] = tag;
+
+      int? index1 = task.tags?.indexWhere((element) => element.id == tag.id);
+
+      if (index1 != null && index1 != -1) {
+        task.tags![index1] = tag;
+      }
+
+      notifyListeners();
+    }
+  }
 
 }

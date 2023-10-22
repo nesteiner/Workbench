@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
@@ -12,7 +14,6 @@ import 'package:provider/provider.dart';
 class TaskGroupWidget extends StatelessWidget {
   TaskGroup taskgroup;
   late GlobalState state;
-
   TaskGroupWidget({super.key, required this.taskgroup});
 
   @override
@@ -29,7 +30,10 @@ class TaskGroupWidget extends StatelessWidget {
               child: Selector<GlobalState, String>(
                 selector: (_, state) {
                   stringOfTag(Tag tag) => "${tag.id}-${tag.name}";
-                  return taskgroup.tasks.map((e) => "${e.id}-${e.name}-${e.isdone}-${(e.tags ?? []).map(stringOfTag).join(",")}").join(",");
+
+                  final s1 = "${taskgroup.id}-${taskgroup.name}";
+                  final s2 = taskgroup.tasks.map((e) => "${e.id}-${e.name}-${e.isdone}-${(e.tags ?? []).map(stringOfTag).join(",")}-${e.note}").join(",");
+                  return "${s1}-${s2}";
                 },
 
                 builder: (_, value, child) {
@@ -37,7 +41,21 @@ class TaskGroupWidget extends StatelessWidget {
                       shrinkWrap: true,
                       scrollDirection: Axis.vertical,
                       itemCount: taskgroup.tasks.length,
-                      itemBuilder: (context, index) => TaskWidget(task: taskgroup.tasks[index], taskgroupIndex: taskgroup.index,)
+                      itemBuilder: (context, index) {
+                        final task = taskgroup.tasks[index];
+                        final taskgroupIndex = taskgroup.index;
+                        final child = Material(
+                          child: TaskWidget(task: task, taskgroupIndex: taskgroupIndex)
+
+                        );
+
+                        return Stack(
+                          children: [
+                            buildTaskWidgetDrag(context, task, taskgroupIndex, child),
+                            buildTaskWidgetDragTarget(context, task, taskgroupIndex, child),
+                          ],
+                        );
+                      }
                   );
                 },
               )
@@ -205,7 +223,7 @@ class TaskGroupWidget extends StatelessWidget {
               // TODO later to use state to add this task
 
               final request = PostTaskRequest(
-                  name: controller.text,
+                  name: controller.text.trim(),
                   parentid: taskgroup.id,
                   priority: NORMAL_PRIORITY,
                   expectTime: 4
@@ -247,12 +265,125 @@ class TaskGroupWidget extends StatelessWidget {
       if (toggled) {
         child = expand; 
       } else {
-        child = entry;
+        // child = entry;
+        child = Stack(
+          children: [
+            entry,
+            DragTarget<Task>(
+              onWillAccept: (from) => !(from?.index == 1 && from?.parentid == taskgroup.id),
+              onAccept: (from) async {
+                final oldlistid = from.parentid;
+                final oldlist = state.taskgroups.firstWhere((element) => element.id == oldlistid);
+                oldlist.tasks.removeWhere((element) => element.id == from.id);
+
+                taskgroup.tasks.forEach((element) => element.index += 1);
+                taskgroup.tasks.insert(0, from);
+
+                oldlist.tasks
+                    .where((element) => element.index > from.index)
+                    .forEach((element) => element.index -= 1);
+
+                from.index = 1;
+                from.parentid = taskgroup.id;
+
+                final request = UpdateTaskRequest(id: from.id, reorderAt: 1, parentid: taskgroup.id);
+                await state.updateTask(request);
+              },
+
+              builder: (context, datas, rejectedData) {
+                if (datas.isEmpty) {
+                  return Container(
+                    height: settings["widget.taskgroup.task-add.height"],
+                  );
+                }
+
+                return Column(
+                  children: [
+                    entry,
+                    SizedBox(height: 2,),
+                    ...datas.map((e) => Opacity(opacity: 0.5, child: TaskWidget(task: e!, taskgroupIndex: taskgroup.index))).toList()
+                  ],
+                );
+              },
+            )
+          ],
+        );
       }
       
       return child;
       
     });
+  }
+
+  Widget buildTaskWidgetDrag(BuildContext context, Task task, int taskgroupIndex, Material child) {
+    final feedback = Opacity(opacity: 0.5, child: child,);
+
+    return Draggable<Task>(
+      data: task,
+      child: child,
+      feedback: feedback,
+      childWhenDragging: feedback,
+    );
+  }
+
+  Widget buildTaskWidgetDragTarget(BuildContext context, Task task, int taskgroupIndex, Material child) {
+    return DragTarget<Task>(
+      onWillAccept: (from) => from?.id != task.id,
+      onAccept: (from) async {
+        final oldlist = state.taskgroups.firstWhere((element) => element.id == from.parentid);
+        oldlist.tasks.removeWhere((element) => element.id == from.id);
+
+        final newlist = state.taskgroups[taskgroupIndex - 1];
+        int reorderAt = task.index + 1;
+
+        if (from.parentid == task.parentid) {
+          if (from.index < reorderAt) {
+            oldlist.tasks
+                .where((element) => element.index <= reorderAt && element.index > from.index)
+                .forEach((element) => element.index -= 1);
+
+            reorderAt -= 1;
+          } else if (from.index > reorderAt) {
+            oldlist.tasks
+                .where((element) => element.index >= reorderAt && element.index < from.index)
+                .forEach((element) => element.index += 1);
+          }
+
+        } else {
+          oldlist.tasks
+              .where((element) => element.index > from.index)
+              .forEach((element) => element.index -= 1);
+
+          newlist.tasks
+              .where((element) => element.index >= reorderAt)
+              .forEach((element) => element.index += 1);
+        }
+
+        final request = UpdateTaskRequest(id: from.id, reorderAt: reorderAt, parentid: newlist.id);
+        from.parentid = task.parentid;
+        from.index = reorderAt;
+
+        newlist.tasks.insert(reorderAt - 1, from);
+        await state.updateTask(request);
+      },
+
+      builder: (context, datas, rejectedData) {
+        if (datas.isEmpty) {
+          return Container(
+            height: settings["widget.task.height"],
+          );
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            child,
+            SizedBox(height: 4,),
+            ...datas.map((e) => Opacity(opacity: 0.5, child: TaskWidget(task: e!, taskgroupIndex: taskgroupIndex))).toList()
+          ],
+        );
+      },
+    );
   }
 
   void onTapEdit(BuildContext context) {
@@ -297,7 +428,7 @@ class TaskGroupWidget extends StatelessWidget {
       },
     );
 
-    final title = const Row(
+    const title = Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text("编辑这个任务列表", style: TextStyle(fontWeight: FontWeight.bold),)
@@ -352,7 +483,7 @@ class TaskGroupWidget extends StatelessWidget {
       },
     );
 
-    final title = const Row(
+    const title = Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text("在此之后添加任务列表", style: TextStyle(fontWeight: FontWeight.bold),)
@@ -389,7 +520,7 @@ class TaskGroupWidget extends StatelessWidget {
 
     final content = const Text("确定删除这个列表? 这个操作无法撤消");
 
-    final title = const Row(
+    const title = Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text("删除这个任务列表", style: TextStyle(fontWeight: FontWeight.bold),)

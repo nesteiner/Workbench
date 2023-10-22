@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/page/todolist/taskdetail.dart';
+import 'package:frontend/state.dart';
 import 'package:frontend/utils.dart';
+import 'package:provider/provider.dart';
 
 class TaskWidget extends StatefulWidget {
   Task task;
+  // index start from 1
   int taskgroupIndex;
 
   TaskWidget({required this.task, required this.taskgroupIndex});
 
   @override
   TaskWidgetState createState() => TaskWidgetState();
+
 }
 
 class TaskWidgetState extends State<TaskWidget> {
+  late GlobalState state;
   bool ishover = false;
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    state = context.read<GlobalState>();
+
     return GestureDetector(
       onTap: () {
-        navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskDetail(task: widget.task, taskgroupIndex: widget.taskgroupIndex)));
+        state.setCurrentTaskGroupAt(widget.taskgroupIndex - 1);
+        navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskDetail(task: widget.task)));
       },
 
       child: buildCard(context),
@@ -47,46 +56,73 @@ class TaskWidgetState extends State<TaskWidget> {
       ),
     );
 
-    final flag = widget.task.subtasks != null && widget.task.subtasks!.length > 0;
+
     final text = Text(widget.task.name, style: widget.task.isdone ? TextStyle(color: HexColor.fromHex("#8c8c8c")) : null,);
 
     Widget taskContent = Padding(
-      padding: const EdgeInsets.only(top: 14, right: 16, bottom: 14, left: 0),
+      padding: settings["widget.task.content.padding"],
       child: text
     );
 
-    if (flag) {
-      int subtaskCount = widget.task.subtasks!.length;
-      int subtaskDoneCount = widget.task.subtasks!.where((element) => element.isdone).length;
+    final color = Color.fromRGBO(0, 0, 0, 0.3);
 
-      final color = Color.fromRGBO(0, 0, 0, 0.3);
-      final subtaskPart = Row(
+    late List<Widget> children;
+
+    if (widget.task.subtasks != null && widget.task.subtasks!.length > 0) {
+      final attachSubTask = SizedBox(
+        height: settings["widget.task.attach.height"],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(Icons.list, color: color,),
+            Selector<GlobalState, String>(
+              selector: (_, state) {
+                int subtaskCount = widget.task.subtasks!.length;
+                int subtaskDoneCount = widget.task.subtasks!.where((element) => element.isdone).length;
+                return "$subtaskDoneCount/$subtaskCount";
+              },
+
+              builder: (_, value, child) => Text(value, style: TextStyle(color: color),),
+            )
+          ],
+        ),
+      );
+
+      children = [
+        ...buildTags(context),
+        attachSubTask
+      ];
+
+    } else {
+      children = buildTags(context);
+    }
+
+    if (!(widget.task.note?.isEmpty ?? true)) {
+      final noteAttach = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            decoration: settings["widget.task.subtask.decoration"],
-            child: Row(
-              children: [
-                Icon(Icons.list, color: color,),
-                Text("$subtaskDoneCount/$subtaskCount", style: TextStyle(color: color),)
-              ],
-            ),
-          )
+          SvgPicture.asset("assets/note.svg", height: settings["widget.task.attach.height"],),
+          SizedBox(width: 2,)
         ],
       );
 
-      taskContent = Padding(
-          padding: const EdgeInsets.only(top: 14, right: 16, bottom: 14, left: 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              text,
-              SizedBox(height: 8,),
-              subtaskPart
-            ],
-          )
+      children.insert(0, noteAttach);
+    }
+
+    late Widget taskAttachment;
+    if (children.isEmpty) {
+      taskAttachment = SizedBox.shrink();
+    } else {
+      taskAttachment = Container(
+        padding: settings["widget.task.attach.padding"],
+        child: Wrap(
+          direction: Axis.horizontal,
+          children: children,
+        ),
       );
     }
+
 
     final body = Container(
       width: settings["widget.task.width"],
@@ -110,7 +146,13 @@ class TaskWidgetState extends State<TaskWidget> {
         children: [
           left,
           Expanded(
-            child: taskContent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                taskContent,
+                taskAttachment
+              ],
+            ),
           )
         ],
       ),
@@ -118,7 +160,7 @@ class TaskWidgetState extends State<TaskWidget> {
 
 
     // use stack to use left line width
-    final stack =  StatefulBuilder(builder: (context, setState) {
+    final stack = StatefulBuilder(builder: (context, setState) {
 
       return MouseRegion(
         onEnter: (_) => setState(() { ishover = true; }),
@@ -143,10 +185,8 @@ class TaskWidgetState extends State<TaskWidget> {
     );
   }
 
-
-
   Widget _leftline() {
-    final getwidget = (Color color, double width) => Container(
+    getwidget(Color color, double width) => Container(
       width: width,
       decoration: BoxDecoration(
           color: color,
@@ -176,6 +216,29 @@ class TaskWidgetState extends State<TaskWidget> {
         return Container();
       }
     }
+  }
+  
+  List<Widget> buildTags(BuildContext context) {
+    final tags = widget.task.tags ?? [];
+    return tags.map((e) => SizedBox(
+      height: settings["widget.task.attach.height"],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(4)), color: e.color.withOpacity(1)),
+          ),
+
+          SizedBox(width: 2,),
+          Text(e.name, style: TextStyle(fontSize: settings["widget.task.attach.font-size"]),),
+
+          SizedBox(width: 2,)
+        ],
+      ),
+    )).toList();
   }
 }
 

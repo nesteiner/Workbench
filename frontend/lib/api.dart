@@ -97,6 +97,18 @@ class Api {
     return Task.fromJson(response.data!["data"]);
   }
 
+  Future<void> removeDeadline(int id) async {
+    await instance.delete("$todolistUrl/task/deadline/$id");
+  }
+
+  Future<void> removeNotifyTime(int id) async {
+    await instance.delete("$todolistUrl/task/notifyTime/$id");
+  }
+
+  Future<void> removeTag(int taskid, int tagid) async {
+    await instance.delete("$todolistUrl/task/tag?taskid=$taskid&tagid=$tagid");
+  }
+
   Future<TaskGroup> insertTaskGroup(PostTaskGroupRequest request) async {
     Response<Map<String, dynamic>> response = await instance.post("$todolistUrl/taskgroup", data: request.toJson());
     return TaskGroup.fromJson(response.data!["data"]);

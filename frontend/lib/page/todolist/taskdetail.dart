@@ -10,9 +10,8 @@ import 'package:provider/provider.dart';
 
 class TaskDetail extends StatefulWidget {
   Task task;
-  int taskgroupIndex;
 
-  TaskDetail({required this.task, required this.taskgroupIndex});
+  TaskDetail({required this.task});
 
   @override
   TaskDetailState createState() => TaskDetailState();
@@ -26,6 +25,7 @@ class TaskDetailState extends State<TaskDetail> {
   late void Function(void Function()) setStateToggleCreate;
   late void Function(void Function()) setStateToggleSearch;
   late void Function(void Function()) setStateToggleNote;
+  late void Function(void Function()) setStateSubTaskAdd;
   // late void Function(void Function()) setStateChangeTags;
 
 
@@ -33,7 +33,6 @@ class TaskDetailState extends State<TaskDetail> {
   Widget build(BuildContext context) {
     // TODO later to look up state
     state = context.read<GlobalState>();
-
 
     final center = Center(
       child: Column(
@@ -70,8 +69,10 @@ class TaskDetailState extends State<TaskDetail> {
               controller.text = value!;
             });
 
-            final request = UpdateTaskRequest(id: widget.task.id, name: controller.text);
-            await state.updateTask(request, widget.taskgroupIndex);
+            final name = controller.text.trim();
+            widget.task.name = name;
+            final request = UpdateTaskRequest(id: widget.task.id, name: name);
+            await state.updateTask(request);
           }
         },
       );
@@ -119,8 +120,9 @@ class TaskDetailState extends State<TaskDetail> {
                   widget.task.isdone = value;
                 });
 
+                widget.task.isdone = value;
                 final request = UpdateTaskRequest(id: widget.task.id, isdone: value);
-                await state.updateTask(request, widget.taskgroupIndex);
+                await state.updateTask(request);
               }
             },
           ),
@@ -140,6 +142,9 @@ class TaskDetailState extends State<TaskDetail> {
   }
 
   Widget buildTime(BuildContext context) {
+    late void Function(void Function()) setStateDeadline;
+    late void Function(void Function()) setStateNotify;
+
     final rowTimeLeft = SizedBox(
       width: settings["widget.task.form.left.width"],
       height: settings["widget.task.form.item.height"],
@@ -154,16 +159,19 @@ class TaskDetailState extends State<TaskDetail> {
       ),
     );
 
-    final flagDeadline = widget.task.deadline != null;
-    late Text deadlineText;
+    final deadlineText = StatefulBuilder(builder: (context, setState) {
+      setStateDeadline = setState;
+      final flagDeadline = widget.task.deadline != null;
 
-    if (flagDeadline) {
-      deadlineText = Text(widget.task.deadline!.toIso8601String(), style: const TextStyle(color: Colors.blue),);
-    } else {
-      deadlineText = const Text("设置截止时间", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),);
-    }
+      if (flagDeadline) {
+        return Text(formatDateTime(widget.task.deadline!), style: const TextStyle(color: Colors.blue),);
+      } else {
+        return const Text("设置截止时间", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),);
+      }
+    },);
 
-    Widget deadlinePart = TextButton(
+
+    final deadlinePart = TextButton(
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero
       ),
@@ -176,17 +184,17 @@ class TaskDetailState extends State<TaskDetail> {
           if (timeOfDay != null) {
             final datetime = DateTime(date.year, date.month, date.day, timeOfDay.hour, timeOfDay.minute);
 
-            setState(() {
+            setStateDeadline(() {
               widget.task.deadline = datetime;
             });
+
+            final request = UpdateTaskRequest(id: widget.task.id, deadline: formatDateTime(datetime));
+            await state.updateTask(request);
           }
         }
       },
       child: deadlineText
     );
-
-    final flagNotifyTime = widget.task.notifyTime != null;
-    late Widget notifyTimePart;
 
     onPressedNotifyTime() async {
       final now = DateTime.now();
@@ -197,25 +205,63 @@ class TaskDetailState extends State<TaskDetail> {
         if (timeOfDay != null) {
           final datetime = DateTime(date.year, date.month, date.day, timeOfDay.hour, timeOfDay.minute);
 
-          setState(() {
+          setStateNotify(() {
             widget.task.notifyTime = datetime;
           });
+
+          final request = UpdateTaskRequest(id: widget.task.id, notifyTime: formatDateTime(datetime));
+          await state.updateTask(request);
         }
       }
     }
 
-    if (flagNotifyTime) {
-      notifyTimePart = TextButton(
-        onPressed: onPressedNotifyTime,
-        child: Text(widget.task.notifyTime!.toIso8601String()),
-      );
-    } else {
-      notifyTimePart = IconButton(
-        onPressed: onPressedNotifyTime,
-        icon: const Icon(Icons.alarm, color: Color.fromRGBO(0, 0, 0, 0.5),),
-      );
-    }
+    final notifyTimePart = StatefulBuilder(builder: (context, setState) {
+      setStateNotify = setState;
+      final flagNotifyTime = widget.task.notifyTime != null;
 
+      if (flagNotifyTime) {
+        return TextButton(
+          onPressed: onPressedNotifyTime,
+          child: Text(formatDateTime(widget.task.notifyTime!), style: const TextStyle(color: Colors.blue),)
+        );
+      } else {
+        return IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: onPressedNotifyTime,
+          icon: const Icon(Icons.alarm, color: Color.fromRGBO(0, 0, 0, 0.5),),
+        );
+      }
+    });
+
+    final resetPart = PopupMenuButton(
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          onTap: () async {
+            setStateDeadline(() {
+              widget.task.deadline = null;
+            });
+
+            await state.removeDeadline(widget.task.id);
+          },
+
+          child: const Text("重置截止时间"),
+        ),
+
+        PopupMenuItem(
+          onTap: () async {
+            setStateNotify(() {
+              widget.task.notifyTime = null;
+            });
+
+            await state.removeNotifyTime(widget.task.id);
+          },
+
+          child: const Text("重置提醒时间"),
+        )
+      ],
+      child: const Icon(Icons.refresh, color: Color.fromRGBO(0, 0, 0, 0.5),),
+    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -226,7 +272,10 @@ class TaskDetailState extends State<TaskDetail> {
           children: [
             deadlinePart,
             const SizedBox(width: 16,),
-            notifyTimePart
+            notifyTimePart,
+
+            const SizedBox(width: 16,),
+            resetPart
           ],
         )
       ],
@@ -255,7 +304,7 @@ class TaskDetailState extends State<TaskDetail> {
 
     final width = MediaQuery.of(context).size.width;
     final textfield = Container(
-      width: width * 0.8,
+      width: width * 0.6,
       // TODO later to check this
       margin: settings["widget.task.form.note.edit.margin"],
       child: TextField(
@@ -281,13 +330,13 @@ class TaskDetailState extends State<TaskDetail> {
               onPressed: () async {
                 // TODO use state to save note
                 setStateToggleNote(() {
-                  widget.task.note = noteController.text;
+                  widget.task.note = noteController.text.trim();
                   flag = widget.task.note?.isNotEmpty ?? false;
                   toggled = false;
                 });
 
-                final request = UpdateTaskRequest(id: widget.task.id, note: noteController.text);
-                await state.updateTask(request, widget.taskgroupIndex);
+                final request = UpdateTaskRequest(id: widget.task.id, note: noteController.text.trim());
+                await state.updateTask(request);
               },
               child: const Text("保存", style: TextStyle(color: Colors.white),)
           )
@@ -378,7 +427,7 @@ class TaskDetailState extends State<TaskDetail> {
             onSelected: (int value) async {
               widget.task.priority = value;
               final request = UpdateTaskRequest(id: widget.task.id, priority: value);
-              await state.updateTask(request, widget.taskgroupIndex);
+              await state.updateTask(request);
 
               setState(() {
 
@@ -418,51 +467,54 @@ class TaskDetailState extends State<TaskDetail> {
       ),
     );
 
+    final tags = Selector<GlobalState, (String, String)>(
+      selector: (_, state) {
+        final s1 = (widget.task.tags ?? []).map((e) => "${e.id}-${e.name}").join(",");
+        final s2 = (state.currentTags ?? []).map((e) => "${e.id}-${e.name}").join(",");
+        return (s1, s2);
+      },
 
-    final tasktags = Selector<GlobalState, String>(
-      selector: (_, state) => (widget.task.tags ?? []).map((e) => "${e.id}-${e.name}").join(","),
-      builder: (_, value, child) => Wrap(
-        children: (widget.task.tags ?? []).map((e) => buildTagWidget(context, e)).toList(),
-      )
-    );
+      builder: (_, value, child) {
+        final tasktags = (widget.task.tags ?? []).map((e) => buildTagWidget(context, e)).toList();
 
-    final popupbutton = Selector<GlobalState, String>(
-      selector: (_, state) => (state.currentTags ?? []).map((e) => "${e.id}-${e.name}").join(","),
-      builder: (_, value, child) => PopupMenuButton<Tag>(
-        child: const Icon(Icons.add_circle_outline, color: Color.fromRGBO(0, 0, 0, 0.3),),
-        itemBuilder: (context) => [
-          PopupMenuItem(child: buildTagSearchAndCreate(context), enabled: false,),
-          ...((state.currentTags ?? []).where((element) => ! (widget.task.tags ?? []).contains(element)))
-              .map((e) => PopupMenuItem(child: buildTagInMenu(context, e), value: e))
-              .toList()
-        ],
+        final popupbutton = PopupMenuButton<Tag>(
+          child: const Icon(Icons.add_circle_outline, color: Color.fromRGBO(0, 0, 0, 0.3),),
+            itemBuilder: (context) => [
+              PopupMenuItem(child: buildTagSearchAndCreate(context), enabled: false,),
+              ...(state.currentTags ?? [])
+                  .map((e) => PopupMenuItem(child: buildTagInMenu(context, e), value: e))
+                  .toList()
+            ],
 
-        onSelected: (tag) async {
-          await state.insertTagExists(tag, widget.task);
-        },
-      ),
+            onSelected: (tag) async {
+              final flag = widget.task.tags?.indexWhere((element) => element.id == tag.id) ?? -1;
+              if (flag == -1) {
+                await state.insertTagExists(tag, widget.task);
+              }
+            },
+        );
+
+        return Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ...tasktags,
+            popupbutton
+          ],
+        );
+      },
     );
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         rowTagsLeft,
-
-        tasktags,
-
-        popupbutton
+        Expanded(child: tags)
       ],
     );
-
-
 
   }
 
   Widget buildSubTasks(BuildContext context) {
-    final flag = widget.task.subtasks?.isNotEmpty ?? false;
-    if (flag) {
-      final taskcount = widget.task.subtasks!.length;
-      final taskfinishcount = widget.task.subtasks!.where((element) => element.isdone).length;
-
       final rowSubTasksLeft = SizedBox(
         width: settings["widget.task.form.left.width"],
         height: settings["widget.task.form.item.height"],
@@ -473,62 +525,67 @@ class TaskDetailState extends State<TaskDetail> {
             const SizedBox(width: 8,),
             const Text("子任务", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),),
             const Text(" - "),
-            Text("$taskfinishcount/$taskcount", style: const TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),)
+
+            Selector<GlobalState, String>(
+              selector: (_, state) {
+                final taskcount = widget.task.subtasks!.length;
+                final taskfinishcount = widget.task.subtasks!.where((element) => element.isdone).length;
+                return "$taskfinishcount/$taskcount";
+              },
+
+              builder: (_, value, child) => Text(value, style: const TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),),
+            )
           ],
         ),
       );
 
-      final children = widget.task.subtasks!.map<Widget>((e) => buildSubTaskWidget(context, e)).toList();
-      children.add(buildSubTaskAdd(context));
+      return Selector<GlobalState, String>(
+        selector: (_, state) => (widget.task.subtasks ?? []).map((e) => "${e.id}-${e.name}-${e.isdone}").join(","),
+        builder: (_, value, child) {
+          final children = (widget.task.subtasks ?? []).map<Widget>((e) => buildSubTaskWidget(context, e)).toList();
+          // children.insert(0, buildSubTaskAdd(context));
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          rowSubTasksLeft,
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color.fromRGBO(0, 0, 0, 0.3)),
-              borderRadius: settings["widget.task.subtask.border-radius"]
-            ),
-            
-            child: Column(
-              children: children
-            ),
-          )
-        ],
-      );
-    } else {
-      final rowSubTasksLeft = SizedBox(
-        width: settings["widget.task.form.left.width"],
-        height: settings["widget.task.form.item.height"],
-        child: const Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(Icons.list_alt, color: Color.fromRGBO(0, 0, 0, 0.5),),
-            SizedBox(width: 8,),
-            Text("子任务", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),),
-            Text(" - "),
-          ],
-        ),
+          final reorderlist = StatefulBuilder(builder: (context, setState) => ReorderableListView.builder(
+              header: buildSubTaskAdd(context),
+              shrinkWrap: true,
+              itemCount: children.length,
+              itemBuilder: (context, index) => buildSubTaskWidget(context, widget.task.subtasks![index]),
+              onReorder: (oldindex, newindex) async {
+                if (newindex > oldindex) {
+                  newindex -= 1;
+                }
+
+
+                final subtask = widget.task.subtasks![oldindex];
+
+                setState(() {
+                  final child = widget.task.subtasks!.removeAt(oldindex);
+                  widget.task.subtasks!.insert(newindex, child);
+                });
+
+                final request = UpdateSubTaskRequest(id: subtask.id, reorderAt: newindex + 1);
+                await state.updateSubTask(request, widget.task);
+              }
+          ));
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              rowSubTasksLeft,
+              Container(
+                decoration: BoxDecoration(
+                    border: Border.all(color: const Color.fromRGBO(0, 0, 0, 0.3)),
+                    borderRadius: settings["widget.task.subtask.border-radius"]
+                ),
+
+                child: reorderlist
+              )
+            ],
+          );
+        },
       );
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          rowSubTasksLeft,
-          Container(
-            decoration: BoxDecoration(
-                border: Border.all(color: const Color.fromRGBO(0, 0, 0, 0.3)),
-                borderRadius: settings["widget.task.subtask.border-radius"]
-            ),
-
-            child: buildSubTaskAdd(context)
-          )
-          
-        ],
-      );
     }
-  }
 
   Widget buildPriorityWidget(int value) {
     if (value == LOW_PRIORITY) {
@@ -580,20 +637,73 @@ class TaskDetailState extends State<TaskDetail> {
 
   Widget buildTagWidget(BuildContext context, Tag tag) {
     final textColor = tag.color.withOpacity(1);
-    return Wrap(
-      children: [
-        Container(
-          margin: settings["widget.task.form.tag.margin"],
-          padding: settings["widget.task.form.tag.padding"],
-          decoration: BoxDecoration(
-              color: tag.color,
-              borderRadius: settings["widget.task.form.tag.border-radius"]
-          ),
+    // final child = Wrap(
+    //   children: [
+    //     Container(
+    //       margin: settings["widget.task.form.tag.margin"],
+    //       padding: settings["widget.task.form.tag.padding"],
+    //       decoration: BoxDecoration(
+    //           color: tag.color,
+    //           borderRadius: settings["widget.task.form.tag.border-radius"]
+    //       ),
+    //
+    //       child: Text(tag.name, style: TextStyle(color: textColor),),
+    //     )
+    //   ],
+    // );
 
-          child: Text(tag.name, style: TextStyle(color: textColor),),
-        )
-      ],
+    final button = GestureDetector(
+        onTap: () async {
+          widget.task.tags?.removeWhere((element) => element.id == tag.id);
+          await state.removeTag(tag.id, widget.task);
+        },
+
+        child: const Icon(Icons.close, color: Color.fromRGBO(0, 0, 0, 0.3),)
     );
+
+    final margin = SizedBox(
+      width: settings["widget.task.form.tag.close.margin-right"],
+    );
+
+    final children = <Widget>[
+      Container(
+        margin: settings["widget.task.form.tag.margin"],
+        padding: settings["widget.task.form.tag.padding"],
+        decoration: BoxDecoration(
+            color: tag.color,
+            borderRadius: settings["widget.task.form.tag.border-radius"]
+        ),
+
+        child: Text(tag.name, style: TextStyle(color: textColor),),
+      )
+    ];
+
+    bool flag = true;
+    return StatefulBuilder(builder: (context, setState) => GestureDetector(
+      onLongPress: () {
+        if (flag) {
+          setState(() {
+            children.addAll([margin, button]);
+          });
+
+          flag = false;
+        } else {
+          setState(() {
+            children.removeLast();
+            children.removeLast();
+
+            flag = true;
+          });
+        }
+      },
+
+
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: children,
+      ),
+    ));
   }
 
   Widget buildTagSearchAndCreate(BuildContext context) {
@@ -642,27 +752,28 @@ class TaskDetailState extends State<TaskDetail> {
     final checkbox = StatefulBuilder(builder: (context, setState) {
       return Checkbox(
         value: subtask.isdone,
-        onChanged: (bool? value) {
+        onChanged: (bool? value) async {
           if (value != null) {
             setState(() {
               subtask.isdone = value;
             });
+
+            final request = UpdateSubTaskRequest(id: subtask.id, isdone: value);
+            await state.updateSubTask(request, widget.task);
           }
         },
       );
     },);
 
-    InputDecoration? decoration;
-
-    if (subtask.isdone) {
-      decoration = const InputDecoration(
-        border: InputBorder.none
-      );
-    }
-
     final textfield = TextField(
       controller: controller,
-      decoration: decoration,
+      decoration: null,
+      onSubmitted: (String? value) async {
+        if (value?.isNotEmpty ?? false) {
+          final request = UpdateSubTaskRequest(id: subtask.id, name: controller.text);
+          await state.updateSubTask(request, widget.task);
+        }
+      },
     );
 
     final taskcontent = Expanded(
@@ -673,8 +784,8 @@ class TaskDetailState extends State<TaskDetail> {
     );
 
     final deleteButton = IconButton(
-      onPressed: () {
-        // TODO later to delete this subtask using state
+      onPressed: () async {
+        await state.deleteSubTask(subtask.id, widget.task);
       },
 
       icon: const Icon(Icons.delete_forever_outlined, color: Colors.red,),
@@ -689,7 +800,8 @@ class TaskDetailState extends State<TaskDetail> {
     );
 
     return Container(
-      padding: const EdgeInsets.only(top: 2, right: 12, bottom: 2, left: 16),
+      key: ValueKey("subtask-${subtask.id}-${subtask.name}-${subtask.isdone}"),
+      padding: settings["page.taskdetail.subtask.padding"],
       child: row,
     );
   }
@@ -698,6 +810,7 @@ class TaskDetailState extends State<TaskDetail> {
     bool isdone = false;
     bool toggled = false;
     TextEditingController controller = TextEditingController();
+    final disabled = ValueNotifier(true);
 
     return StatefulBuilder(builder: (context, setState) {
       final checkbox = Checkbox(
@@ -711,13 +824,15 @@ class TaskDetailState extends State<TaskDetail> {
         },
       );
 
-      final saveButton = ElevatedButton(
-        onPressed: controller.text.isEmpty ? null : () {
-          // TODO later to add it
-
+      final saveButton = ListenableBuilder(listenable: disabled, builder: (context, child) => ElevatedButton(
+        onPressed: disabled.value ? null : () async {
           setState(() {
             toggled = false;
           });
+
+          final request = PostSubTaskRequest(parentid: widget.task.id, name: controller.text);
+          await state.insertSubTask(request, widget.task);
+          controller.text = "";
         },
 
         style: ElevatedButton.styleFrom(
@@ -725,19 +840,23 @@ class TaskDetailState extends State<TaskDetail> {
         ),
 
         child: const Text("保存", style: TextStyle(color: Colors.white),),
-      );
+      ));
 
 
       final textfield = TextField(
         controller: controller,
         onChanged: (String? value) {
           // TODO later maybe I should make a new StatefulBuilder
-          setState(() {});
+          if (value?.isEmpty ?? true) {
+            disabled.value = true;
+          } else {
+            disabled.value = false;
+          }
         },
 
         decoration: const InputDecoration(
           contentPadding: EdgeInsets.all(7),
-          border: OutlineInputBorder(),
+          border: InputBorder.none,
           hintText: "输入任务内容..."
         ),
       );
@@ -807,109 +926,50 @@ class TaskDetailState extends State<TaskDetail> {
   }
 
   Widget buildTagInMenu(BuildContext context, Tag tag) {
-     return Container(
-       width: settings["widget.task.form.menu.tag.width"],
-       height: settings["widget.task.form.menu.tag.height"],
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-           mainAxisSize: MainAxisSize.max,
-           children: [
-             Container(
-               width: 8,
-               height: 8,
-               margin: const EdgeInsets.only(right: 8),
-               decoration: BoxDecoration(color: tag.color, borderRadius: const BorderRadius.all(Radius.circular(4))),
-             ),
+    final flag = (widget.task.tags ?? []).indexWhere((element) => element.id == tag.id) ?? -1;
+    final child = flag != -1 ? const Icon(Icons.check) : SizedBox.shrink();
+    final footer = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            onTapEditTag(context, tag);
+          },
 
-             Text(tag.name, overflow: TextOverflow.ellipsis,)
-           ],
+          icon: const Icon(Icons.edit_outlined, color: Color.fromRGBO(0, 0, 0, 0.1),),
         ),
-     );
-  }
+        child
+      ],
+    );
 
-  Widget buildTagCreate(BuildContext context) {
-    final controller = TextEditingController();
-    late void Function(void Function()) setStateInput;
-
-    final head = Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(width: 0.5, color: Color.fromRGBO(0, 0, 0, 0.3))
-        )
-      ),
+    return Container(
+      width: settings["widget.task.form.menu.tag.width"],
+      height: settings["widget.task.form.menu.tag.height"],
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+         mainAxisSize: MainAxisSize.max,
+         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+         children: [
+           Row(
+             crossAxisAlignment: CrossAxisAlignment.center,
+             children: [
+               Container(
+                 width: 8,
+                 height: 8,
+                 margin: const EdgeInsets.only(right: 8),
+                 decoration: BoxDecoration(color: tag.color, borderRadius: const BorderRadius.all(Radius.circular(4))),
+               ),
 
-            icon: const Icon(Icons.arrow_back_ios_new, color: Color.fromRGBO(0, 0, 0, 0.5),),
-          ),
+               Text(tag.name, overflow: TextOverflow.ellipsis,)
+             ],
+           ),
 
-          const Text("新建标签", style: TextStyle(fontWeight: FontWeight.bold),),
-
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-
-            icon: const Icon(Icons.close, color: Color.fromRGBO(0, 0, 0, 0.5),),
-          )
-        ],
+           footer
+         ],
       ),
-    );
-
-    final input = TextField(
-      controller: controller,
-      decoration: const InputDecoration(
-        hintText: "标签名称",
-        border: OutlineInputBorder()
-      ),
-
-      onChanged: (String? value) {
-        setStateInput(() {});
-      },
-    );
-
-    final colorsChildren = [Colors.blue, Colors.green, const Color.fromRGBO(0, 156, 149, 1), Colors.purple, Colors.orange, Colors.red]
-        .map((e) {
-          return ListTile(
-            title: Text(e.toString()),
-            leading: Radio<Color>(
-              groupValue: Colors.white,
-              value: e,
-              onChanged: (Color? value) {
-                // TODO later to set color
-              },
-            ),
-          );
-    }).toList();
-
-    final colors = Column(
-      children: colorsChildren,
-    );
-
-    return StatefulBuilder(builder: (context, setState) {
-      setStateInput = setState;
-      return Column(
-        children: [
-          head,
-          input,
-          colors,
-          ElevatedButton(
-             onPressed: controller.text.isEmpty ? null : () {
-               // TODO later to add
-
-               Navigator.of(context).pop();
-             },
-
-             child: const Text("创建"),
-           )
-        ],
-      );
-    });
+     );
   }
 
   Widget buildEditExpectAndFinishTime(BuildContext context) {
@@ -962,7 +1022,7 @@ class TaskDetailState extends State<TaskDetail> {
             onTap: () async {
               final request = UpdateTaskRequest(id: widget.task.id, expectTime: widget.task.expectTime + 1);
               widget.task.expectTime += 1;
-              await state.updateTask(request, widget.taskgroupIndex);
+              await state.updateTask(request);
             },
 
             child: Center(
@@ -983,7 +1043,7 @@ class TaskDetailState extends State<TaskDetail> {
                     expectTime: widget.task.expectTime - 1);
 
                 widget.task.expectTime -= 1;
-                await state.updateTask(request, widget.taskgroupIndex);
+                await state.updateTask(request);
               }
             },
 
@@ -1001,6 +1061,57 @@ class TaskDetailState extends State<TaskDetail> {
         left,
         right
       ],
+    );
+  }
+
+  void onTapEditTag(BuildContext context, Tag tag) {
+    final controller = TextEditingController(text: tag.name);
+    final disabled = ValueNotifier(true);
+
+    final textfield = TextField(
+      controller: controller,
+      decoration: const InputDecoration(
+        border: null
+      ),
+
+      onChanged: (String? value) {
+        if (value?.isEmpty ?? true) {
+          disabled.value = true;
+        } else {
+          disabled.value = false;
+        }
+      },
+    );
+
+    final actions = [
+      TextButton(
+        onPressed: () {
+          navigatorKey.currentState?.pop();
+        },
+
+        child: const Text("取消"),
+      ),
+
+      ListenableBuilder(listenable: disabled, builder: (context, child) => TextButton(
+        onPressed: disabled.value ? null : () async {
+          final request = UpdateTagRequest(id: tag.id, name: controller.text.trim());
+          await state.updateTag(request, widget.task);
+
+          navigatorKey.currentState?.pop();
+          navigatorKey.currentState?.pop();
+        },
+
+        child: const Text("确定"),
+      ))
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("编辑这个标签"),
+        content: textfield,
+        actions: actions,
+      )
     );
   }
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -39,6 +40,24 @@ class TaskController {
     fun deleteOne(@PathVariable("id") id: Int): Response<Unit> {
         taskService.deleteOne(id)
         return Response.Ok("delete ok", Unit)
+    }
+
+    @DeleteMapping("/deadline/{id}")
+    fun removeDeadline(@PathVariable("id") id: Int): Response<Unit> {
+        taskService.removeDeadline(id)
+        return Response.Ok("remove deadline ok", Unit)
+    }
+
+    @DeleteMapping("/tag", params = ["taskid", "tagid"])
+    fun removeTag(@RequestParam("taskid") taskid: Int, @RequestParam("tagid") tagid: Int): Response<Unit> {
+        taskService.removeTag(taskid, tagid)
+        return Response.Ok("remove tag ok", Unit)
+    }
+
+    @DeleteMapping("/notifyTime/{id}")
+    fun removeNotifyTime(@PathVariable("id") id: Int): Response<Unit> {
+        taskService.removeNotifyTime(id)
+        return Response.Ok("remove notify time ok", Unit)
     }
 
     @PutMapping

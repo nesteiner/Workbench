@@ -135,15 +135,60 @@ class TaskService {
         mustExistIn(request.parentid, TaskGroups)
 
         if (request.reorderAt != null && request.parentid != null) {
+            val (currentIndex, parentid) = Tasks.slice(Tasks.index, Tasks.parentid)
+                    .select(Tasks.id eq request.id)
+                    .first()
+                    .let {
+                        listOf(it[Tasks.index], it[Tasks.parentid].value)
+                    }
+
+            Tasks.update({ (Tasks.parentid eq parentid) and (Tasks.index greater currentIndex)}) {
+                with (SqlExpressionBuilder) {
+                    it.update(index, index - 1);
+                }
+            }
+
             Tasks.update({ (Tasks.parentid eq request.parentid) and (Tasks.index greaterEq request.reorderAt) }) {
                 with (SqlExpressionBuilder) {
                     it.update(index, index + 1)
                 }
             }
 
+        } else if (request.reorderAt != null && request.parentid == null) {
+            val (currentIndex, parentid) = Tasks.slice(Tasks.index, Tasks.parentid).select(Tasks.id eq request.id).first().let {
+                listOf(it[Tasks.index], it[Tasks.parentid].value)
+            }
+
+            if (currentIndex < request.reorderAt) {
+                Tasks.update(
+                        {
+                            (Tasks.parentid eq parentid) and (Tasks.index lessEq request.reorderAt) and (Tasks.index greater currentIndex)
+                        }) {
+                    with (SqlExpressionBuilder) {
+                        it.update(index, index - 1)
+                    }
+                }
+            } else if (currentIndex > request.reorderAt) {
+                Tasks.update(
+                        {
+                            (Tasks.parentid eq parentid) and (Tasks.index greaterEq request.reorderAt) and (Tasks.index less currentIndex)
+                        }) {
+                    with(SqlExpressionBuilder) {
+                        it.update(index, index + 1)
+                    }
+                }
+            }
         }
 
         Tasks.update({ Tasks.id eq request.id }) {
+            if (request.reorderAt != null) {
+                it[index] = request.reorderAt
+            }
+
+            if (request.parentid != null) {
+                it[parentid] = request.parentid
+            }
+
             if (request.name != null) {
                 it[name] = request.name
             }
@@ -241,6 +286,23 @@ class TaskService {
                 }
     }
 
+    fun removeDeadline(id: Int) {
+        Tasks.update({ Tasks.id eq id }) {
+            it[deadline] = null
+        }
+    }
+
+    fun removeNotifyTime(id: Int) {
+        Tasks.update({ Tasks.id eq id }) {
+            it[notifyTime] = null
+        }
+    }
+
+    fun removeTag(taskid0: Int, tagid0: Int) {
+        TaskTag.deleteWhere {
+            (tagid eq tagid0) and (taskid eq taskid0)
+        }
+    }
     private fun parseFrom(datetimeString: String): Instant {
         val datetime = parseDateFormat.parse(datetimeString)
         val isostring = formatDateFormat.format(datetime)

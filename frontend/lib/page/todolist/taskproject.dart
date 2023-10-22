@@ -279,10 +279,10 @@ class TaskProjectPage extends StatelessWidget {
               return;
             }
             
-            final request = PostTaskProjectRequest(userid: state.user.id, name: nameController.text);
+            final request = PostTaskProjectRequest(userid: state.user.id, name: nameController.text.trim());
 
             if (profileController.text.isNotEmpty) {
-              request.profile = profileController.text;
+              request.profile = profileController.text.trim();
             }
 
             if (localImagePath != null) {

@@ -48,11 +48,17 @@ class TagService {
     }
 
     fun updateOne(request: UpdateTagRequest): Tag {
-        Tags.update({Tags.id eq request.id}) {
-            it[name] = request.name
-        }
+        val ifexist = Tags.select(Tags.name eq request.name).firstOrNull()
 
-        return findOne(request.id) ?: throw BadRequestException("no such tag")
+        if (ifexist == null) {
+            Tags.update({ Tags.id eq request.id }) {
+                it[name] = request.name
+            }
+
+            return findOne(request.id)!!
+        } else {
+            throw BadRequestException("there is already a tag named ${request.name}")
+        }
     }
 
     fun findAllOfTask(taskid: Int): List<Tag> {
