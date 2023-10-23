@@ -15,8 +15,14 @@ class PomodoroBoard extends StatelessWidget {
     state = context.read<GlobalState>();
     // TODO: implement build
     final counter = CounterWidget();
-    return Selector<GlobalState, (Task?, List<Task>, FocusState)>(
-      selector: (_, state) => (state.currentTask, state.currentTaskGroup!.tasks, state.counter.focusState),
+    return Selector<GlobalState, (Task?, List<Task>, FocusState, String)>(
+      selector: (_, state) {
+        stringOfTimes(Task task) => "${task.finishTime} / ${task.expectTime}";
+        final tasks = state.currentTaskGroup!.tasks;
+        final s = tasks.map(stringOfTimes).join(",");
+        return (state.currentTask, tasks, state.counter.focusState, s);
+      },
+
       builder: (_, value, child) {
         final currentTask = value.$1;
         final tasks = value.$2;
@@ -29,8 +35,14 @@ class PomodoroBoard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             counter,
+            buildCurrentTask(context),
+            buildHead(context),
+
+            SizedBox(height: settings["widget.pomodoro.pomodoro-board.counter.margin-bottom"],),
+
             Row(mainAxisAlignment: MainAxisAlignment.start, children: [buildSelect(context),],),
 
+            SizedBox(height: settings["widget.pomodoro.pomodoro-board.counter.margin-bottom"],),
             ...taskcards
           ],
         );
@@ -57,13 +69,64 @@ class PomodoroBoard extends StatelessWidget {
                   state.setCounterTaskGroup(e);
                 },
               )).toList(),
-      child: buildTaskGroup(context, state.currentTaskGroup!),
+
+      child: Container(
+        decoration: settings["widget.pomodoro.pomodoro-board.select.decoration"],
+        padding: settings["widget.pomodoro.pomodoro-board.select.padding"],
+        child: Text(state.currentTaskGroup!.name, style: const TextStyle(color: Colors.white),),
+      )
     );
 
     return Container(
       margin: settings["widget.pomodoro.taskcard.select.margin"],
-      color: Colors.white,
-      child: popupbutton,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+      ),
+
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text("当前任务列表: ", style: TextStyle(fontWeight: FontWeight.bold),),
+
+          popupbutton
+        ],
+      )
+    );
+  }
+
+  Widget buildCurrentTask(BuildContext context) {
+    return Center(
+      child: Text(state.currentTask?.name ?? "", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w100, overflow: TextOverflow.ellipsis),),
+    );
+  }
+
+  Widget buildHead(BuildContext context) {
+    return Container(
+      decoration: settings["widget.pomodoro.pomodoro-board.taskheader.decoration"],
+
+      padding: settings["widget.pomodoro.pomodoro-board.taskheader.padding"],
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+
+        children: [
+          const Text("Tasks", style: TextStyle(color: Colors.white, fontSize: 18),),
+
+          GestureDetector(
+            onTap: () => state.clearActPomodoros(),
+            child: Row(
+              children: [
+                const Icon(Icons.check, color: Colors.white,),
+                SizedBox(width: settings["widget.pomodoro.pomodoro-board.taskheader.padding.icon-text"],),
+                const Text("Clear act pomodoros", style: TextStyle(color: Colors.white),)
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 
@@ -82,11 +145,11 @@ class PomodoroBoard extends StatelessWidget {
 
   Color getcolor(FocusState state) {
     if (state == FocusState.pomodoro) {
-      return const Color.fromRGBO(186, 73, 73, 1);
+      return settings["widget.pomodoro.pomodoro-board.red"];
     } else if (state == FocusState.shortBreak) {
-      return const Color.fromRGBO(56, 133, 138, 1);
+      return settings["widget.pomodoro.pomodoro-board.green"];
     } else {
-      return const Color.fromRGBO(57, 112, 151, 1);
+      return settings["widget.pomodoro.pomodoro-board.blue"];
     }
   }
 }

@@ -42,8 +42,7 @@ class TaskGroupBoard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.menu),
-          Text("菜单", style: TextStyle(color: settings["page.taskgroup-board.appbar.font.color"]),)
+          const Icon(Icons.menu),
         ],
       ),
 
@@ -80,9 +79,14 @@ class TaskGroupBoard extends StatelessWidget {
       ],
     );
 
+    final pomodoroSettings = GestureDetector(
+      onTap: () => onTapPomodoroSetting(context),
+      child: const Icon(Icons.settings, color: Colors.red,),
+    );
+
     return AppBar(
       title: title,
-      actions: [menubutton],
+      actions: [menubutton, pomodoroSettings],
     );
   }
 
@@ -98,8 +102,6 @@ class TaskGroupBoard extends StatelessWidget {
             return Center(child: CircularProgressIndicator(),);
           }
 
-
-          final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("taskgroup-${e.id}"), taskgroup: e)).toList();
           return Selector<GlobalState, String>(
             // in this way, reorder will not flash
             // any way, don't build expensive widget in builder
@@ -132,67 +134,6 @@ class TaskGroupBoard extends StatelessWidget {
             },
           );
 
-          // return Selector<GlobalState, String>(
-          //   selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
-          //   builder: (_, value, child) =>
-          //       StatefulBuilder(builder: (context, setState) => ListView.builder(
-          //         shrinkWrap: true,
-          //         scrollDirection: Axis.horizontal,
-          //         itemCount: state.taskgroups.length,
-          //         itemBuilder: (context, index) {
-          //           final currentTaskGroup = state.taskgroups[index];
-          //           final child = TaskGroupWidget(taskgroup: currentTaskGroup,);
-          //           final feedback = Opacity(opacity: 0.5, child: child,);
-          //           return Stack(
-          //             children: [
-          //               Draggable<TaskGroup>(
-          //                 data: currentTaskGroup,
-          //                 child: child,
-          //                 feedback: Material(child: feedback),
-          //                 childWhenDragging: Material(child: feedback),
-          //               ),
-          //
-          //               DragTarget<TaskGroup>(
-          //                 onWillAccept: (from) => from?.id != currentTaskGroup.id,
-          //                 onAccept: (from) async {
-          //                   final oldindex = state.taskgroups.indexWhere((element) => element.id == from.id);
-          //                   int newindex = index;
-          //
-          //                   if (newindex > oldindex) {
-          //                     newindex -= 1;
-          //                   }
-          //
-          //                   setState(() {
-          //                     final item = state.taskgroups.removeAt(oldindex);
-          //                     state.taskgroups.insert(newindex, item);
-          //                   });
-          //
-          //                   await state.reorderTaskGroup(from, oldindex, newindex + 1);
-          //                 },
-          //
-          //                 builder: (context, datas, rejectedData) {
-          //                   final child = Container(
-          //                     width: settings["widget.taskgroup.width"],
-          //                   );
-          //
-          //                   if (datas.isEmpty) {
-          //                     return child;
-          //                   }
-          //
-          //                   return Row(
-          //                     children: [
-          //                       child,
-          //                       SizedBox(width: 4,),
-          //                       ...datas.map((e) => TaskGroupWidget(taskgroup: currentTaskGroup)).toList()
-          //                     ],
-          //                   );
-          //                 },
-          //               )
-          //           ],
-          //         );
-          //       },
-          //     )
-          //   ));
         }
     );
   }
@@ -494,6 +435,119 @@ class TaskGroupBoard extends StatelessWidget {
         child: const Text("确定"),
       ))
 
+    ];
+
+    showDialog(context: context, builder: (context) => AlertDialog(
+      title: title,
+      content: content,
+      actions: actions,
+    ));
+  }
+
+  void onTapPomodoroSetting(BuildContext context) {
+    final title = const Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Row(children: [
+          Text("设置番茄钟时间")
+        ],)
+      ],
+    );
+
+    final content = Selector<GlobalState, String>(
+      selector: (_, state) => "${state.counter.pomodoroTime}-${state.counter.shortBreakTime}-${state.counter.longBreakTime}-${state.counter.longBreakInterval}",
+      builder: (_, value, child) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Pomodoro Time"),
+              Slider(
+                value: state.counter.pomodoroTime.toDouble(),
+                min: 15,
+                max: 50,
+                divisions: 7,
+                label: "${state.counter.pomodoroTime}",
+                onChanged: (value) {
+                  state.setTimes(pomodoroTime: value.toInt());
+                },
+              )
+            ],
+          ),
+
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("ShortBreak Time"),
+              Slider(
+                value: state.counter.shortBreakTime.toDouble(),
+                min: 5,
+                max: 15,
+                divisions: 5,
+                label: "${state.counter.shortBreakTime}",
+                onChanged: (value) {
+                  state.setTimes(shortBreakTime: value.toInt());
+                },
+              )
+            ],
+          ),
+
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("LongBreak Time"),
+              Slider(
+                value: state.counter.longBreakTime.toDouble(),
+                min: 15,
+                max: 25,
+                divisions: 5,
+                label: "${state.counter.longBreakTime}",
+                onChanged: (value) {
+                  state.setTimes(longBreakTime: value.toInt());
+                },
+              )
+            ],
+          ),
+
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Long Break Interval"),
+              Slider(
+                value: state.counter.longBreakInterval.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 10,
+                label: "${state.counter.longBreakInterval}",
+                onChanged: (value) {
+                  state.setTimes(longBreakInterval: value.toInt());
+                },
+              )
+            ],
+          )
+        ],
+      )
+    );
+
+    final actions = [
+      TextButton(
+        onPressed: () {
+          state.resetTimes();
+          navigatorKey.currentState?.pop();
+        },
+
+        child: const Text("reset"),
+      ),
+
+      TextButton(
+        onPressed: () {
+          navigatorKey.currentState?.pop();
+        },
+
+        child: const Text("cancel"),
+      ),
     ];
 
     showDialog(context: context, builder: (context) => AlertDialog(

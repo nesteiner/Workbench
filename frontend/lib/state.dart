@@ -32,6 +32,7 @@ class GlobalState extends ChangeNotifier {
 
   void setCounterTaskGroup(TaskGroup taskGroup) {
     currentTaskGroup = taskGroup;
+    currentTask = null;
     notifyListeners();
   }
 
@@ -72,12 +73,28 @@ class GlobalState extends ChangeNotifier {
   }
 
   void setTimes({
-    required int pomodoroTime,
-    required int shortBreakTime,
-    required int longBreakTime,
-    required int longBreakInterval
+    int? pomodoroTime,
+    int? shortBreakTime,
+    int? longBreakTime,
+    int? longBreakInterval
   }) {
-    counter = Counter(pomodoroTime: pomodoroTime, shortBreakTime: shortBreakTime, longBreakTime: longBreakTime, longBreakInterval: longBreakInterval);
+    if (pomodoroTime != null) {
+      counter.pomodoroTime = pomodoroTime;
+    }
+
+    if (shortBreakTime != null) {
+      counter.shortBreakTime = shortBreakTime;
+    }
+
+    if (longBreakTime != null) {
+      counter.longBreakTime = longBreakTime;
+    }
+
+    if (longBreakInterval != null) {
+      counter.longBreakInterval = longBreakInterval;
+    }
+
+    counter.setFocusState(counter.focusState);
     notifyListeners();
   }
 
@@ -86,6 +103,16 @@ class GlobalState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearActPomodoros() {
+    currentTaskGroup?.tasks.forEach((element) async {
+      final request = UpdateTaskRequest(id: element.id, finishTime: 0);
+      await updateTask(request);
+
+      element.finishTime = 0;
+    });
+
+    notifyListeners();
+  }
 
   /**
    * todolist module
@@ -110,6 +137,7 @@ class GlobalState extends ChangeNotifier {
 
   void setCurrentTaskGroupAt(int index) {
     currentTaskGroup = taskgroups[index];
+    currentTask = null;
   }
 
   Future<void> login(String username, String password) async {

@@ -36,9 +36,8 @@ class Counter {
     this.longBreakInterval = 4,
     this.duration = const Duration(seconds: 3)
   }) {
-    currentTime = [1, 0];
     state = RunningState.paused;
-    // TODO set focus state
+    currentTime = [1, 0];
     setFocusState(focusState);
   }
 

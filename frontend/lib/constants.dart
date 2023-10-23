@@ -185,7 +185,7 @@ Map<String, dynamic> settings = {
   "widget.pomodoro.counter.decoration": const BoxDecoration(color: Color.fromRGBO(255, 255, 255, 0.1)),
   "widget.pomodoro.counter.focus.text-style": const TextStyle(color: Colors.white),
   "widget.pomodoro.counter.padding": const EdgeInsets.only(top: 20, bottom: 30),
-  "widget.pomodoro.counter.margin": const EdgeInsets.only(top: 40),
+  "widget.pomodoro.counter.margin": const EdgeInsets.only(top: 40, bottom: 20),
   "widget.pomodoro.counter.time-text.style": const TextStyle(fontSize: 120, color: Colors.white, fontWeight: FontWeight.bold),
   "widget.pomodoro.counter.button.text-style": const TextStyle(fontSize: 22, color: Color.fromRGBO(186, 73, 73, 1), fontWeight: FontWeight.bold),
   "widget.pomodoro.counter.button.decoration": const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.all(Radius.circular(4))),
@@ -202,13 +202,29 @@ Map<String, dynamic> settings = {
   "widget.pomodoro.taskcard.padding": const EdgeInsets.only(top: 18, bottom: 18, left: 14, right: 14),
   "widget.pomodoro.taskcard.select.margin": const EdgeInsets.only(left: 14),
   // please edit this two items together
-  "widget.pomodoro.taskcard.margin": const EdgeInsets.only(top: 8),
+  "widget.pomodoro.taskcard.margin": const EdgeInsets.only(bottom: 8),
   "widget.pomodoro.taskcard.padding.top": 8.0,
 
   "widget.pomodoro.taskcard.selected.width": 2.0,
   "widget.pomodoro.pomodoro-board.taskgroup-menu.width.desktop": 120.0,
+  "widget.pomodoro.pomodoro-board.red": const Color.fromRGBO(186, 73, 73, 1),
+  "widget.pomodoro.pomodoro-board.green": const Color.fromRGBO(56, 133, 138, 1),
+  "widget.pomodoro.pomodoro-board.blue": const Color.fromRGBO(57, 112, 151, 1),
+  "widget.pomodoro.pomodoro-board.select.padding": const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+  "widget.pomodoro.pomodoro-board.select.decoration": BoxDecoration(
+    borderRadius: BorderRadius.all(Radius.circular(4)),
+    border: Border.all(color: Colors.white, width: 2)
+  ),
 
+  "widget.pomodoro.pomodoro-board.counter.margin-bottom": 20.0,
+  "widget.pomodoro.pomodoro-board.taskheader.decoration": const BoxDecoration(
+      border: Border(bottom: BorderSide(width: 2, color: Color.fromRGBO(255, 255, 255, 0.6)))
+  ),
+
+  "widget.pomodoro.pomodoro-board.taskheader.padding": const EdgeInsets.only(bottom: 14, left: 10, right: 10),
+  "widget.pomodoro.pomodoro-board.taskheader.padding.icon-text": 8.0,
   "common.svg.size": 20.0,
+  "common.unit.size": 4.0,
 };
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
