@@ -1,8 +1,24 @@
+
 spring:
   profiles:
     active: login,todolist
+
+  datasource:
+    url: "jdbc:postgresql://localhost/workbench"
+    driver-class-name: "org.postgresql.Driver"
+    username: "steiner"
+    password: "779151714"
+  exposed:
+    generate-ddl: true
+    show-sql: true
+
 
 server:
   port: 8082
   servlet:
     context-path: "/api"
+
+
+file:
+  storage:
+    url: "/home/steiner/workspace/workbench/storage"

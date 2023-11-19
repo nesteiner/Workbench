@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/page/todolist/taskgroup-board.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
 class TaskProjectWidget extends StatelessWidget {
-  TaskProject taskproject;
-
+  final TaskProject taskproject;
+  late final TodoListState state;
   TaskProjectWidget({super.key, required this.taskproject});
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    state = context.read<TodoListState>();
     late Widget container;
 
     if (Platform.isAndroid || Platform.isIOS) {
@@ -32,8 +32,6 @@ class TaskProjectWidget extends StatelessWidget {
   }
 
   Widget buildDesktop(BuildContext context) {
-    final state = context.read<GlobalState>();
-
     final footer = Container(
       decoration: BoxDecoration(
           borderRadius: settings["widget.taskproject.footer.border-radius"],
@@ -79,7 +77,6 @@ class TaskProjectWidget extends StatelessWidget {
   }
 
   Widget buildMobile(BuildContext context) {
-    final state = context.read<GlobalState>();
     final image = Image.network(
       state.todolistImageUrl(taskproject.avatarid),
       fit: BoxFit.fitWidth,

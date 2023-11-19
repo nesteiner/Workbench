@@ -10,19 +10,16 @@ import com.steiner.workbench.todolist.model.Task
 import com.steiner.workbench.todolist.model.TaskGroup
 import com.steiner.workbench.todolist.model.TaskProject
 import com.steiner.workbench.todolist.table.*
-import com.steiner.workbench.todolist.util.now
+import com.steiner.workbench.common.util.now
 import org.jetbrains.exposed.sql.*
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-@Component
-@Transactional
 class TodoListApplicationRunner: ApplicationRunner {
     override fun run(args: ApplicationArguments?) {
         SchemaUtils.drop(TaskTag, Tags, SubTasks, Tasks, TaskGroups, TaskProjects, ImageItems)

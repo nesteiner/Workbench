@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/page/todolist/taskdetail.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -20,12 +20,12 @@ class TaskWidget extends StatefulWidget {
 }
 
 class TaskWidgetState extends State<TaskWidget> {
-  late GlobalState state;
+  late TodoListState state;
   bool ishover = false;
 
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
 
     return GestureDetector(
       onTap: () {
@@ -76,7 +76,7 @@ class TaskWidgetState extends State<TaskWidget> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(Icons.list, color: color,),
-            Selector<GlobalState, String>(
+            Selector<TodoListState, String>(
               selector: (_, state) {
                 int subtaskCount = widget.task.subtasks!.length;
                 int subtaskDoneCount = widget.task.subtasks!.where((element) => element.isdone).length;

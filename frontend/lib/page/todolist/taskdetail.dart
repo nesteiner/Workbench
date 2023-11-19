@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/utils.dart';
 import 'package:provider/provider.dart';
 
 class TaskDetail extends StatefulWidget {
-  Task task;
+  final Task task;
 
   TaskDetail({required this.task});
 
@@ -21,7 +21,7 @@ class TaskDetailState extends State<TaskDetail> {
   bool toggleCreate = false;
   bool toggleSearch = false;
 
-  late GlobalState state;
+  late final TodoListState state;
   late void Function(void Function()) setStateToggleCreate;
   late void Function(void Function()) setStateToggleSearch;
   late void Function(void Function()) setStateToggleNote;
@@ -32,7 +32,7 @@ class TaskDetailState extends State<TaskDetail> {
   @override
   Widget build(BuildContext context) {
     // TODO later to look up state
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
 
     final center = Center(
       child: Column(
@@ -467,7 +467,7 @@ class TaskDetailState extends State<TaskDetail> {
       ),
     );
 
-    final tags = Selector<GlobalState, (String, String)>(
+    final tags = Selector<TodoListState, (String, String)>(
       selector: (_, state) {
         final s1 = (widget.task.tags ?? []).map((e) => "${e.id}-${e.name}").join(",");
         final s2 = (state.currentTags ?? []).map((e) => "${e.id}-${e.name}").join(",");
@@ -526,7 +526,7 @@ class TaskDetailState extends State<TaskDetail> {
             const Text("子任务", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),),
             const Text(" - "),
 
-            Selector<GlobalState, String>(
+            Selector<TodoListState, String>(
               selector: (_, state) {
                 final taskcount = widget.task.subtasks!.length;
                 final taskfinishcount = widget.task.subtasks!.where((element) => element.isdone).length;
@@ -539,7 +539,7 @@ class TaskDetailState extends State<TaskDetail> {
         ),
       );
 
-      return Selector<GlobalState, String>(
+      return Selector<TodoListState, String>(
         selector: (_, state) => (widget.task.subtasks ?? []).map((e) => "${e.id}-${e.name}-${e.isdone}").join(","),
         builder: (_, value, child) {
           final children = (widget.task.subtasks ?? []).map<Widget>((e) => buildSubTaskWidget(context, e)).toList();
@@ -988,7 +988,7 @@ class TaskDetailState extends State<TaskDetail> {
 
     final right = Row(
       children: [
-        Selector<GlobalState, int>(
+        Selector<TodoListState, int>(
           selector: (_, state) => widget.task.finishTime,
           builder: (_, value, child) => Container(
             padding: settings["page.taskdetail.edit.expect-finish.text-container.padding"],
@@ -1003,7 +1003,7 @@ class TaskDetailState extends State<TaskDetail> {
           child: Text("/", style: settings["page.taskdetail.edit.expect-finish.slash.text-style"],),
         ),
 
-        Selector<GlobalState, int>(
+        Selector<TodoListState, int>(
           selector: (_, state) => widget.task.expectTime,
           builder: (_, value, child) => Container(
             padding: settings["page.taskdetail.edit.expect-finish.text-container.padding"],

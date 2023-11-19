@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/utils.dart';
 
 Map<String, dynamic> settings = {
+  // TODO REMEMBER TO use this setting
+  "global.window.width": 800.0,
+
+
   "page.login.body.padding": const EdgeInsets.symmetric(vertical: 10.0),
   "page.login.body.margin-top": 50.0,
   "page.login.button.height": 50.0,
@@ -225,6 +229,80 @@ Map<String, dynamic> settings = {
   "widget.pomodoro.pomodoro-board.taskheader.padding.icon-text": 8.0,
   "common.svg.size": 20.0,
   "common.unit.size": 4.0,
+
+  "widget.daily-attendance.task.icon.size": 48.0,
+  "widget.daily-attendance.task.icon.border-radius": const BorderRadius.all(Radius.circular(18)),
+  "widget.daily-attendance.task.padding": const EdgeInsets.all(10),
+  "widget.daily-attendance.task.icon.margin": 8.0,
+  "widget.daily-attendance.switcher.icon.size": 70.0,
+  "widget.daily-attendance.switcher.icon.border-radius": const BorderRadius.all(Radius.circular(35)),
+  "widget.daily-attendance.switcher.slot.width": 210.0,
+  "widget.daily-attendance.switcher.slot.background-color": const Color.fromRGBO(0, 0, 0, 0.1),
+
+
+
+  "page.daily-attendance.taskrecording.background.default-color": HexColor.fromHex("#eccc68"),
+  "page.daily-attendance.taskrecording.background.icon.size": 200.0,
+  "page.daily-attendance.taskrecording.margin.0": 24.0,
+  "page.daily-attendance.taskrecording.margin.1": 4.0,
+  "page.daily-attendance.taskrecording.margin.2": 12.0,
+  "page.daily-attendance.taskrecording.font.color": Colors.white,
+  "page.daily-attendance.taskrecording.font.title.size": 38.0,
+  "page.daily-attendance.taskrecording.font.encouragement.size": 18.0,
+  "page.daily-attendance.taskrecording.font.days.style.0": const TextStyle(fontSize: 20),
+  "page.daily-attendance.taskrecording.font.days.style.1": const TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5), fontSize: 10),
+  "page.daily-attendance.taskrecoring.menu.width": 156.0,
+
+  "page.daily-attendance.taskedit.item.padding": const EdgeInsets.all(10),
+  "page.daily-attendance.taskedit.item.margin": 12.0,
+  "page.daily-attendance.taskedit.image-pick-upload.item.size": 100.0,
+  "page.daily-attendance.taskedit.image-pick-upload.item.decoration": BoxDecoration(
+    border: Border.all(color: Colors.grey, width: 2),
+    shape: BoxShape.circle
+  ),
+  "page.daily-attendance.taskedit.taskedit-frequency.frequency-interval.font.size": 32.0,
+  "page.daily-attendance.taskedit.image-pick-upload.item.icon.size": 40.0,
+  "page.daily-attendance.taskedit.image-pick-upload.item.margin": 8.0,
+
+  // width, height
+  "page.daily-attendance.color-select.grid.aspect-ratio": 0.5,
+  "page.daily-attendance.taskedit.wrapper.decoration": const BoxDecoration(
+    color: Colors.white,
+    boxShadow: [
+      BoxShadow(
+          offset: Offset(0, 1),
+          blurRadius: 2,
+          spreadRadius: 0,
+          color: Color.fromRGBO(0, 0, 0, 0.1)
+      ),
+    ]
+  ),
+  "page.daily-attendance.taskedit.wrapper.margin": const EdgeInsets.all(8),
+  "page.daily-attendance.taskedit.wrapper.padding": const EdgeInsets.all(12),
+  "page.daily-attendance.taskedit.tabbody.max-height": 200.0,
+  "page.daily-attendance.taskedit.tabbody.min-height": 40.0,
+  "page.daily-attendance.taskedit.edit-goal.margin-bottom": 8.0,
+  "page.daily-attendance.taskedit.edit-goal.textfield.width.0": 40.0,
+  "page.daily-attendance.taskedit.edit-goal.textfield.width.1": 100.0,
+  "page.daily-attendance.taskedit.edit-group.item.padding": const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+  "page.daily-attendance.taskedit.edit-group.title.margin-bottom": 8.0,
+  "page.daily-attendance.taskedit.edit-group.item.margin": const EdgeInsets.only(right: 4.0),
+  "page.daily-attendance.taskedit.edit-group.item.border-radius": BorderRadius.circular(4.0),
+
+  "page.daily-attendance.taskedit.edit-notify-times.title.margin-bottom": 8.0,
+  "page.daily-attendance.taskedit.edit-notify-times.item.padding": const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+  "page.daily-attendance.taskedit.edit-notify-times.item.margin": const EdgeInsets.only(right: 4),
+  "page.daily-attendance.taskedit.edit-notify-times.item.decoration": BoxDecoration(
+    borderRadius: BorderRadius.circular(4.0),
+    color: Color.fromRGBO(0, 0, 0, 0.1)
+  ),
+
+  "page.daily-attendance.taskedit.edit-encouragement.title.margin-bottom": 8.0,
+
+  "widget.daily-attendance.checkbox.margin": const EdgeInsets.symmetric(horizontal: 8),
+  "widget.daily-attendance.checkbox.padding": const EdgeInsets.all(8.0),
+  "widget.daily-attendance.checkbox.wrapper.padding": const EdgeInsets.all(8.0)
+
 };
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

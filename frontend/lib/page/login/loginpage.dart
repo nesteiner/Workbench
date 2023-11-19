@@ -2,17 +2,18 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/page/homepage.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/login-state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatelessWidget {
-  late GlobalState state;
+  late final LoginState state;
   final usernameController = TextEditingController(text: "steiner");
   final passwordController = TextEditingController(text: "password");
 
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<LoginState>();
     return Scaffold(
       body: Center(child: buildBody(context)),
     );
@@ -59,6 +60,10 @@ class LoginPage extends StatelessWidget {
                 // navigator.push(MaterialPageRoute(builder: (_) => HomePage()));
                 navigatorKey.currentState?.pushNamed("/taskproject");
               } on DioException catch (exception) {
+                if (!context.mounted) {
+                  return;
+                }
+
                 print(exception);
                 await showDialog(
                   context: context,

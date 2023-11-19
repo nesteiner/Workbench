@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
 class TaskCard extends StatelessWidget {
@@ -11,13 +11,13 @@ class TaskCard extends StatelessWidget {
   bool isselected;
   late void Function(void Function()) setStateColor;
 
-  late GlobalState state;
+  late TodoListState state;
 
   TaskCard({required this.task, required this.isselected, required this.taskgroupIndex});
 
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
 
     final child0 = StatefulBuilder(builder: (context, setState) {
       setStateColor = setState;

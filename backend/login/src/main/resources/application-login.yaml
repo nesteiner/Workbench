@@ -1,12 +1,4 @@
-spring:
-  datasource:
-    url: "jdbc:postgresql://localhost/workbench"
-    driver-class-name: "org.postgresql.Driver"
-    username: "steiner"
-    password: "779151714"
-  exposed:
-    generate-ddl: true
-    show-sql: true
+
 
 jwt:
   secret: "iot.technology"
@@ -18,4 +10,4 @@ open:
     - "/authenticate"
     - "/user/register"
     - "/todolist/image/download/*"
-    - "/test"
+    - "/daily-attendance/icon/**"

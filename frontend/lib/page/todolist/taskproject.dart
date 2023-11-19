@@ -7,16 +7,16 @@ import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/page/todolist/taskgroup-board.dart';
 import 'package:frontend/request/todolist.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
 import 'package:frontend/widget/todolist/taskproject.dart';
 import 'package:provider/provider.dart';
 
 class TaskProjectPage extends StatelessWidget {
-  late GlobalState state;
+  late final TodoListState state;
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
 
     final child = FutureBuilder(
         future: loadTaskProjects(),
@@ -31,7 +31,7 @@ class TaskProjectPage extends StatelessWidget {
             // return buildBody(context, snapshot.requireData);
             return buildBody(context);
           } else {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           }
@@ -83,7 +83,7 @@ class TaskProjectPage extends StatelessWidget {
     late Widget child;
 
     if (Platform.isAndroid || Platform.isIOS) {
-      child = Consumer<GlobalState>(builder: (context, state, child) {
+      child = Consumer<TodoListState>(builder: (context, state, child) {
         taskprojects = state.taskprojects;
 
         return StatefulBuilder(builder: (context, setState) {
@@ -97,7 +97,7 @@ class TaskProjectPage extends StatelessWidget {
     } else {
       final ratio = 208 / 135;
 
-      child = Consumer<GlobalState>(builder: (context, state, child) {
+      child = Consumer<TodoListState>(builder: (context, state, child) {
         taskprojects = state.taskprojects;
 
         return StatefulBuilder(builder: (context, setState) {

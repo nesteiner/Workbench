@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -234,5 +235,11 @@ class UserService: UserDetailsService {
         } else {
             throw BadRequestException("username duplicate")
         }
+    }
+
+    fun currentUserId(): Int {
+        val userdetail = SecurityContextHolder.getContext().authentication
+        val username = userdetail.name
+        return findOne(username)!!.id
     }
 }

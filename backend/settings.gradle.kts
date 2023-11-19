@@ -1,2 +1,2 @@
 rootProject.name = "workbench"
-include("todolist", "app", "login", "common")
+include("todolist", "app", "login", "common", "daily-attendance")

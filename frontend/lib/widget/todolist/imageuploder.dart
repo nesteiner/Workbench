@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 class ImageUploader extends StatefulWidget {
   Image image;
-  void Function(String) onTap;
+  final void Function(String) onTap;
   
   ImageUploader({required this.image, required this.onTap});
 

@@ -2,11 +2,14 @@ package com.steiner.workbench.common
 
 import java.text.SimpleDateFormat
 
+// for login
 const val ROLE_ADMIN = "admin"
 const val AUTHORIZATIOIN = "Authorization"
 const val USERNAME_ATTRIBUTE = "username"
 const val JWTTOKEN_ATTRIBUTE = "jwttoken"
 
+
+// for todolist
 const val SUBTASK_NAME_LENGTH = 128
 const val TASK_NAME_LENGTH = 128
 const val TASK_GROUP_NAME_LENGTH = 128
@@ -30,3 +33,10 @@ val formatDateFormat = SimpleDateFormat(ISO8601_FORMAT)
 
 // for parse yyyy-MM-dd'T'HH:mm:ss'Z' string to Date
 val truncedDateFormat = SimpleDateFormat(TRUNCED_ISO8601_FORMAT)
+
+// for daily attendance
+const val DAILY_ATTENDANCE_NAME_LENGTH = 24
+const val DAILY_ATTENDANCE_ENCOURAGEMENT_LENGTH = 24
+
+const val DAILY_ATTENDANCE_IMAGE_NAME_LENGTH = 24
+const val DAILY_ATTENDANCE_IMAGE_PATH_LENGTH = 128

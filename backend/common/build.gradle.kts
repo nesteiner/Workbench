@@ -4,9 +4,18 @@
  * This is a general purpose Gradle build.
  * To learn more about Gradle by exploring our Samples at https://docs.gradle.org/8.2.1/samples
  */
+
+val exposedVersion: String by project
+
+plugins {
+    // 不要编辑这个插件的版本，因为这个版本刚好与 exposed json 库的版本匹配
+    kotlin("plugin.serialization") version "1.8.22"
+}
+
 dependencies {
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.jetbrains.exposed:exposed-json:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
 }

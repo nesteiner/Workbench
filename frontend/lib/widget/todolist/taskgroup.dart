@@ -5,21 +5,21 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/utils.dart';
 import 'package:frontend/widget/pomodoro/pomodoro-board.dart';
 import 'package:frontend/widget/todolist/task.dart';
 import 'package:provider/provider.dart';
 
 class TaskGroupWidget extends StatelessWidget {
-  TaskGroup taskgroup;
-  late GlobalState state;
+  final TaskGroup taskgroup;
+  late final TodoListState state;
   TaskGroupWidget({super.key, required this.taskgroup});
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
     final body = Column(
       children: [
         buildHead(context),
@@ -27,7 +27,7 @@ class TaskGroupWidget extends StatelessWidget {
 
         Expanded(
             child: SingleChildScrollView(
-              child: Selector<GlobalState, String>(
+              child: Selector<TodoListState, String>(
                 selector: (_, state) {
                   stringOfTag(Tag tag) => "${tag.id}-${tag.name}";
 
@@ -77,12 +77,12 @@ class TaskGroupWidget extends StatelessWidget {
   Widget buildHead(BuildContext context) {
     // final name = Text(taskgroup.name, style: TextStyle(fontWeight: FontWeight.bold),);
     // final count = Text(taskgroup.tasks.length.toString(), style: TextStyle(fontSize: 12, color: HexColor.fromHex("#bfbfbf")),);
-    final name = Selector<GlobalState, String>(
+    final name = Selector<TodoListState, String>(
       selector: (_, state) => taskgroup.name,
       builder: (_, value, child) => Text(value, style: const TextStyle(fontWeight: FontWeight.bold),),
     );
 
-    final count = Selector<GlobalState, int>(
+    final count = Selector<TodoListState, int>(
       selector: (_, state) => taskgroup.tasks.length,
       builder: (_, value, child) => Text(value.toString(), style: TextStyle(fontSize: 12, color: HexColor.fromHex("#bfbfbf")),),
     );

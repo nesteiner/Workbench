@@ -48,7 +48,6 @@ class WebSecurityConfigure {
                 }
                 .authorizeHttpRequests {
                     it.requestMatchers(*openConfigure.urls).permitAll()
-                            .requestMatchers("/admin/**").hasAuthority("admin")
 
                     it.requestMatchers("/admin/**").hasAuthority("admin")
                     it.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

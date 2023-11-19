@@ -49,9 +49,12 @@ subprojects {
 		implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 		testImplementation("org.springframework.boot:spring-boot-starter-test")
 
+		implementation("org.springframework.boot:spring-boot-starter-validation")
+
 		// java 版本过高
 		implementation("javax.xml.bind:jaxb-api:2.3.0")
 		implementation("org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion")
+		implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
 		implementation("org.postgresql:postgresql")
 	}
 }

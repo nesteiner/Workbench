@@ -49,10 +49,7 @@ class TaskProjectController {
 
     @GetMapping
     fun findAll(): Response<List<TaskProject>> {
-        val userdetail = SecurityContextHolder.getContext().authentication
-        val username = userdetail.name
-        val userid = userService.findOne(username)!!.id
-
+        val userid = userService.currentUserId()
         return Response.Ok("all task projects", taskprojectService.findAll(userid))
     }
 

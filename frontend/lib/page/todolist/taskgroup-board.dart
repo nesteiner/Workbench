@@ -2,18 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
-import 'package:frontend/model/pomodoro.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/widget/pomodoro/pomodoro-board.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
 import 'package:frontend/widget/todolist/taskgroup.dart';
 import 'package:provider/provider.dart';
 
 class TaskGroupBoard extends StatelessWidget {
-  late GlobalState state;
-  TaskProject taskproject;
+  late final TodoListState state;
+  final TaskProject taskproject;
   late void Function(void Function()) setStateName;
 
   String? localImagePath;
@@ -22,7 +21,7 @@ class TaskGroupBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
     // TODO: implement build
     return Scaffold(
       appBar: buildAppBar(context),
@@ -39,7 +38,7 @@ class TaskGroupBoard extends StatelessWidget {
 
 
     final menubutton = PopupMenuButton(
-      child: Row(
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Icon(Icons.menu),
@@ -99,10 +98,10 @@ class TaskGroupBoard extends StatelessWidget {
           }
 
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator(),);
+            return const Center(child: CircularProgressIndicator(),);
           }
 
-          return Selector<GlobalState, String>(
+          return Selector<TodoListState, String>(
             // in this way, reorder will not flash
             // any way, don't build expensive widget in builder
             selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
@@ -291,7 +290,7 @@ class TaskGroupBoard extends StatelessWidget {
         ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: Color.fromRGBO(0, 0, 255, 0.2)
+              foregroundColor: const Color.fromRGBO(0, 0, 255, 0.2)
             ),
             
             onPressed: () => navigatorKey.currentState?.pop(), 
@@ -324,11 +323,11 @@ class TaskGroupBoard extends StatelessWidget {
   }
 
   Widget buildFloatingActionButton(BuildContext context) {
-    return Selector<GlobalState, bool>(
+    return Selector<TodoListState, bool>(
       selector: (_, state) => state.timer?.isActive ?? false,
       builder: (_, value, child) {
         if (value) {
-          return Selector<GlobalState, String>(
+          return Selector<TodoListState, String>(
             selector: (_, state) => state.counter.timeText,
             builder: (_, value, child) {
               return FloatingActionButton(
@@ -340,13 +339,13 @@ class TaskGroupBoard extends StatelessWidget {
                   },
 
                   child: Center(
-                    child: Text(value, style: TextStyle(color: Colors.white),),
+                    child: Text(value, style: const TextStyle(color: Colors.white),),
                   )
               );
             },
           );
         } else {
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }
       },
     );
@@ -390,7 +389,7 @@ class TaskGroupBoard extends StatelessWidget {
   }
 
   void insertTaskGroup(BuildContext context) {
-    final title = const Row(
+    const title = Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text("新建任务列表")
@@ -402,7 +401,7 @@ class TaskGroupBoard extends StatelessWidget {
 
     final content = TextField(
       controller: controller,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         border: OutlineInputBorder(),
         hintText: "输入任务列表名称"
       ),
@@ -445,7 +444,7 @@ class TaskGroupBoard extends StatelessWidget {
   }
 
   void onTapPomodoroSetting(BuildContext context) {
-    final title = const Row(
+    const title = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -455,7 +454,7 @@ class TaskGroupBoard extends StatelessWidget {
       ],
     );
 
-    final content = Selector<GlobalState, String>(
+    final content = Selector<TodoListState, String>(
       selector: (_, state) => "${state.counter.pomodoroTime}-${state.counter.shortBreakTime}-${state.counter.longBreakTime}-${state.counter.longBreakInterval}",
       builder: (_, value, child) => Column(
         mainAxisSize: MainAxisSize.min,

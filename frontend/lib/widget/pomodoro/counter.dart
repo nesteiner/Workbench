@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/pomodoro.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
 class CounterWidget extends StatelessWidget {
-  late final GlobalState state;
+  late final TodoListState state;
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
 
     return Container(
       width: settings["widget.pomodoro.counter.width.desktop"],
@@ -61,7 +61,7 @@ class CounterWidget extends StatelessWidget {
   }
 
   Widget buildTimeText(BuildContext context) {
-    final text = Selector<GlobalState, String>(
+    final text = Selector<TodoListState, String>(
       selector: (_, state) => state.counter.timeText,
       builder: (_, value, child) => Text(
         value,
@@ -76,7 +76,7 @@ class CounterWidget extends StatelessWidget {
   }
 
   Widget buildClickButton(BuildContext context) {
-    return Selector<GlobalState, bool>(
+    return Selector<TodoListState, bool>(
       selector: (_, state) => state.counter.state == RunningState.paused,
       builder: (_, value, child) => GestureDetector(
         onTap: () {

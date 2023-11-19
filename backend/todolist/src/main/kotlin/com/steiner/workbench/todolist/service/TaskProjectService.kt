@@ -9,7 +9,7 @@ import com.steiner.workbench.todolist.request.PostTaskProjectRequest
 import com.steiner.workbench.todolist.request.UpdateTaskProjectRequest
 import com.steiner.workbench.todolist.table.TaskProjects
 import com.steiner.workbench.todolist.util.mustExistIn
-import com.steiner.workbench.todolist.util.now
+import com.steiner.workbench.common.util.now
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList

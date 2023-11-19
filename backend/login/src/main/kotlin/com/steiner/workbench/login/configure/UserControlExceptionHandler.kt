@@ -1,15 +1,19 @@
 package com.steiner.workbench.login.configure
 
 import com.steiner.workbench.common.util.Response
+import com.steiner.workbench.login.controller.AuthenticationController
 import com.steiner.workbench.login.exception.LoginException
 import com.steiner.workbench.login.exception.PermissionDeniedException
 import com.steiner.workbench.login.exception.UserNotEnabledException
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE - 1)
 class UserControlExceptionHandler {
     @ExceptionHandler(LoginException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
