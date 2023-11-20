@@ -29,6 +29,14 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
+springBoot {
+	mainClass = "com.steiner.workbench.ApplicationKt"
+}
+
+dependencies {
+	implementation(project(":app"))
+}
+
 subprojects {
 	repositories {
 		mavenCentral()
