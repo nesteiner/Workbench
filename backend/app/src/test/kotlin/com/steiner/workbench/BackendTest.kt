@@ -5,6 +5,7 @@ import com.steiner.workbench.login.model.User
 import com.steiner.workbench.login.table.Roles
 import com.steiner.workbench.login.table.UserRole
 import com.steiner.workbench.login.table.Users
+import com.steiner.workbench.todolist.table.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
@@ -16,7 +17,7 @@ class BackendTest {
 
         transaction {
             addLogger(StdOutSqlLogger)
-            SchemaUtils.create(Roles, Users, UserRole)
+            SchemaUtils.create(Roles, Users, UserRole, TaskProjects, TaskGroups, Tasks, SubTasks, ImageItems, TaskTag)
 
             val roles = listOf(
                     Role(id = 1, name = "admin"),
@@ -50,6 +51,12 @@ class BackendTest {
             UserRole.insert {
                 it[userid] = admin.id
                 it[roleid] = admin.roles[0].id
+            }
+
+            ImageItems.insert {
+                it[id] = 1
+                it[name] = "default.png"
+                it[path] = "/home/steiner/workspace/workbench/storage/default.png"
             }
         }
 
