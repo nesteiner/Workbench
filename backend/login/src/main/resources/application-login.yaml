@@ -11,3 +11,7 @@ open:
     - "/user/register"
     - "/todolist/image/download/*"
     - "/daily-attendance/icon/**"
+    - "/samba/play"
+    - "/samba/play-test"
+    - "/check"
+    - "/samba/check/login"

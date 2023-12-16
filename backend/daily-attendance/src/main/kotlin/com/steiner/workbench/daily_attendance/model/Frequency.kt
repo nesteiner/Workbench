@@ -16,6 +16,6 @@ sealed class Frequency {
     class CountInWeek(val count: Int): Frequency()
     @Serializable
     @SerialName("Interval")
-    // 按时间间隔
+    // 按时间间隔,每几天一次
     class Interval(val count: Int): Frequency()
 }

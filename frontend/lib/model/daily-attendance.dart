@@ -147,11 +147,25 @@ class GoalAmount extends Goal {
   }
 }
 
-enum Group {
+const _groupmap = {
+  Group.noon: 0,
+  Group.afternoon: 1,
+  Group.night: 2,
+  Group.other: 3
+};
+
+enum Group implements Comparable<Group> {
   noon,
   afternoon,
   night,
-  other
+  other;
+
+  int compareTo(Group other) {
+    final key1 = _groupmap[this]!;
+    final key2 = _groupmap[other]!;
+
+    return key1.compareTo(key2);
+  }
 }
 
 extension ToStringExtension on Group {
@@ -264,7 +278,6 @@ class IconWord extends Icon {
 ///     @SerialName("Manual")
 ///     class Manual(val days: Int): KeepDays()
 /// }
-
 abstract class KeepDays {
   static KeepDays fromJson(Map<String, dynamic> json) {
     if (json["type"] == "Forever") {
@@ -443,6 +456,12 @@ class ProgressReady extends Progress {
       "type": "Ready"
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    // TODO: implement ==
+    return other is ProgressReady;
+  }
 }
 
 class ProgressDone extends Progress {
@@ -457,6 +476,12 @@ class ProgressDone extends Progress {
     return {
       "type": "Done"
     };
+  }
+
+  @override
+  bool operator ==(Object other) {
+    // TODO: implement ==
+    return other is ProgressDone;
   }
 }
 
@@ -485,9 +510,20 @@ class ProgressDoing extends Progress {
       "amount": amount
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    // TODO: implement ==
+    if (other is! ProgressDoing) {
+      return false;
+    }
+
+    final other0 = other as ProgressDoing;
+    return total == other0.total && unit == other0.unit && amount == other0.amount;
+  }
 }
 
-class DailyAttendanceTask {
+class Task {
   final int id;
   String name;
   Icon icon;
@@ -503,7 +539,7 @@ class DailyAttendanceTask {
   final int persistenceDays;
   final int consecutiveDays;
 
-  DailyAttendanceTask({
+  Task({
     required this.id,
     required this.name,
     required this.icon,
@@ -520,8 +556,8 @@ class DailyAttendanceTask {
     required this.consecutiveDays
   });
 
-  factory DailyAttendanceTask.fromJson(Map<String, dynamic> json) {
-    return DailyAttendanceTask(
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
         id: json["id"],
         name: json["name"],
         icon: Icon.fromJson(json["icon"]),
@@ -551,8 +587,8 @@ class DailyAttendanceTask {
     }
   }
 
-  DailyAttendanceTask copy() {
-    return DailyAttendanceTask(
+  Task copy() {
+    return Task(
         id: id,
         name: name,
         icon: icon,
@@ -599,5 +635,35 @@ class ImageItem {
         id: json["id"],
         name: json["name"]
     );
+  }
+}
+
+enum IconMode {
+  image,
+  word
+}
+
+class ImageCompose {
+  Widget? entry;
+  Widget? background;
+
+  ImageCompose({this.entry, this.background});
+
+  ImageCompose copyWith({Widget? entry, Widget? background}) {
+    return ImageCompose(
+        entry: entry ?? this.entry,
+        background: background ?? this.background
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    // TODO: implement ==
+    if (other is! ImageCompose) {
+      return false;
+    }
+
+    final other1 = other as ImageCompose;
+    return entry == other1.entry && background == other1.background;
   }
 }

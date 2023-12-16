@@ -16,19 +16,18 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.validation.BindingResult
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @Validated
+@RequestMapping("/authenticate")
 class AuthenticationController {
     @Autowired
     lateinit var jwtTokenUtil: JwtTokenUtil
     @Autowired
     lateinit var userService: UserService
 
-    @PostMapping("/authenticate")
+    @PostMapping
     fun createToken(@RequestBody @Valid request: LoginRequest, result: BindingResult): Response<LoginResponse> {
         try {
             val userdetail = userService.loadUserByUsername(request.username)

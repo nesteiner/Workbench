@@ -9,7 +9,7 @@ import com.steiner.workbench.todolist.request.PostTaskProjectRequest
 import com.steiner.workbench.todolist.request.UpdateTaskProjectRequest
 import com.steiner.workbench.todolist.table.TaskProjects
 import com.steiner.workbench.todolist.util.mustExistIn
-import com.steiner.workbench.common.util.now
+import com.steiner.workbench.common.util.shanghaiNow
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -43,7 +43,7 @@ class TaskProjectService {
             }
         }
 
-        val nowInstant = now()
+        val nowInstant = shanghaiNow()
         val id = TaskProjects.insert {
             it[name] = request.name
             it[index] = 1
@@ -97,7 +97,7 @@ class TaskProjectService {
                 it[avatarid] = request.avatarid
             }
 
-            it[updateTime] = now()
+            it[updateTime] = shanghaiNow()
 
             if (request.profile != null) {
                 it[profile] = request.profile

@@ -10,18 +10,25 @@ class TodoListApi extends Api {
   static const ResponseType responseType = ResponseType.json;
   static BaseOptions defaultOptions = BaseOptions(contentType: contentType, responseType: responseType);
 
-  late String jwttoken;
   late final Dio instance;
   String todolistUrl;
+  void Function(DioException) errorHandler;
 
-  TodoListApi({required this.todolistUrl}): assert(!todolistUrl.endsWith("/")) {
+  TodoListApi({required this.todolistUrl, required this.errorHandler}): assert(!todolistUrl.endsWith("/")) {
     instance = Dio(defaultOptions);
-    instance.interceptors.add(CustomInterceptors());
+    instance.interceptors.add(CustomInterceptors(errorHandler: errorHandler));
   }
 
   @override
   void setToken(String token) {
-    instance.options.headers["Authorization"] = "Bearer $token";
+    late String token1;
+    if (token.startsWith("Bearer")) {
+      token1 = token;
+    } else {
+      token1 = "Bearer $token";
+    }
+
+    instance.options.headers["Authorization"] = token1;
   }
 
 
@@ -150,5 +157,10 @@ class TodoListApi extends Api {
   Future<SubTask> updateSubTask(UpdateSubTaskRequest request) async {
     Response<Map<String, dynamic>> response = await instance.put("$todolistUrl/subtask", data: request.toJson());
     return SubTask.fromJson(response.data!["data"]);
+  }
+
+  Future<String> test() async {
+    Response<Map<String, dynamic>> response = await instance.get("$todolistUrl/test");
+    return response.data!["data"];
   }
 }

@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/pomodoro.dart';
 import 'package:frontend/model/todolist.dart';
-import 'package:frontend/state.dart';
+import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/widget/pomodoro/counter.dart';
 import 'package:frontend/widget/pomodoro/taskcard.dart';
 import 'package:provider/provider.dart';
 
 class PomodoroBoard extends StatelessWidget {
-  late GlobalState state;
+  late final TodoListState state;
 
   @override
   Widget build(BuildContext context) {
-    state = context.read<GlobalState>();
+    state = context.read<TodoListState>();
     // TODO: implement build
     final counter = CounterWidget();
-    return Selector<GlobalState, (Task?, List<Task>, FocusState, String)>(
+    return Selector<TodoListState, (Task?, List<Task>, FocusState, String)>(
       selector: (_, state) {
         stringOfTimes(Task task) => "${task.finishTime} / ${task.expectTime}";
         final tasks = state.currentTaskGroup!.tasks;
@@ -27,9 +27,7 @@ class PomodoroBoard extends StatelessWidget {
         final currentTask = value.$1;
         final tasks = value.$2;
         final focusState = value.$3;
-
-        final taskcards = tasks.map<Widget>((e) => TaskCard(task: e, isselected: currentTask?.id == e.id, taskgroupIndex: state.currentTaskGroup!.index)).toList();
-
+        final taskcards = tasks.map((e) => TaskCard(task: e, isselected: currentTask?.id == e.id, taskgroupIndex: state.currentTaskGroup!.index,)).toList();
         final column = Column(
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -43,15 +41,26 @@ class PomodoroBoard extends StatelessWidget {
             Row(mainAxisAlignment: MainAxisAlignment.start, children: [buildSelect(context),],),
 
             SizedBox(height: settings["widget.pomodoro.pomodoro-board.counter.margin-bottom"],),
+            // ...taskcards
+
             ...taskcards
           ],
         );
 
-        return Container(
+        final child = Container(
             decoration: BoxDecoration(color: getcolor(focusState)),
-            child: SingleChildScrollView(
-              child: column,
+            child: SingleChildScrollView(child: column)
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("专注", style: TextStyle(color: Colors.white),),
+            backgroundColor: getcolor(focusState),
+            leading: const BackButton(
+              color: Colors.white,
             )
+          ),
+          body: child,
         );
       },
     );
@@ -89,7 +98,6 @@ class PomodoroBoard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text("当前任务列表: ", style: TextStyle(fontWeight: FontWeight.bold),),
-
           popupbutton
         ],
       )

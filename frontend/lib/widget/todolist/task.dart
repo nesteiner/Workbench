@@ -30,7 +30,9 @@ class TaskWidgetState extends State<TaskWidget> {
     return GestureDetector(
       onTap: () {
         state.setCurrentTaskGroupAt(widget.taskgroupIndex - 1);
-        navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskDetail(task: widget.task)));
+        // navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskDetail(task: widget.task)));
+        state.currentTask = widget.task;
+        todolistNavigatorKey.currentState?.pushNamed(todolistRoutes["taskdetail"]!);
       },
 
       child: buildCard(context),

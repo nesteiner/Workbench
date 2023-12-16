@@ -24,8 +24,10 @@ class TaskProjectWidget extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: () {
-        navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskGroupBoard(taskproject: taskproject)));
+      onTap: () async {
+        await state.setCurrentTaskProject(taskproject);
+        // todolistNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskGroupBoard(taskproject: taskproject)));
+        todolistNavigatorKey.currentState?.pushNamed(todolistRoutes["taskgroup-board"]!);
       },
       child: container
     );

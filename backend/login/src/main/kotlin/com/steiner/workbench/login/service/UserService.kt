@@ -56,14 +56,16 @@ class UserService: UserDetailsService {
 
         return Users.select(Users.id eq id)
                 .firstOrNull()?.let {
-                    User(
-                            it[Users.id].value,
-                            it[Users.name],
+                    with (Users) {
+                        User(
+                            it[this.id].value,
+                            it[name],
                             roles,
-                            it[Users.email],
-                            it[Users.enabled],
-                            it[Users.passwordHash]
-                    )
+                            it[email],
+                            it[enabled],
+                            it[passwordHash]
+                        )
+                    }
                 }
     }
 
@@ -85,14 +87,16 @@ class UserService: UserDetailsService {
 
         return Users.select(Users.name eq name)
                 .firstOrNull()?.let {
-                    User(
-                            it[Users.id].value,
-                            it[Users.name],
+                    with (Users) {
+                        User(
+                            it[this.id].value,
+                            it[this.name],
                             roles,
-                            it[Users.email],
-                            it[Users.enabled],
-                            it[Users.passwordHash]
-                    )
+                            it[email],
+                            it[enabled],
+                            it[passwordHash]
+                        )
+                    }
                 }
     }
 
@@ -115,14 +119,16 @@ class UserService: UserDetailsService {
                                 Role(it[Roles.id].value, it[Roles.name])
                             }
 
-                    User(
-                            it[Users.id].value,
-                            it[Users.name],
+                    with (Users) {
+                        User(
+                            it[this.id].value,
+                            it[name],
                             roles,
-                            it[Users.email],
-                            it[Users.enabled],
-                            it[Users.passwordHash]
-                    )
+                            it[email],
+                            it[enabled],
+                            it[passwordHash]
+                        )
+                    }
                 }
     }
 
@@ -146,14 +152,16 @@ class UserService: UserDetailsService {
                                 Role(it[Roles.id].value, it[Roles.name])
                             }
 
-                    User(
-                            it[Users.id].value,
-                            it[Users.name],
+                    with (Users) {
+                        User(
+                            it[this.id].value,
+                            it[name],
                             roles,
-                            it[Users.email],
-                            it[Users.enabled],
-                            it[Users.passwordHash]
-                    )
+                            it[email],
+                            it[enabled],
+                            it[passwordHash]
+                        )
+                    }
                 }
 
         val totalPages = ceil(Users.selectAll().count() / size.toDouble()).toInt()

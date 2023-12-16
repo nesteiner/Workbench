@@ -27,7 +27,7 @@ class ImageItemController(
 ) {
     @Autowired
     lateinit var imageitemService: ImageItemService
-    @Value("\${file.storage.url}")
+    @Value("\${file.storage.todolist-url}")
     lateinit var imagefolderPath: String
 
     @PostMapping("/upload")

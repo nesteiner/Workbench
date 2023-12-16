@@ -59,11 +59,6 @@ class UserController {
         return Response.Ok("all users", userService.findAll(page, size))
     }
 
-    @GetMapping
-    fun findAll(): Response<List<User>> {
-        return Response.Ok("all users", userService.findAll())
-    }
-
     @GetMapping(params = ["id"])
     fun findOne(@RequestParam("id") id: Int): Response<User> {
         val user = userService.findOne(id)
@@ -81,6 +76,16 @@ class UserController {
             throw BadRequestException("no such user")
         } else {
             Response.Ok("this user", user)
+        }
+    }
+
+    @GetMapping
+    fun findOne(): Response<User> {
+        try {
+            val userid = userService.currentUserId()
+            return Response.Ok("current user", userService.findOne(userid)!!)
+        } catch (exception: Exception) {
+            throw BadRequestException("you haven't login yet")
         }
     }
 }

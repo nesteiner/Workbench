@@ -12,16 +12,20 @@ class LoginApi {
   static const ResponseType responseType = ResponseType.json;
   static BaseOptions defaultOptions = BaseOptions(contentType: contentType, responseType: responseType);
 
-  late String jwttoken;
+  String jwttoken = "";
   late final Dio instance;
-  late User user;
+  User? user;
+  String? username;
 
   String loginUrl;
   String userUrl;
 
-  LoginApi({required this.loginUrl, required this.userUrl}) {
+
+  void Function(DioException) errorHandler;
+
+  LoginApi({required this.loginUrl, required this.userUrl, required this.errorHandler}): assert(!loginUrl.endsWith("/")), assert(!userUrl.endsWith("/")) {
     instance = Dio(defaultOptions);
-    instance.interceptors.add(CustomInterceptors());
+    instance.interceptors.add(CustomInterceptors(errorHandler: errorHandler));
   }
 
   Future<void> authenticate(String name, String password) async {
@@ -35,6 +39,7 @@ class LoginApi {
   }
 
   Future<User> login(String name, String password) async {
+    username = name;
     // if you use authenticate flatten, the server will return 400 status
     await authenticate(name, password);
 
@@ -49,5 +54,25 @@ class LoginApi {
   void passToken(Api api) {
     api.setToken(jwttoken);
   }
+
+  Future<void> setToken(String token) async {
+    late String token1;
+    if (token.startsWith("Bearer")) {
+      token1 = token;
+    } else {
+      token1 = "Bearer $token";
+    }
+
+    jwttoken = token1;
+    instance.options.headers["Authorization"] = token1;
+
+    Response<Map<String, dynamic>> response = await instance.get("$userUrl");
+    Map<String, dynamic> data = response.data!["data"];
+
+    final result = User.fromJson(data);
+    user = result;
+  }
+
+
 }
 

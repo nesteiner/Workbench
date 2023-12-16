@@ -1,29 +1,33 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
-import 'package:frontend/page/todolist/taskgroup-board.dart';
 import 'package:frontend/request/todolist.dart';
+import 'package:frontend/state/login-state.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
 import 'package:frontend/widget/todolist/taskproject.dart';
 import 'package:provider/provider.dart';
 
 class TaskProjectPage extends StatelessWidget {
-  late final TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+
+  LoginState? _loginState;
+  LoginState get loginState => _loginState!;
+
   @override
   Widget build(BuildContext context) {
-    state = context.read<TodoListState>();
-
+    _state ??= context.read<TodoListState>();
+    _loginState ??= context.read<LoginState>();
     final child = FutureBuilder(
         future: loadTaskProjects(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
-              child: Text("error: ${snapshot.error}"),
+              child: Text("error in build TaskProjectPage: ${snapshot.error}"),
             );
           }
 
@@ -39,6 +43,7 @@ class TaskProjectPage extends StatelessWidget {
     );
 
     return Scaffold(
+      appBar: AppBar(title: const Text("待办清单"),),
       body: child,
     );
   }
@@ -46,8 +51,10 @@ class TaskProjectPage extends StatelessWidget {
   Widget buildBody(BuildContext context) {
     late void Function(void Function()) setStateOrder;
     late List<TaskProject> taskprojects;
+    final width = MediaQuery.of(context).size.width;
 
-    final head = Row(
+    final head0 = Row(
+      mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -80,68 +87,76 @@ class TaskProjectPage extends StatelessWidget {
       ],
     );
 
+    final head = SizedBox(
+      width: width,
+      child: head0,
+    );
+
     late Widget child;
 
     if (Platform.isAndroid || Platform.isIOS) {
-      child = Consumer<TodoListState>(builder: (context, state, child) {
-        taskprojects = state.taskprojects;
+      child = Selector<TodoListState, String>(
+          selector: (_, state) => state.taskprojects.map((e) => "${e.id}-${e.avatarid}-${e.name}").join(","),
+          builder: (_, value, child) {
+          taskprojects = state.taskprojects;
 
-        return StatefulBuilder(builder: (context, setState) {
-          setStateOrder = setState;
-          return ListView(
-            shrinkWrap: true,
-            children: taskprojects.map((e) => TaskProjectWidget(taskproject: e)).toList(),
-          );
-        });
+          return StatefulBuilder(builder: (context, setState) {
+            setStateOrder = setState;
+            return ListView(
+              shrinkWrap: true,
+              children: taskprojects.map((e) => TaskProjectWidget(taskproject: e)).toList(),
+            );
+          });
       });
     } else {
       final ratio = 208 / 135;
 
-      child = Consumer<TodoListState>(builder: (context, state, child) {
-        taskprojects = state.taskprojects;
+      final child0 = Selector<TodoListState, String>(
+        selector: (_, state) => state.taskprojects.map((e) => "${e.id}-${e.avatarid}-${e.name}").join(","),
+        builder: (_, value, child) {
+          taskprojects = state.taskprojects;
 
-        return StatefulBuilder(builder: (context, setState) {
-          setStateOrder = setState;
+          return StatefulBuilder(builder: (context, setState) {
+            setStateOrder = setState;
 
-          final children = taskprojects.map<Widget>((e) => TaskProjectWidget(taskproject: e)).toList();
-          children.add(buildTaskProjectAdd(context));
-          return GridView(
-              shrinkWrap: true,
-              scrollDirection: Axis.vertical,
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: settings["widget.taskproject.max-width"],
-                  childAspectRatio: ratio
-              ),
+            final children = taskprojects.map<Widget>((e) => TaskProjectWidget(taskproject: e)).toList();
+            children.add(buildTaskProjectAdd(context));
+            return GridView(
+                shrinkWrap: true,
+                scrollDirection: Axis.vertical,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: settings["widget.taskproject.max-width"],
+                    childAspectRatio: ratio
+                ),
 
-              children: children
-          );
-        });
-      },);
+                children: children
+            );
+          });
+        },);
 
+      child = ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: width,
+        ),
+
+        child: child0,
+      );
     }
 
-
     final column = Column(
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         head,
-        Divider(),
+        const Divider(),
         Expanded(child: child)
       ],
     );
 
-    final size = MediaQuery.of(context).size;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: size.width,
-          maxHeight: size.height
-        ),
-        child: column,
-      )
+      child: column,
     );
   }
 
@@ -265,7 +280,7 @@ class TaskProjectPage extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
-            navigatorKey.currentState?.pop();
+            Navigator.pop(context);
           },
           
           child: const Text("取消"),
@@ -279,7 +294,7 @@ class TaskProjectPage extends StatelessWidget {
               return;
             }
             
-            final request = PostTaskProjectRequest(userid: state.user.id, name: nameController.text.trim());
+            final request = PostTaskProjectRequest(userid: loginState.userid, name: nameController.text.trim());
 
             if (profileController.text.isNotEmpty) {
               request.profile = profileController.text.trim();
@@ -296,7 +311,7 @@ class TaskProjectPage extends StatelessWidget {
 
             await state.insertTaskProject(request);
 
-            navigatorKey.currentState?.pop();
+            Navigator.pop(context);
           },
           
           child: const Text("确定"),

@@ -16,6 +16,8 @@ dependencies {
     implementation(project(":login"))
     implementation(project(":todolist"))
     implementation(project(":daily-attendance"))
+    implementation(project(":clipboard"))
+    implementation(project(":samba"))
 }
 
 tasks.withType<Test> {

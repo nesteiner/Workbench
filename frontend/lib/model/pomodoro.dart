@@ -21,7 +21,7 @@ class Counter {
   int interval = 0;
   bool isfinished = false;
   AudioPlayer audioPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.release);
-  AssetSource musicUrl = AssetSource("notifaction.mp3");
+  AssetSource musicUrl = AssetSource("notification.mp3");
 
 
   late List<int> currentTime; // [minutes, seconds]

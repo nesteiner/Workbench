@@ -11,7 +11,6 @@ import com.steiner.workbench.daily_attendance.service.DailyAttendanceService
 import com.steiner.workbench.login.service.UserService
 import jakarta.validation.Valid
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.LocalDate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.validation.BindingResult
 import org.springframework.validation.annotation.Validated
@@ -22,10 +21,11 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 
-/// if use you Response, there must be Response.Ok or Response.Err,
+/// if you use Response, there must be Response.Ok or Response.Err,
 /// because Response has not been serialized by kotlinx.serialization
 /// but its derived types are
 @RestController
@@ -86,13 +86,30 @@ class DailyAttendanceController {
 
     @GetMapping("/{id}")
     fun findOne(@PathVariable("id") id: Int): Response.Ok<Task> {
-        val item = dailyAttendanceService.findOne(id) ?: throw BadRequestException("no such daily atatendance")
+        val item = dailyAttendanceService.findOne(id) ?: throw BadRequestException("no such daily attendance")
         return Response.Ok("this daily attendance", item)
     }
 
     @PutMapping("/reset/{id}")
-    fun resetToday(@PathVariable("id") id: Int): Response.Ok<Unit> {
-        dailyAttendanceService.resetTaskCurrentDay(id)
-        return Response.Ok("reset ok", Unit)
+    fun resetToday(@PathVariable("id") id: Int): Response.Ok<Task> {
+        return Response.Ok("reset ok", dailyAttendanceService.resetTaskCurrentDay(id))
+    }
+
+    @GetMapping("/statistics/week", params = ["offset"])
+    fun statisticsWeekly(@RequestParam("offset") offset: Int): Response.Ok<Map<Int, Map<DayOfWeek, Progress>>> {
+        val userid = userService.currentUserId()
+        return Response.Ok(
+            "statistics weekly",
+            dailyAttendanceService.statisticsThisWeek(offset, userid)
+        )
+    }
+
+    @GetMapping("/statistics/month", params = ["offset"])
+    fun statisticsMonthly(@RequestParam("offset") offset: Int): Response.Ok<Map<Int, Map<Int, Progress>>> {
+        val userid = userService.currentUserId()
+        return Response.Ok(
+            "statistics monthly",
+            dailyAttendanceService.statisticsThisMonth(offset, userid)
+        )
     }
 }

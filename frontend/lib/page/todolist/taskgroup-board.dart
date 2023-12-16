@@ -90,50 +90,36 @@ class TaskGroupBoard extends StatelessWidget {
   }
 
   Widget buildBody(BuildContext context) {
-    return FutureBuilder(
-        future: loadTaskGroup(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("error: ${snapshot.error}");
-          }
+    return Selector<TodoListState, String>(
+      // in this way, reorder will not flash
+      // any way, don't build expensive widget in builder
+      selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
+      builder: (_, value, child) {
+        final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("${e.id}-${e.name}"), taskgroup: e)).toList();
+        return StatefulBuilder(builder: (context, setState) {
+          return ReorderableListView(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              children: children,
+              onReorder: (oldindex, newindex) async {
+                if (newindex > oldindex) {
+                  newindex -= 1;
+                }
 
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(),);
-          }
-
-          return Selector<TodoListState, String>(
-            // in this way, reorder will not flash
-            // any way, don't build expensive widget in builder
-            selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
-            builder: (_, value, child) {
-              final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("${e.id}-${e.name}"), taskgroup: e)).toList();
-              return StatefulBuilder(builder: (context, setState) {
-                return ReorderableListView(
-                    shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    children: children,
-                    onReorder: (oldindex, newindex) async {
-                      if (newindex > oldindex) {
-                        newindex -= 1;
-                      }
-
-                      setState(() {
-                        final child = children.removeAt(oldindex);
-                        children.insert(newindex, child);
-                      });
+                setState(() {
+                  final child = children.removeAt(oldindex);
+                  children.insert(newindex, child);
+                });
 
 
-                      await state.reorderTaskGroup(state.taskgroups[oldindex], oldindex, newindex + 1);
-                    },
+                await state.reorderTaskGroup(state.taskgroups[oldindex], oldindex, newindex + 1);
+              },
 
-                    footer: buildFooter(context)
-                );
-              });
-
-            },
+              footer: buildFooter(context)
           );
+        });
 
-        }
+      },
     );
   }
 
@@ -223,7 +209,8 @@ class TaskGroupBoard extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
-            navigatorKey.currentState?.pop();
+            todolistNavigatorKey.currentState?.pop();
+            // Navigator.pop(context);
           },
 
           child: const Text("取消"),
@@ -259,7 +246,8 @@ class TaskGroupBoard extends StatelessWidget {
 
             await state.updateTaskProject(request);
 
-            navigatorKey.currentState?.pop();
+            todolistNavigatorKey.currentState?.pop();
+            // Navigator.pop(context);
           },
 
           child: const Text("确定"),
@@ -269,8 +257,6 @@ class TaskGroupBoard extends StatelessWidget {
   }
 
   Widget buildDeleteTaskProject(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
     return AlertDialog(
       title: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -293,7 +279,7 @@ class TaskGroupBoard extends StatelessWidget {
               foregroundColor: const Color.fromRGBO(0, 0, 255, 0.2)
             ),
             
-            onPressed: () => navigatorKey.currentState?.pop(), 
+            onPressed: () => Navigator.pop(context),
             child: Text("取消", style: settings["page.taskgroup-board.appbar.dialog.delete.cancel.font.style"],)
         ),
         
@@ -304,7 +290,11 @@ class TaskGroupBoard extends StatelessWidget {
           
           onPressed: () async {
             await state.deleteTaskProject(taskproject.id);
-            navigatorKey.currentState?.popUntil(ModalRoute.withName("/taskproject"));
+            // navigatorKey.currentState?.popUntil(ModalRoute.withName("/taskproject"));
+            // Navigator.pop(context);
+            // Navigator.pop(context);
+
+            todolistNavigatorKey.currentState?.popUntil(ModalRoute.withName(todolistRoutes["taskproject"]!));
           },
 
           child: Text("删除", style: settings["page.taskgroup-board.appbar.dialog.delete.confirm.font.style"],),
@@ -332,10 +322,7 @@ class TaskGroupBoard extends StatelessWidget {
             builder: (_, value, child) {
               return FloatingActionButton(
                   onPressed: () {
-                    showDialog(context: context, builder: (context) =>
-                        AlertDialog(
-                          content: PomodoroBoard(),
-                        ));
+                    todolistNavigatorKey.currentState?.pushNamed(todolistRoutes["pomodoro"]!);
                   },
 
                   child: Center(
@@ -415,10 +402,11 @@ class TaskGroupBoard extends StatelessWidget {
       },
     );
 
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          todolistNavigatorKey.currentState?.pop();
+          // Navigator.pop(context);
         },
 
         child: const Text("取消"),
@@ -428,7 +416,8 @@ class TaskGroupBoard extends StatelessWidget {
         onPressed: disabled.value ? null : () async {
           final request = PostTaskGroupRequest(parentid: state.currentProject!.id, name: controller.text.trim());
           await state.insertTaskGroup(request);
-          navigatorKey.currentState?.pop();
+          todolistNavigatorKey.currentState?.pop();
+          // Navigator.pop(context);
         },
 
         child: const Text("确定"),
@@ -439,7 +428,7 @@ class TaskGroupBoard extends StatelessWidget {
     showDialog(context: context, builder: (context) => AlertDialog(
       title: title,
       content: content,
-      actions: actions,
+      actions: actions(context),
     ));
   }
 
@@ -530,11 +519,12 @@ class TaskGroupBoard extends StatelessWidget {
       )
     );
 
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
           state.resetTimes();
-          navigatorKey.currentState?.pop();
+          todolistNavigatorKey.currentState?.pop();
+          // Navigator.pop(context);
         },
 
         child: const Text("reset"),
@@ -542,7 +532,8 @@ class TaskGroupBoard extends StatelessWidget {
 
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          todolistNavigatorKey.currentState?.pop();
+          // Navigator.pop(context);
         },
 
         child: const Text("cancel"),
@@ -552,7 +543,7 @@ class TaskGroupBoard extends StatelessWidget {
     showDialog(context: context, builder: (context) => AlertDialog(
       title: title,
       content: content,
-      actions: actions,
+      actions: actions(context),
     ));
   }
 }

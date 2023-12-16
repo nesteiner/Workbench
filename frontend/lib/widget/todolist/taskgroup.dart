@@ -124,9 +124,12 @@ class TaskGroupWidget extends StatelessWidget {
     final pomodoroButton = GestureDetector(
       onTap: () {
         state.setCounterTaskGroup(taskgroup);
-        showDialog(context: context, builder: (context) => AlertDialog(
-          content: PomodoroBoard(),
-        ));
+        // showDialog(context: context, builder: (context) => AlertDialog(
+        //   content: PomodoroBoard(),
+        // ));
+
+        // navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => PomodoroBoard()));
+        todolistNavigatorKey.currentState?.pushNamed(todolistRoutes["pomodoro"]!);
       },
       child: SvgPicture.asset("assets/pomodoro.svg", width: settings["common.svg.size"], height: settings["common.svg.size"],),
     );
@@ -220,8 +223,6 @@ class TaskGroupWidget extends StatelessWidget {
         ListenableBuilder(listenable: disabled, builder: (context, child) {
          return ElevatedButton(
             onPressed: disabled.value ? null : () async {
-              // TODO later to use state to add this task
-
               final request = PostTaskRequest(
                   name: controller.text.trim(),
                   parentid: taskgroup.id,
@@ -229,6 +230,7 @@ class TaskGroupWidget extends StatelessWidget {
                   expectTime: 4
               );
 
+              controller.text = "";
               await state.insertTask(request);
 
               setStateToggle(() {
@@ -389,10 +391,11 @@ class TaskGroupWidget extends StatelessWidget {
   void onTapEdit(BuildContext context) {
     final controller = TextEditingController(text: taskgroup.name);
     final disabled = ValueNotifier(true);
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          todolistNavigatorKey.currentState?.pop();
         },
 
         child: const Text("取消"),
@@ -405,7 +408,8 @@ class TaskGroupWidget extends StatelessWidget {
             final request = UpdateTaskGroupRequest(id: taskgroup.id, name: controller.text);
             await state.updateTaskGroup(request, taskgroup.index - 1);
 
-            navigatorKey.currentState?.pop();
+            // Navigator.pop(context);
+            todolistNavigatorKey.currentState?.pop();
           },
 
           child: const Text("确定"),
@@ -438,17 +442,18 @@ class TaskGroupWidget extends StatelessWidget {
     showDialog(context: context, builder: (context) => AlertDialog(
       title: title,
       content: content,
-      actions: actions,
+      actions: actions(context),
     ));
   }
 
   void onTapAddAfter(BuildContext context) {
     final controller = TextEditingController();
     final disabled = ValueNotifier(true);
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          todolistNavigatorKey.currentState?.pop();
         },
 
         child: const Text("取消"),
@@ -459,7 +464,8 @@ class TaskGroupWidget extends StatelessWidget {
           onPressed: disabled.value ? null : () async {
             final request = PostTaskGroupRequest(parentid: state.currentProject!.id, name: controller.text);
             await state.insertTaskGroupAfter(request, taskgroup.index - 1);
-            navigatorKey.currentState?.pop();
+            // Navigator.pop(context);
+            todolistNavigatorKey.currentState?.pop();
           },
 
           child: const Text("确定"),
@@ -493,16 +499,17 @@ class TaskGroupWidget extends StatelessWidget {
     showDialog(context: context, builder: (context) => AlertDialog(
       title: title,
       content: content,
-      actions: actions,
+      actions: actions(context),
     ));
 
   }
 
   void onTapDelete(BuildContext context) {
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          todolistNavigatorKey.currentState?.pop();
         },
 
         child: const Text("取消"),
@@ -511,7 +518,8 @@ class TaskGroupWidget extends StatelessWidget {
       TextButton(
         onPressed: () async {
           await state.deleteTaskGroup(taskgroup.id);
-          navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          todolistNavigatorKey.currentState?.pop();
         },
 
         child: const Text("确定"),
@@ -530,7 +538,7 @@ class TaskGroupWidget extends StatelessWidget {
     showDialog(context: context, builder: (context) => AlertDialog(
       title: title,
       content: content,
-      actions: actions,
+      actions: actions(context),
     ));
   }
 }

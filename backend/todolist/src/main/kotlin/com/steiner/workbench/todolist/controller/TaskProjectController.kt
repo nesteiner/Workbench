@@ -50,7 +50,8 @@ class TaskProjectController {
     @GetMapping
     fun findAll(): Response<List<TaskProject>> {
         val userid = userService.currentUserId()
-        return Response.Ok("all task projects", taskprojectService.findAll(userid))
+        val result = taskprojectService.findAll(userid)
+        return Response.Ok("all task projects", result)
     }
 
     @GetMapping(params = ["page", "size"])

@@ -21,7 +21,10 @@ class TaskDetailState extends State<TaskDetail> {
   bool toggleCreate = false;
   bool toggleSearch = false;
 
-  late final TodoListState state;
+  TodoListState? _state;
+
+  TodoListState get state => _state!;
+
   late void Function(void Function()) setStateToggleCreate;
   late void Function(void Function()) setStateToggleSearch;
   late void Function(void Function()) setStateToggleNote;
@@ -32,7 +35,7 @@ class TaskDetailState extends State<TaskDetail> {
   @override
   Widget build(BuildContext context) {
     // TODO later to look up state
-    state = context.read<TodoListState>();
+    _state ??= context.read<TodoListState>();
 
     final center = Center(
       child: Column(
@@ -731,7 +734,8 @@ class TaskDetailState extends State<TaskDetail> {
           onPressed: disabled.value ? null : () async {
             final request = PostTagRequest(name: controller.text , parentid: state.currentProject!.id, color: Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(0.3));
             await state.insertTagNotExists(request, widget.task);
-            navigatorKey.currentState?.pop();
+            // Navigator.pop(context);
+            todolistNavigatorKey.currentState?.pop();
           },
 
           icon: const Icon(Icons.add_circle_outline, color: Color.fromRGBO(0, 0, 0, 0.5),),
@@ -926,7 +930,7 @@ class TaskDetailState extends State<TaskDetail> {
   }
 
   Widget buildTagInMenu(BuildContext context, Tag tag) {
-    final flag = (widget.task.tags ?? []).indexWhere((element) => element.id == tag.id) ?? -1;
+    final flag = (widget.task.tags ?? []).indexWhere((element) => element.id == tag.id);
     final child = flag != -1 ? const Icon(Icons.check) : SizedBox.shrink();
     final footer = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -1083,10 +1087,12 @@ class TaskDetailState extends State<TaskDetail> {
       },
     );
 
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          // navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          todolistNavigatorKey.currentState?.pop();
         },
 
         child: const Text("取消"),
@@ -1097,8 +1103,12 @@ class TaskDetailState extends State<TaskDetail> {
           final request = UpdateTagRequest(id: tag.id, name: controller.text.trim());
           await state.updateTag(request, widget.task);
 
-          navigatorKey.currentState?.pop();
-          navigatorKey.currentState?.pop();
+          // navigatorKey.currentState?.pop();
+          // navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          // Navigator.pop(context);
+
+          todolistNavigatorKey.currentState?.popUntil(ModalRoute.withName(todolistRoutes["taskproject"]!));
         },
 
         child: const Text("确定"),
@@ -1110,7 +1120,7 @@ class TaskDetailState extends State<TaskDetail> {
       builder: (context) => AlertDialog(
         title: const Text("编辑这个标签"),
         content: textfield,
-        actions: actions,
+        actions: actions(context),
       )
     );
   }

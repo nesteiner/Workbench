@@ -7,10 +7,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import java.io.IOException
 
 @RestControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
@@ -41,6 +43,22 @@ class GlobalExceptionHandler {
         val message = exception.message
         return Response.Err(message)
     }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleException(exception: HttpMessageNotReadableException): Response.Err {
+        val message = "missing field error, detail: ${exception.message}"
+        return Response.Err(message)
+    }
+
+    @ExceptionHandler(IOException::class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleException(exception: IOException): Response.Err {
+        val message = exception.message ?: "Internal exception occurs"
+        exception.printStackTrace()
+        return Response.Err(message)
+    }
+
 
     @ExceptionHandler(Exception::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

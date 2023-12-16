@@ -2,7 +2,7 @@ package com.steiner.workbench.daily_attendance.service
 
 import com.steiner.workbench.common.exception.BadRequestException
 import com.steiner.workbench.common.util.CURRENT_TIME_ZONE
-import com.steiner.workbench.common.util.now
+import com.steiner.workbench.common.util.shanghaiNow
 import com.steiner.workbench.daily_attendance.request.UpdateProgressRequest
 import com.steiner.workbench.daily_attendance.table.Tasks
 import com.steiner.workbench.daily_attendance.iterate.*
@@ -21,6 +21,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.month
 import org.jetbrains.exposed.sql.kotlin.datetime.year
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.abs
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -37,6 +38,7 @@ class DailyAttendanceService {
                 DayOfWeek.SATURDAY to 5,
                 DayOfWeek.SUNDAY to 6
         )
+
     }
 
     fun insertOne(request: PostTaskRequest): Task {
@@ -44,16 +46,13 @@ class DailyAttendanceService {
         if (ifexists != null) {
             throw BadRequestException("there is already a task named ${request.name}")
         }
-        val currentDay = now()
-        val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
-
         val id = Tasks.insert {
             it[name] = request.name
             it[icon] = request.icon
             it[encouragement] = request.encouragement
             it[frequency] = request.frequency
             it[goal] = request.goal
-            it[startTime] = currentDayLocalDate
+            it[startTime] = request.startTime
             it[keepdays] = request.keepdays
             it[group] = request.group
             it[notifyTimes] = request.notifyTimes
@@ -118,8 +117,9 @@ class DailyAttendanceService {
             it[progress] = progress0
         }
 
-        val now0 = now()
-        Tasks.slice(Tasks.id, Tasks.name)
+        val now0 = shanghaiNow()
+        val yesterday = (now0 - 1.toDuration(DurationUnit.DAYS)).toLocalDateTime(CURRENT_TIME_ZONE).date
+        Tasks.slice(Tasks.id, Tasks.name, Tasks.consecutiveDays, Tasks.persistenceDays)
                 .select(Tasks.id eq request.id)
                 .first()
                 .let {
@@ -131,6 +131,44 @@ class DailyAttendanceService {
                         it[taskname] = taskname0
                         it[time] = now0
                         it[progress] = progress0
+                    }
+
+                    val op = with (TaskEvents) {
+                        (taskid eq taskid0) and
+                                (time.year() eq yesterday.year) and
+                                (time.month() eq yesterday.monthNumber) and
+                                (time.day() eq yesterday.dayOfMonth)
+                    }
+
+                    val yesterdayProgress = TaskEvents
+                        .slice(TaskEvents.progress)
+                        .select(op)
+                        .firstOrNull()?.let {
+                            it[TaskEvents.progress]
+                        }
+
+                    var cday = it[Tasks.consecutiveDays]
+                    var pday = it[Tasks.persistenceDays]
+
+                    if (yesterdayProgress != null) {
+                        if (yesterdayProgress is Progress.Done && progress0 is Progress.Done) {
+                            cday += 1
+                            pday += 1
+                        } else {
+                            cday = 0
+                        }
+                    } else {
+                        if (progress0 is Progress.Done) {
+                            cday = 1
+                            pday += 1
+                        } else {
+                            cday = 0
+                        }
+                    }
+
+                    Tasks.update({ Tasks.id eq taskid0 }) {
+                        it[consecutiveDays] = cday
+                        it[persistenceDays] = pday
                     }
                 }
 
@@ -171,11 +209,13 @@ class DailyAttendanceService {
 
     /// find the tasks which is not archived
     fun findAll(userid: Int): List<Task> {
-        val currentDay = now()
+        val currentDay = shanghaiNow()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
         return findAll(currentDayLocalDate, userid)
     }
 
+    /// findAll tasks which userid = userid, at the date of `localdate`
+    /// this is like history of tasks
     fun findAll(localdate: LocalDate, userid: Int): List<Task> {
         return Tasks
                 .select(
@@ -183,12 +223,9 @@ class DailyAttendanceService {
                                 and
                                 (Tasks.startTime lessEq localdate)
                                 and
-                                (Tasks.progress eq Progress.Ready)
-                                and
                                 (Tasks.userid eq userid)
                 ).filter {
-                    val keepdays = it[Tasks.keepdays]
-                    when (keepdays) {
+                    when (val keepdays = it[Tasks.keepdays]) {
                         is KeepDays.Forever -> true
 
                         is KeepDays.Manual -> {
@@ -200,51 +237,101 @@ class DailyAttendanceService {
                         }
                     }
                 }.map {
-                    findOne(it[Tasks.id].value)!!
+                val taskEvents = findAllEventsUntilThisWeek(it[Tasks.id].value, localdate)
+                val lastProgress = taskEvents.lastOrNull()?.progress ?: Progress.Ready
+
+                val progress = when (val frequency = it[Tasks.frequency]) {
+                    is Frequency.Days -> {
+                        if (frequency.weekdays.contains(localdate.dayOfWeek)) {
+                            lastProgress
+                        } else {
+                            Progress.NotScheduled
+                        }
+                    }
+
+                    is Frequency.CountInWeek -> {
+                        val count = taskEvents.count { taskevent ->
+                            taskevent.progress == Progress.Done
+                        }
+
+                        if (count >= frequency.count) {
+                            Progress.Done
+                        } else {
+                            lastProgress
+                        }
+                    }
+
+                    is Frequency.Interval -> {
+                        val lastEvent = findLastEventsUntilThisDay(it[Tasks.id].value, localdate)
+                        val lastDate = lastEvent?.time?.toLocalDateTime(CURRENT_TIME_ZONE)?.date
+                        val isScheduled: Boolean = if (lastDate != null) {
+                            isSameDay(lastDate.plus(frequency.count, DateTimeUnit.DAY), localdate)
+                        } else {
+                            (it[Tasks.startTime]..localdate step frequency.count).count { date ->
+                                isSameDay(date, localdate)
+                            } > 0
+                        }
+
+                        if (isScheduled) {
+                            lastProgress
+                        } else {
+                            Progress.NotScheduled
+                        }
+                    }
                 }
+
+                with (Tasks) {
+                    Task(
+                        id = it[id].value,
+                        name = it[name],
+                        icon = it[icon],
+                        encouragement = it[encouragement],
+                        frequency = it[frequency],
+                        goal = it[goal],
+                        startTime = it[startTime],
+                        keepdays = it[keepdays],
+                        group = it[group],
+                        notifyTimes = it[notifyTimes],
+                        progress = progress,
+                        isarchived = it[isarchived],
+                        userid = it[Tasks.userid].value,
+                        consecutiveDays = it[consecutiveDays],
+                        persistenceDays = it[persistenceDays]
+                    )
+                }
+            }
     }
 
     fun findLatest7Days(userid: Int): Map<DayOfWeek, List<Task>> {
-        val currentDay = now()
+        val currentDay = shanghaiNow()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
-        val past7LocalDate = currentDay.minus(7.toDuration(DurationUnit.DAYS)).toLocalDateTime(CURRENT_TIME_ZONE).date
-
-        val dayOfWeekRecord = HashMap<DayOfWeek, LocalDate>()
-
-        for (date in past7LocalDate..currentDayLocalDate) {
-            dayOfWeekRecord.put(date.dayOfWeek, date)
-        }
+        val past6LocalDate = currentDay.minus(6.toDuration(DurationUnit.DAYS)).toLocalDateTime(CURRENT_TIME_ZONE).date
 
         val result = HashMap<DayOfWeek, List<Task>>()
 
-        (past7LocalDate..currentDayLocalDate).forEach {
+        (past6LocalDate..currentDayLocalDate).forEach {
             val value = findAll(it, userid)
             val key = it.dayOfWeek
 
-            result.put(key, value)
+            result[key] = value
         }
 
-
-        return result.toSortedMap { left, right ->
-            dayOfWeekRecord[left]!!.compareTo(dayOfWeekRecord[right]!!)
-        }
+        return result
     }
 
     fun refreshDataDaily() {
         // this should be called once a day
         // given a now instant, refresh progress by frequency and former progress
-        val currentDay = now()
+        val currentDay = shanghaiNow()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
-        val yesterdayLocalDate = currentDayLocalDate.minus(DatePeriod(days = 1))
 
         Tasks.select((Tasks.isarchived eq false) and (Tasks.startTime lessEq currentDayLocalDate))
                 .filter {
-                    val keepday = it[Tasks.keepdays]
-                    when (keepday) {
+                    when (val keepdays = it[Tasks.keepdays]) {
                         is KeepDays.Forever -> true
                         is KeepDays.Manual -> {
                             val startTime = it[Tasks.startTime]
-                            val endTime = startTime.plus(keepday.days, DateTimeUnit.DAY)
+                            val endTime = startTime.plus(keepdays.days, DateTimeUnit.DAY)
 
                             endTime >= currentDayLocalDate
                         }
@@ -275,7 +362,7 @@ class DailyAttendanceService {
                                 task.progress == Progress.Done
                             }
 
-                            if (doneCount == count) {
+                            if (doneCount >= count) {
                                 Tasks.update({ Tasks.id eq id }) {
                                     it[progress] = Progress.NotScheduled
                                 }
@@ -283,39 +370,28 @@ class DailyAttendanceService {
                         }
 
                         is Frequency.Interval -> {
+                            val taskEvent = findLastEventsUntilThisDay(it[Tasks.id].value, currentDayLocalDate)
                             val startTime = it[Tasks.startTime]
-                            val nextTime = startTime.plus(frequency.count, DateTimeUnit.DAY)
-                            if (!(isSameDay(startTime, currentDayLocalDate) || isSameDay(nextTime, currentDayLocalDate))) {
-                                Tasks.update({ Tasks.id eq id }) {
-                                    it[progress] = Progress.NotScheduled
+                            val lastDate = taskEvent?.time?.toLocalDateTime(CURRENT_TIME_ZONE)?.date
+
+                            val isScheduled: Boolean  = if (lastDate != null) {
+                                isSameDay(lastDate.plus(frequency.count, DateTimeUnit.DAY), currentDayLocalDate)
+                            } else {
+                                (startTime..currentDayLocalDate step frequency.count).count { date ->
+                                    isSameDay(date, currentDayLocalDate)
+                                } > 0
+                            }
+
+                            Tasks.update({ Tasks.id eq id }) {
+                                it[progress] = if (isScheduled) {
+                                    Progress.Ready
+                                } else {
+                                    Progress.NotScheduled
                                 }
                             }
+
                         }
                     }
-
-                    // get the event of yesterday, check if there is done progress, if so, days += 1, else days = 0
-                    val op = (TaskEvents.taskid eq id) and
-                            (TaskEvents.time.year() eq yesterdayLocalDate.year) and
-                            (TaskEvents.time.month() eq yesterdayLocalDate.monthNumber) and
-                            (TaskEvents.time.day() eq yesterdayLocalDate.dayOfMonth)
-
-                    val flag = TaskEvents.select(op).any {
-                        val progress = it[TaskEvents.progress]
-                        progress == Progress.Done
-                    }
-
-
-                    Tasks.update({ Tasks.id eq id }) {
-                        if (flag) {
-                            with (SqlExpressionBuilder) {
-                                it.update(consecutiveDays, consecutiveDays + 1)
-                                it.update(persistenceDays, persistenceDays + 1)
-                            }
-                        } else {
-                            it[consecutiveDays] = 0
-                        }
-                    }
-
                 }
     }
 
@@ -327,45 +403,185 @@ class DailyAttendanceService {
     }
 
     fun findAllEventsOfCurrentWeek(taskid: Int): List<TaskEvent> {
-        val currentDay = now()
+        val currentDay = shanghaiNow()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
 
         val distance = dayDistance[currentDayLocalDate.dayOfWeek]!!
         val startOfWeek = currentDay - distance.toDuration(DurationUnit.DAYS)
-        val endOfWeek = startOfWeek + 7.toDuration(DurationUnit.DAYS)
+        val endOfWeek = startOfWeek + 6.toDuration(DurationUnit.DAYS)
 
-        return TaskEvents.select(
-                (TaskEvents.time greaterEq startOfWeek)
-                        and
-                        (TaskEvents.time lessEq endOfWeek)
-        ).map {
-            TaskEvent(
-                    id = it[TaskEvents.id].value,
+        return with (TaskEvents) {
+            select(
+                (TaskEvents.taskid eq taskid) and
+                        (time greaterEq startOfWeek) and
+                        (time lessEq endOfWeek)
+            ).map {
+                TaskEvent(
+                    id = it[id].value,
                     taskid = it[TaskEvents.taskid].value,
-                    taskname = it[TaskEvents.taskname],
-                    time = it[TaskEvents.time],
-                    progress = it[TaskEvents.progress]
-            )
+                    taskname = it[taskname],
+                    time = it[time],
+                    progress = it[progress]
+                )
+            }
         }
-
     }
 
-    fun resetTaskCurrentDay(id: Int) {
-        val currentDay = now()
+    fun findAllEventsUntilThisWeek(taskid: Int, localdate: LocalDate): List<TaskEvent> {
+        val distance = dayDistance[localdate.dayOfWeek]!!
+        val startOfWeek = localdate.minus(distance, DateTimeUnit.DAY)
+
+        return with (TaskEvents) {
+            val op = (TaskEvents.taskid eq taskid) and
+                    (time.year() greaterEq startOfWeek.year) and
+                    (time.month() greaterEq startOfWeek.monthNumber) and
+                    (time.day() greaterEq startOfWeek.dayOfMonth) and
+                    (time.year() lessEq localdate.year) and
+                    (time.month() lessEq localdate.monthNumber) and
+                    (time.day() lessEq localdate.dayOfMonth)
+
+            select(op).map {
+                TaskEvent(
+                    id = it[id].value,
+                    taskid = it[TaskEvents.taskid].value,
+                    taskname = it[taskname],
+                    time = it[time],
+                    progress = it[progress]
+                )
+            }
+        }
+    }
+
+    fun findLastEventsUntilThisDay(taskid: Int, localdate: LocalDate): TaskEvent? {
+        return with (TaskEvents) {
+            val op = (TaskEvents.taskid eq taskid) and
+                    (time.year() lessEq localdate.year) and
+                    (time.month() lessEq localdate.monthNumber) and
+                    (time.day() lessEq localdate.dayOfMonth)
+
+            select(op).lastOrNull()?.let {
+                TaskEvent(
+                    id = it[id].value,
+                    taskid = it[TaskEvents.taskid].value,
+                    taskname = it[taskname],
+                    time = it[time],
+                    progress = it[progress]
+                )
+            }
+        }
+    }
+
+    fun resetTaskCurrentDay(id: Int): Task {
+        val currentDay = shanghaiNow()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
+        val (progress1, cday, pday) = with (Tasks) {
+            slice(progress, consecutiveDays, persistenceDays)
+                .select(Tasks.id eq id)
+                .first()
+                .let {
+                    listOf(it[progress], it[consecutiveDays], it[persistenceDays])
+                }
+        }
+
+        if (progress1 is Progress.Done) {
+            if (cday != 0) {
+                with (Tasks) {
+                    update({ Tasks.id eq id }) {
+                        with (SqlExpressionBuilder) {
+                            it.update(consecutiveDays, consecutiveDays - 1)
+                        }
+                    }
+                }
+            }
+
+            if (pday != 0) {
+                with (Tasks) {
+                    update({ Tasks.id eq id }) {
+                        with (SqlExpressionBuilder) {
+                            it.update(persistenceDays, persistenceDays - 1)
+                        }
+                    }
+                }
+            }
+        }
 
         Tasks.update({ Tasks.id eq id }) {
             it[progress] = Progress.Ready
         }
 
-        // TODO delete the taskevents which is the same day with currentDay, and the id eq id
         TaskEvents.deleteWhere {
+            val r0 = TaskEvents.taskid eq id
             val r1 = time.year() eq currentDayLocalDate.year
             val r2 = time.month() eq currentDayLocalDate.monthNumber
             val r3 = time.day() eq currentDayLocalDate.dayOfMonth
-            r1 and r2 and r3
+
+            r0 and r1 and r2 and r3
         }
+
+        return findOne(id)!!
     }
+
+    /**
+     * @param offset: 距离本周的偏移量, it should be negative
+     */
+    fun statisticsThisWeek(offset: Int, userid: Int): Map<Int, Map<DayOfWeek, Progress>> {
+        assert(offset < 0)
+
+        val now = shanghaiNow()
+        val nowLocalDate = now.toLocalDateTime(CURRENT_TIME_ZONE).date
+        val distance = dayDistance[nowLocalDate.dayOfWeek]!!
+        val startOfWeek = nowLocalDate.minus(distance, DateTimeUnit.DAY)
+        val startOfThisWeek = startOfWeek.minus(abs(offset), DateTimeUnit.WEEK)
+        val endOfThisWeek = startOfThisWeek.plus(6, DateTimeUnit.DAY)
+
+        val progressRecord = mutableMapOf<Int, MutableMap<DayOfWeek, Progress>>()
+
+        (startOfThisWeek..endOfThisWeek).forEach { date ->
+            val tasks = findAll(date, userid)
+            for (task in tasks) {
+                if (progressRecord.containsKey(task.id)) {
+                    // result[task.id]?.add(task.progress)
+                    progressRecord[task.id]?.put(date.dayOfWeek, task.progress)
+                } else {
+                    // result[task.id] = mutableListOf(task.progress)
+                    progressRecord[task.id] = mutableMapOf(date.dayOfWeek to task.progress)
+                }
+            }
+
+        }
+
+        return progressRecord
+    }
+
+    /**
+     * @param offset: 距离本月的偏移量, it should be negative
+     */
+    fun statisticsThisMonth(offset: Int, userid: Int): Map<Int, Map<Int, Progress>> {
+        assert(offset < 0)
+
+        val now = shanghaiNow()
+        val nowLocalDate = now.toLocalDateTime(CURRENT_TIME_ZONE).date
+        val startOfMonth = LocalDate(nowLocalDate.year, nowLocalDate.monthNumber, 1)
+        val thisMonth = startOfMonth.minus(abs(offset), DateTimeUnit.MONTH)
+        val endOfMonth = thisMonth.plus(DatePeriod(months = 1)).minus(1, DateTimeUnit.DAY)
+
+        val progressRecord = mutableMapOf<Int, MutableMap<Int, Progress>>()
+        (thisMonth..endOfMonth).forEach { date ->
+            val tasks = findAll(date, userid)
+            for (task in tasks) {
+                if (progressRecord.containsKey(task.id)) {
+                    // result[task.id]?.add(task.progress)
+                    progressRecord[task.id]?.put(date.dayOfMonth, task.progress)
+                } else {
+                    // result[task.id] = mutableListOf(task.progress)
+                    progressRecord[task.id] = mutableMapOf(date.dayOfMonth to task.progress)
+                }
+            }
+        }
+
+        return progressRecord
+    }
+
     private fun isSameDay(left: LocalDate, right: LocalDate): Boolean {
         return left.year == right.year && left.month == right.month && left.dayOfMonth == right.dayOfMonth
     }

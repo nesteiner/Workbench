@@ -12,7 +12,7 @@ class RangeOfLocalDateTest {
         val start = LocalDate(2023, 11, 1)
         val end = LocalDate(2023, 11, 12)
         var count = 1
-        for (element in start..end step 1) {
+        for (element in start..end step 2) {
             if (count >= 100) {
                 break
             }

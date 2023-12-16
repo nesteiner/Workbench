@@ -30,7 +30,7 @@ class IconController(val sdf: SimpleDateFormat = SimpleDateFormat("yyyyMMdd")) {
 
     @Autowired
     lateinit var iconService: IconService
-    @Value("\${file.storage.url}")
+    @Value("\${file.storage.daily-attendance-url}")
     lateinit var imagefolderPath: String
 
     @PostMapping("/upload")

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
-import 'package:frontend/request/todolist.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
@@ -41,17 +40,15 @@ class TaskCard extends StatelessWidget {
         ],
       );
 
-      final container = Container(
-        padding: settings["widget.pomodoro.taskcard.padding"],
-        margin: settings["widget.pomodoro.taskcard.margin"],
-        color: Colors.white,
-        child: row,
+       return Container(
+         width: settings["widget.pomodoro.counter.width.desktop"],
+         padding: settings["widget.pomodoro.taskcard.padding"],
+         margin: settings["widget.pomodoro.taskcard.margin"],
+         color: Colors.white,
+         child: row,
       );
 
-      return FractionallySizedBox(
-        widthFactor: 0.95,
-        child: container,
-      );
+
     });
 
     late Widget child1;
@@ -62,8 +59,10 @@ class TaskCard extends StatelessWidget {
           child0,
           Positioned(
             left: 0,
-            top: settings["widget.pomodoro.taskcard.padding.top"],
-            bottom: 0,
+            // top: settings["widget.pomodoro.taskcard.padding.top"],
+            // bottom: 0,
+            top: 0,
+            bottom: settings["widget.pomodoro.taskcard.padding.bottom"],
             child: Container(
               color: Colors.black,
               width: settings["widget.pomodoro.taskcard.selected.width"],
@@ -81,7 +80,10 @@ class TaskCard extends StatelessWidget {
         state.setCounterTask(task);
       },
 
-      child: child1,
+      child: Align(
+        alignment: Alignment.center,
+        child: child1,
+      )
     );
   }
 

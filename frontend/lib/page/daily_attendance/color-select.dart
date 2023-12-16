@@ -3,7 +3,7 @@ import 'package:frontend/constants.dart';
 import 'package:frontend/utils.dart';
 
 class ColorSelect extends StatelessWidget {
-  final colors = [
+  static final colors = [
     HexColor.fromHex("#eccc68"),
     HexColor.fromHex("#ff7f50"),
     HexColor.fromHex("#ff6b81"),
@@ -26,6 +26,8 @@ class ColorSelect extends StatelessWidget {
     HexColor.fromHex("#ced6e0"),
   ];
 
+  static Color get defaultColor => colors.first;
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
@@ -33,7 +35,8 @@ class ColorSelect extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            navigatorKey.currentState?.pop(null);
+            dailyAttendnaceNavigatorKey.currentState?.pop(null);
+            // Navigator.pop(context, null);
           },
 
           icon: const Icon(Icons.close),
@@ -53,7 +56,8 @@ class ColorSelect extends StatelessWidget {
       itemCount: colors.length,
       itemBuilder: (context, index) => GestureDetector(
         onTap: () {
-          navigatorKey.currentState?.pop(colors[index]);
+          dailyAttendnaceNavigatorKey.currentState?.pop(colors[index]);
+          // Navigator.pop(context, colors[index]);
         },
 
         child: Container(

@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart' show Color;
 import 'package:frontend/model/daily-attendance.dart';
 import 'package:frontend/utils.dart';
 
 class PostDailyAttendanceTaskRequest {
-  final String name;
-  final Icon icon;
-  final String encouragement;
-  final Frequency frequency;
-  final Goal goal;
-  final KeepDays keepdays;
-  final Group group;
-  final List<NotifyTime> notifyTimes;
-  final int userid;
+  String name;
+  Icon icon;
+  String encouragement;
+  Frequency frequency;
+  Goal goal;
+  KeepDays keepdays;
+  Group group;
+  DateTime startTime;
+  List<NotifyTime> notifyTimes;
+  int userid;
 
   PostDailyAttendanceTaskRequest({
     required this.name,
@@ -21,40 +21,23 @@ class PostDailyAttendanceTaskRequest {
     required this.goal,
     required this.keepdays,
     required this.group,
+    required this.startTime,
     required this.notifyTimes,
     required this.userid
   });
 
   Map<String, dynamic> toJson() {
     return {
-      "name": name,
+      "name": name.trim(),
       "icon": icon.toJson(),
-      "encouragement": encouragement,
+      "encouragement": encouragement.trim(),
       "frequency": frequency.toJson(),
       "goal": goal.toJson(),
-      "keepdays": keepdays.toString(),
+      "keepdays": keepdays.toJson(),
       "group": group.stringValue(),
+      "startTime": formatDateTime(startTime),
       "notifyTimes": notifyTimes.map((e) => e.toJson()).toList(),
       "userid": userid
-    };
-  }
-}
-
-class PostIconWordRequest {
-  final int word;
-  late final String color;
-
-  PostIconWordRequest({
-    required this.word,
-    required Color color
-  }) {
-    this.color = color.toHex();
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "word": word,
-      "color": color
     };
   }
 }
@@ -102,12 +85,12 @@ class UpdateDailyAttendanceTaskRequest {
     required this.notifyTimes
   });
 
-  factory UpdateDailyAttendanceTaskRequest.fromObject(DailyAttendanceTask task) {
+  factory UpdateDailyAttendanceTaskRequest.fromObject(Task task) {
     return UpdateDailyAttendanceTaskRequest(
       id: task.id,
-      name: task.name,
+      name: task.name.trim(),
       icon: task.icon,
-      encouragement: task.encouragement,
+      encouragement: task.encouragement.trim(),
       frequency: task.frequency,
       goal: task.goal,
       startTime: task.startTime,

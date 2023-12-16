@@ -1,7 +1,8 @@
 import com.steiner.workbench.common.ISO8601_FORMAT
 import com.steiner.workbench.common.SIMPLE_DATETIME_FORMAT
+import com.steiner.workbench.common.formatDateFormat
 import com.steiner.workbench.todolist.table.ImageItems
-import com.steiner.workbench.common.util.now
+import com.steiner.workbench.common.util.shanghaiNow
 import kotlinx.datetime.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -70,7 +71,13 @@ class BackendTest {
     fun testNow() {
         val timezone = TimeZone.currentSystemDefault()
         println(timezone)
-        println(now())
+        println(shanghaiNow())
         println(Clock.System.now().toLocalDateTime(timezone))
+    }
+
+    @Test
+    fun `test datetime format`() {
+        val s = "2023-12-10T11:52:36.846660Z"
+        formatDateFormat.parse(s)
     }
 }

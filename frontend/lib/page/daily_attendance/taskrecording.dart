@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
-import 'package:frontend/model/daily-attendance.dart' as da show IconWord, IconImage, DailyAttendanceTask, Icon;
+import 'package:frontend/model/daily-attendance.dart' as da;
 import 'package:frontend/page/daily_attendance/taskedit.dart';
+import 'package:frontend/request/daily-attendance.dart';
 import 'package:frontend/state/daily-attendance-state.dart';
+import 'package:frontend/widget/daily_attendance/switcher.dart';
 import 'package:provider/provider.dart';
 
 /// ATTENTION
 /// 这里不用一个 类变量 task 来代表 state.currentTask 的原因是，state.currentTask 要赋予新值，
 /// 这个时候 task 无法随之更新
+/// ATTENTION
+/// fuck you, you can give a getter function
 class TaskRecording extends StatelessWidget {
   late final DailyAttendanceState state;
   late final Widget backgroundImage;
 
+  late final ValueNotifier<bool> isdoneNotifier;
+  bool get isdone => currentTask.progress == da.ProgressDone();
+  da.Task get currentTask => state.currentTask!;
+  bool get destroyed => state.currentTask == null;
+
   @override
   Widget build(BuildContext context) {
     state = context.read<DailyAttendanceState>();
+    isdoneNotifier = ValueNotifier(isdone);
 
     backgroundImage = Selector<DailyAttendanceState, int?>(
       selector: (_, state) {
         int? id;
-        final task = state.currentTask!;
-        if (task.icon is da.IconImage) {
-          final icon = task.icon as da.IconImage;
+        if (currentTask.icon is da.IconImage) {
+          final icon = currentTask.icon as da.IconImage;
           id = icon.backgroundId;
         }
 
@@ -52,9 +61,8 @@ class TaskRecording extends StatelessWidget {
     return Selector<DailyAttendanceState, Color?>(
       selector: (_, state) {
         Color? color;
-        final task = state.currentTask!;
-        if (task.icon is da.IconImage) {
-          final icon = task.icon as da.IconImage;
+        if (currentTask.icon is da.IconImage) {
+          final icon = currentTask.icon as da.IconImage;
           color = icon.backgroundColor;
         }
 
@@ -79,25 +87,46 @@ class TaskRecording extends StatelessWidget {
         PopupMenuButton(
           itemBuilder: (_) => [
             PopupMenuItem(
-                child: SizedBox(
-                    width: settings["page.daily-attendance.taskrecoring.menu.width"],
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.edit, color: Colors.black,),
-                        SizedBox(width: settings["common.unit.size"],),
-                        const Text("编辑")
-                      ],
-                    ),
-                ),
-
+                onTap: () async {
+                  await state.resetCurrentTask();
+                  isdoneNotifier.value = isdone;
+                },
+                
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.refresh),
+                    SizedBox(width: settings["common.unit.size"],),
+                    const Text("重置打卡")
+                  ],
+                )
+            ),
+            PopupMenuItem(
               onTap: () {
-                navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskEdit()));
+                dailyAttendnaceNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskEdit()));
               },
+              
+              child: SizedBox(
+                  width: settings["page.daily-attendance.taskrecoring.menu.width"],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.edit, color: Colors.black,),
+                      SizedBox(width: settings["common.unit.size"],),
+                      const Text("编辑")
+                    ],
+                  ),
+              ),
             ),
 
             PopupMenuItem(
+                onTap: () async {
+                  final request = UpdateArchiveTaskRequest(id: currentTask.id, isarchive: true);
+                  await state.updateArchive(request);
+                },
+
                 child: SizedBox(
                   width: settings["page.daily-attendance.taskrecoring.menu.width"],
                   child: Row(
@@ -113,6 +142,36 @@ class TaskRecording extends StatelessWidget {
             ),
 
             PopupMenuItem(
+              onTap: () {
+                actions(BuildContext context1) => [
+                  TextButton(
+                    onPressed: () {
+                      dailyAttendnaceNavigatorKey.currentState?.pop();
+                      // Navigator.pop(context1);
+                    },
+
+                    child: const Text("取消"),
+                  ),
+
+                  TextButton(
+                    onPressed: () async {
+                      // Navigator.pop(context1);
+                      dailyAttendnaceNavigatorKey.currentState?.popUntil(ModalRoute.withName(dailyAttendanceRoutes["taskpage"]!));
+                      await state.deleteTask(currentTask);
+                    },
+
+                    child: const Text("确定"),
+                  )
+                ];
+
+
+                showDialog(context: context, builder: (context) => AlertDialog(
+                  title: const Text("删除习惯"),
+                  content: const Text("确定删除这个习惯? 这个操作无法恢复"),
+                  actions: actions(context),
+                ));
+              },
+
               child: SizedBox(
                 width: settings["page.daily-attendance.taskrecoring.menu.width"],
                 child: Row(
@@ -121,7 +180,7 @@ class TaskRecording extends StatelessWidget {
                   children: [
                     const Icon(Icons.delete_forever_outlined, color: Colors.black,),
                     SizedBox(width: settings["common.unit.size"],),
-                    const Text("归档")
+                    const Text("删除")
                   ],
                 ),
               )
@@ -135,7 +194,50 @@ class TaskRecording extends StatelessWidget {
   }
 
   Widget buildBody(BuildContext context, Color backgroundColor) {
-    final task = state.currentTask!;
+    final task = currentTask;
+
+    final switcher = Selector<DailyAttendanceState, da.Task>(
+      selector: (_, state) => currentTask,
+      builder: (_, datask, child) {
+        return Switcher(
+            duration: const Duration(milliseconds: 500),
+            value: datask.progress == da.ProgressDone(),
+            onChanged: (boolvalue) async {
+              late UpdateProgressRequest request;
+              if (boolvalue) {
+
+                if (datask.goal is da.GoalCurrentDay) {
+                  request = UpdateProgressRequest(id: datask.id, progress: da.ProgressDone());
+                } else if (datask.goal is da.GoalAmount) {
+                  final goal = datask.goal as da.GoalAmount;
+                  final progress = datask.progress;
+                  if (progress is da.ProgressReady) {
+                    request = UpdateProgressRequest(id: datask.id, progress: da.ProgressDoing(total: goal.total, unit: goal.unit, amount: goal.eachAmount));
+                  } else if (progress is da.ProgressDoing) {
+                    final progress1 = progress as da.ProgressDoing;
+                    request = UpdateProgressRequest(id: datask.id, progress: da.ProgressDoing(total: goal.total, unit: goal.unit, amount: progress1.amount + goal.eachAmount));
+                  }
+
+                }
+              } else {
+                if (datask.goal is da.GoalCurrentDay) {
+                  request = UpdateProgressRequest(id: datask!.id, progress: da.ProgressReady());
+                } else if (datask.goal is da.GoalAmount) {
+                  final goal = datask.goal as da.GoalAmount;
+                  final progress = datask.progress;
+                  if (progress is da.ProgressDoing || progress is da.ProgressDone) {
+                    request = UpdateProgressRequest(id: datask.id, progress: da.ProgressDoing(total: goal.total, unit: goal.unit, amount: goal.total - goal.eachAmount));
+                  }
+                }
+              }
+
+              await state.updateProgress(request);
+              isdoneNotifier.value = isdone;
+            }
+        );
+      },
+    );
+
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -143,7 +245,6 @@ class TaskRecording extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor
       ),
-
 
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -157,7 +258,52 @@ class TaskRecording extends StatelessWidget {
           Text(task.encouragement, style: TextStyle(color: settings["page.daily-attendance.taskrecording.font.color"], fontSize: settings["page.daily-attendance.taskrecording.font.encouragement.size"]),),
           SizedBox(height: settings["page.daily-attendance.taskrecording.margin.2"],),
 
-          Text("Switch here")
+          ValueListenableBuilder(
+              valueListenable: isdoneNotifier,
+              builder: (context, value, child) {
+                return Visibility(
+                    visible: !value,
+                    maintainSize: true,
+                    maintainState: true,
+                    maintainAnimation: true,
+                    child: switcher
+                );
+              }
+          ),
+
+          SizedBox(height: settings["page.daily-attendance.taskrecording.margin.3"],),
+
+          Selector<DailyAttendanceState, (bool, double?)>(
+            selector: (_, state) {
+              final $1 = currentTask.progress is da.ProgressDoing;
+              late double? $2;
+
+              if (currentTask.progress is da.ProgressDone) {
+                $2 = 1;
+              } else if (currentTask.progress is! da.ProgressDoing) {
+                $2 = null;
+              } else {
+                final progress = currentTask.progress as da.ProgressDoing;
+                $2 = progress.amount / progress.total;
+              }
+
+              return ($1, $2);
+            },
+
+            builder: (_, value, child) {
+              if (!value.$1 || value.$2 == null) {
+                return const SizedBox.shrink();
+              }
+
+              return FractionallySizedBox(
+                widthFactor: 0.5,
+                child: LinearProgressIndicator(
+                  value: value.$2,
+                ),
+              );
+            },
+          )
+
         ],
       ),
 

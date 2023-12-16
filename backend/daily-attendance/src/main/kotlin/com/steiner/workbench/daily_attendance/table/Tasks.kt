@@ -7,11 +7,12 @@ import com.steiner.workbench.daily_attendance.model.*
 import com.steiner.workbench.login.table.Users
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 
 private val formatter = Json { prettyPrint = true }
-object Tasks: IntIdTable(name = "DailyAttendanceTasks") {
+object Tasks: IntIdTable(name = "daily-attendance-tasks") {
     val name = varchar("name", DAILY_ATTENDANCE_NAME_LENGTH).uniqueIndex()
     val icon = jsonb<Icon>("icon", formatter)
     val encouragement = varchar("encouragement", DAILY_ATTENDANCE_ENCOURAGEMENT_LENGTH)
@@ -24,7 +25,7 @@ object Tasks: IntIdTable(name = "DailyAttendanceTasks") {
     val progress = jsonb<Progress>("progress", formatter)
 
     val isarchived = bool("isarchived")
-    val userid = reference("userid", Users)
+    val userid = reference("userid", Users, onDelete = ReferenceOption.CASCADE)
     val consecutiveDays = integer("consecutiveDays")
     val persistenceDays = integer("persistenceDays")
 }

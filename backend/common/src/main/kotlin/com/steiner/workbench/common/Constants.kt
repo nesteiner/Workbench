@@ -1,6 +1,8 @@
 package com.steiner.workbench.common
 
 import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 // for login
 const val ROLE_ADMIN = "admin"
@@ -26,13 +28,13 @@ const val TRUNCED_ISO8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'"
 const val SIMPLE_DATETIME_FORMAT = "yyyy-MM-dd HH:mm"
 
 // for parse yyyy-MM-dd HH:mm string to Date
-val parseDateFormat = SimpleDateFormat(SIMPLE_DATETIME_FORMAT)
+val parseDateFormat = DateTimeFormatter.ofPattern(SIMPLE_DATETIME_FORMAT, Locale.CHINA)
 
 // for format date into iso8601 string
-val formatDateFormat = SimpleDateFormat(ISO8601_FORMAT)
+val formatDateFormat = DateTimeFormatter.ofPattern(ISO8601_FORMAT, Locale.CHINA)
 
 // for parse yyyy-MM-dd'T'HH:mm:ss'Z' string to Date
-val truncedDateFormat = SimpleDateFormat(TRUNCED_ISO8601_FORMAT)
+val truncedDateFormat = DateTimeFormatter.ofPattern(TRUNCED_ISO8601_FORMAT, Locale.CHINA)
 
 // for daily attendance
 const val DAILY_ATTENDANCE_NAME_LENGTH = 24
@@ -40,3 +42,11 @@ const val DAILY_ATTENDANCE_ENCOURAGEMENT_LENGTH = 24
 
 const val DAILY_ATTENDANCE_IMAGE_NAME_LENGTH = 24
 const val DAILY_ATTENDANCE_IMAGE_PATH_LENGTH = 128
+
+const val CLIPBOARD_TEXT_LENGTH = 1024
+const val CLIPBOARD_IMAGE_NAME_LENGTH = 128
+const val CLIPBOARD_IMAGE_PATH_LENGTH = 128
+const val CLIPBOARD_IMAGE_SIZE_LENGTH = 16
+
+const val oneKB = 1024L
+const val oneMB = 1024 * 1024L

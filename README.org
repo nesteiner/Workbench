@@ -1,122 +1,89 @@
 #+title: trace of making workbench
 
-* backend
-** login module test
-1. start application
-2. which port ?
-3. get token
-4. GET /user with no exist id
-5. POST /authenticate with error password
-6. how about register ?
+* Feature
+- [ ] use websocket to send notification
+- [ ] refresh token periodly
+- [X] tabbar to controller routes, use *replacement* instead of push
 
-** todolist module
-- [ ] schdule: delete unreferenced image
-- [X] test validator
-- [X] series of deleteAll function
-- [X] deleteOne task-project, task-group, task
-- [X] image-item-controller
-- [X] def: parseFrom(string): Instant | parse string into kotlinx.datetime.Instant
-- [X] constant, format
-- [X] kotlinx.datetime.Instant to yyyy-MM-dd HH:mm
-- [ ] now instance always wrong
-** DONE todolist reorder
-*** TaskService
-**** insertOne
-- set index start from 1
-- rest of tasks index += 1
-**** updateOne
-- tasks that index >= reorderAt set index += 1
-- set this task index = reorderAt
-
-*** TaskGroupService
-**** insertOne
-**** updateOne
-*** TaskProjectService
-**** insertOne
-**** updateOne
-
-
-** TODO samba module
-
-** before launch
-- [X] use application runner
 * frontend
-** api test
-- [ ] need cors ??
-- [X] test transform from json
-- [X] request.toJson
-- [X] test series of findAll function
-- [X] design top-level operation of CRUD
-- [ ] test snapshot.error
+- [X] clipboard api
+- [X] clipboard state
+- [X] clipboard state in globalstate
+- [X] check connection -- this need backend to accept check
+  - [X] preload page
+  - [X] setting page
+- [X] 清除设置
+- [X] __check connection__
+- [ ] 401 exception
+- [ ] refresh
+- [ ] hint text
+- [ ] step by step
+- [ ] pageview 
 
 
-** size overflow
-- [X] overflow when resizing
-  *using stack*
+** loading page
+- [ ] when login, using loading page
 
-** TaskBoard
-- [-] reorder taskgroup
-  - [X] 前后端动作不协调
-  - [X] currentIndex split two part
-  - [ ] use drag and droptarget 
 
-- [ ] state consume the data
-  - [ ] taskgroup with tasks, use Selector<GlobalState, List<TaskGroup>>
-  - [ ] another reorder 
+* backend
+- [X] transform Instant with kotlinx.serialization
+- [X] build a simple demo
 
-    
-- [-] 菜单
-  - [X] image uploader
-  - [X] 更换封面
-  - [X] 项目信息
-  - [X] 项目简介
-  - [X] actions on submit
-  - [X] image not fill, need to ask
-  - [X] image path with utf-8
-  - [X] not update after upload image
-  - [X] 删除
-  - [X] create task-project
-  - [X] 删除部分 text wrap
 
-  - [X] ImageUploader
-    - [X] crop size
-    - [X] crop position
-    - [X] actions
-    - [X] buttons 
-      
-  - [ ] 排序
-  foreach(sort, taskgroups)
-  - [ ] 默认
-  - [ ] 最近创建
-  - [ ] 最近更新
-  - [ ] 优先级
 
-- [ ] 筛选
-  - [ ] 标签
-  - [ ] 是否完成
-    
-- [ ] reorder and move task widget
-** TaskWidget
 
-** TaskDetail
+** DONE page cache 
+- [ ] TabController
+- [ ] NavigationRail with TabBarView ?
+- [ ] 有没有与 NavigationRail 搭配的组件，就像 TabBarView那样
+- [ ] 会不会是 keepalive 用错了
+- [ ] __trying to modify keepalive__
+- [ ] use tabbarview, but no keepalive ?
 
-** TODO adjust widget and decorate
-- [ ] code: buildDesktop
-- [ ] code: buildMobile
-** token refresh
-- [ ] 定时更换 token
-** logout position
-* Problem
-- [X] ApplicationRunner
-- [ ] tag order
-- [ ] mongodb insert at
-
-** Debug
-- [ ] application runner
-- [ ] pacman
 * Scaffold
 ** Student
 add @JsonIgnore to passwordHash
 ** WebSecurityConfigurer
 order of filters
 
+* Developing Notes
+1. coroutineScope 会在内部启动一个子协程来执行阻塞式的IO操作
+
+** about JSON parse error in sealed class
+您好，这是 Bing。我看了您的代码，发现了一些问题。
+首先，您的 =IconSerializer= 类没有必要继承 =SealedClassSerializer=，因为 =Icon= 类已经是一个 =@Serializable= 的密封类，所以它已经有了一个默认的序列化器。您可以直接使用 `Icon.serializer()` 来获取它，或者省略 =@Serializable(with = IconSerializer::class)= 注解，让编译器自动推断。
+其次，您的 =SealedClassSerializer= 类的实现有一些问题。您的 =serialize= 方法和 =deserialize= 方法都是直接调用 =serializer= 的对应方法，没有做任何额外的处理。这样的话，您的序列化器就没有任何作用，而且可能会导致一些问题。例如，当您使用 `Json.decodeFromString<WrapperIcon>(jsonString)` 时，您的 `IconSerializer` 会被用来解析 `icon` 字段，但是它并没有正确地处理密封类的多态性。它会期望 `icon` 字段的值是一个数组，而不是一个对象，因为密封类的默认序列化格式是 =[type, value]=。这就是为什么您会收到这样的错误：
+#+begin_quote
+kotlinx.serialization.json.internal.JsonDecodingException: Unexpected JSON token at offset 26: Expected start of the array '[', but had ' ' instead at path: $.icon
+JSON input: {
+"name": "hello",
+"icon": {"type": "Word", "char": "h", "color": "#ffeccc68"}
+}
+#+end_quote
+
+如果您想要自定义密封类的序列化格式，您需要在 =serialize= 方法和 =deserialize= 方法中添加一些逻辑，来根据不同的子类类型进行编码和解码。您可以参考这个[文档](^1^)中的例子，了解如何实现一个自定义的密封类序列化器。
+
+我希望这些信息对您有帮助。如果您还有其他问题，欢迎继续提问。😊
+
+源: 与必应的对话， 2023/11/21
+(1) json - How to serialize/deserialize Kotlin sealed class? - Stack Overflow. https://stackoverflow.com/questions/50157468/how-to-serialize-deserialize-kotlin-sealed-class.
+(2) JSON features - GitHub. https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/json.md.
+(3) JsonElement - Kotlin Programming Language. https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-json/kotlinx.serialization.json/-json-element/.
+(4) Json - Kotlin Programming Language. https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-json/kotlinx.serialization.json/-json/.
+(5) SealedClassSerializer - Kotlin Programming Language. https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization/-sealed-class-serializer/.
+(6) undefined. https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core.
+(7) undefined. https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind.
+(8) undefined. https://avatars.githubusercontent.com/u/1446536?v=4.
+(9) undefined. https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/json.md?raw=true.
+(10) undefined. https://desktop.github.com.
+(11) undefined. https://docs.github.com/articles/about-issue-and-pull-request-templates.
+(12) undefined. https://github.com/Kotlin/kotlinx.serialization/raw/master/docs/json.md.
+(13) undefined. https://www.json.org/json-en.html.
+(14) undefined. https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-json/kotlinx.serialization.json/-json/index.html.
+
+
+* TODO Demo Project
+** Sidebar navigator
+1. use controller
+** nested route
+1. use navigator key

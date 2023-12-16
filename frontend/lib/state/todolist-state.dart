@@ -17,8 +17,6 @@ class TodoListState extends ChangeNotifier implements Api {
   TaskProject? currentProject;
   List<Tag>? currentTags;
 
-  late User user;
-
   Counter counter = Counter(pomodoroTime: 25, shortBreakTime: 5, longBreakTime: 15);
 
   TodoListState({required this.api});
@@ -33,6 +31,8 @@ class TodoListState extends ChangeNotifier implements Api {
    */
   Timer? timer;
   // this is for pomodoro and todolist
+
+  // STUB using it
   TaskGroup? currentTaskGroup;
   Task? currentTask;
 

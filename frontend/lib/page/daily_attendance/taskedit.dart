@@ -5,72 +5,34 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/daily-attendance.dart' as da;
-import 'package:frontend/page/daily_attendance/color-select.dart';
 import 'package:frontend/request/daily-attendance.dart';
 import 'package:frontend/state/daily-attendance-state.dart';
 import 'package:frontend/widget/daily_attendance/checkbox.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:provider/provider.dart';
 
-enum _IconMode {
-  image,
-  word
-}
-
-class ImageCompose {
-  Widget? entry;
-  Widget? background;
-
-  ImageCompose({this.entry, this.background});
-
-  ImageCompose copyWith({Widget? entry, Widget? background}) {
-    return ImageCompose(
-      entry: entry ?? this.entry,
-      background: background ?? this.background
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    // TODO: implement ==
-    if (other is! ImageCompose) {
-      return false;
-    }
-
-    final other1 = other as ImageCompose;
-    return entry == other1.entry && background == other1.background;
-  }
-}
-
 class TaskEdit extends StatelessWidget {
   static final units = [
-    "次", "杯", "毫升", "分钟", "小时", "公里"
+    "次", "杯", "毫升", "分钟", "小时", "公里", "页"
   ];
   static final positiveRegex = RegExp(r"^[1-9]\d*$");
   
   late final DailyAttendanceState state;
-  late void Function(void Function()) setStateSwitch;
   late void Function(void Function()) setStateBackgroundColor;
   late void Function(void Function()) setStateEditIcon;
   late void Function(void Function()) setStateSubmitMode;
   late final ValueNotifier<String> wordNotifier;
-  late final ValueNotifier<ImageCompose> imageNotifier;
-  late final ValueNotifier<_IconMode> modeNotifier;
+  late final ValueNotifier<da.ImageCompose> imageNotifier;
+  late final ValueNotifier<da.IconMode> modeNotifier;
 
   int entryid = -1;
   int backgroundid = -1;
   late Color backgroundColor;
 
-  late final da.DailyAttendanceTask copyOfTask;
-
-  double width = 0.0;
+  late final da.Task copyOfTask;
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-      width = settings["global.window.width"];
-    }
-
     state = context.read<DailyAttendanceState>();
 
     copyOfTask = state.currentTask!.copy();
@@ -86,7 +48,7 @@ class TaskEdit extends StatelessWidget {
       backgroundColor = icon1.color;
     }
 
-    final mode = copyOfTask.icon is da.IconImage ? _IconMode.image : _IconMode.word;
+    final mode = copyOfTask.icon is da.IconImage ? da.IconMode.image : da.IconMode.word;
     modeNotifier = ValueNotifier(mode);
 
     Widget? entry;
@@ -99,7 +61,7 @@ class TaskEdit extends StatelessWidget {
       wordNotifier = ValueNotifier(icon.word);
     }
 
-    imageNotifier = ValueNotifier(ImageCompose(entry: entry));
+    imageNotifier = ValueNotifier(da.ImageCompose(entry: entry));
 
     return Scaffold(
       appBar: buildAppBar(context),
@@ -108,13 +70,14 @@ class TaskEdit extends StatelessWidget {
   }
 
   AppBar buildAppBar(BuildContext context) {
-    final actions = [
+    actions(BuildContext context) => [
       IconButton(
         onPressed: () async {
           final request = UpdateDailyAttendanceTaskRequest.fromObject(copyOfTask);
           await state.updateTask(request);
 
-          navigatorKey.currentState?.pop();
+          // Navigator.pop(context);
+          dailyAttendnaceNavigatorKey.currentState?.pop();
         },
 
         icon: const Icon(Icons.check),
@@ -125,13 +88,14 @@ class TaskEdit extends StatelessWidget {
     return AppBar(
       leading: IconButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          dailyAttendnaceNavigatorKey.currentState?.pop();
+          // Navigator.pop(context);
         },
 
         icon: const Icon(Icons.close),
       ),
 
-      actions: actions,
+      actions: actions(context),
     );
   }
 
@@ -223,12 +187,12 @@ class TaskEdit extends StatelessWidget {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: () => setStateSwitch(() => modeNotifier.value = _IconMode.image),
+                    onTap: () => modeNotifier.value = da.IconMode.image,
                     child: ValueListenableBuilder(
                       valueListenable: modeNotifier,
                       builder: (context, value, child) {
                         Color? color = null;
-                        if (value == _IconMode.image) {
+                        if (value == da.IconMode.image) {
                           color = Colors.blue;
                         }
 
@@ -239,12 +203,12 @@ class TaskEdit extends StatelessWidget {
 
                   SizedBox(width: settings["page.daily-attendance.taskedit.item.margin"],),
                   GestureDetector(
-                    onTap: () => setStateSwitch(() => modeNotifier.value = _IconMode.word),
+                    onTap: () => modeNotifier.value = da.IconMode.word,
                     child: ValueListenableBuilder(
                         valueListenable: modeNotifier,
                         builder: (context, value, child) {
                           Color? color = null;
-                          if (value == _IconMode.word) {
+                          if (value == da.IconMode.word) {
                             color = Colors.blue;
                           }
 
@@ -255,17 +219,16 @@ class TaskEdit extends StatelessWidget {
               ),
 
               SizedBox(height: settings["page.daily-attendance.taskedit.image-pick-upload.item.margin"],),
-              StatefulBuilder(builder: (contex, setState) {
-                setStateSwitch = setState;
-
-                if (modeNotifier.value == _IconMode.image) {
-                  return buildIconEditImage(context);
-                } else {
-                  return buildIconEditWord(context);
-                }
-              }),
-
-
+              ValueListenableBuilder(
+                  valueListenable: modeNotifier,
+                  builder: (context, value, child) {
+                    if (value == da.IconMode.image) {
+                      return buildIconEditImage(context);
+                    } else {
+                      return buildIconEditWord(context);
+                    }
+                  }
+              )
 
             ],
           ),
@@ -288,6 +251,7 @@ class TaskEdit extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         title,
+        SizedBox(height: settings["page.daily-attendance.taskedit.edit-name-icon.margin-bottom"],),
 
         Row(
           mainAxisSize: MainAxisSize.max,
@@ -440,7 +404,9 @@ class TaskEdit extends StatelessWidget {
 
     return InkWell(
       onTap: () async {
-        final result = await navigatorKey.currentState?.push<Color?>(MaterialPageRoute(builder: (_) => ColorSelect()));
+        // final result = await navigatorKey.currentState?.push<Color?>(MaterialPageRoute(builder: (_) => ColorSelect()));
+        final result = await dailyAttendnaceNavigatorKey.currentState?.pushNamed<Color?>(dailyAttendanceRoutes["color-select"]!);
+
         if (result != null) {
           setStateBackgroundColor(() {
             backgroundColor = result;
@@ -489,7 +455,7 @@ class TaskEdit extends StatelessWidget {
     onPressed() {
       late da.Icon icon;
 
-      if (modeNotifier.value == _IconMode.image) {
+      if (modeNotifier.value == da.IconMode.image) {
         icon = da.IconImage(entryId: entryid, backgroundId: backgroundid, backgroundColor: backgroundColor);
       } else {
         icon = da.IconWord(word: wordNotifier.value, color: backgroundColor);
@@ -499,7 +465,9 @@ class TaskEdit extends StatelessWidget {
         copyOfTask.icon = icon;
       });
 
-      navigatorKey.currentState?.pop();
+      // navigatorKey.currentState?.pop();
+      // Navigator.pop(context);
+      dailyAttendnaceNavigatorKey.currentState?.pop();
     }
 
     late Widget submitButton;
@@ -508,7 +476,7 @@ class TaskEdit extends StatelessWidget {
     submitButton = ValueListenableBuilder(
         valueListenable: modeNotifier,
         builder: (context, value, child) {
-          if (value == _IconMode.word) {
+          if (value == da.IconMode.word) {
             return ValueListenableBuilder(
                 valueListenable: wordNotifier,
                 builder: (context, value, child) => TextButton(
@@ -535,7 +503,9 @@ class TaskEdit extends StatelessWidget {
     return [
         TextButton(
           onPressed: () {
-            navigatorKey.currentState?.pop();
+            dailyAttendnaceNavigatorKey.currentState?.pop();
+            // Navigator.pop(context);
+
           },
 
           child: const Text("取消"),
@@ -845,7 +815,8 @@ class TaskEdit extends StatelessWidget {
             TextButton(
               onPressed: () {
                 keepdays.value = copyOfTask.keepdays.copy();
-                navigatorKey.currentState?.pop();
+                dailyAttendnaceNavigatorKey.currentState?.pop();
+                // Navigator.pop(context);
               },
 
               child: const Text("取消"),
@@ -854,7 +825,8 @@ class TaskEdit extends StatelessWidget {
             TextButton(
               onPressed: () {
                 copyOfTask.keepdays = keepdays.value;
-                navigatorKey.currentState?.pop();
+                dailyAttendnaceNavigatorKey.currentState?.pop();
+                // Navigator.pop(context);
               },
 
               child: const Text("确定"),
@@ -869,10 +841,11 @@ class TaskEdit extends StatelessWidget {
 
   Future<da.Goal?> showDialogEditGoal(BuildContext context) async {
     late da.Goal goal;
-    final actions = [
+    actions(BuildContext context) => [
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop();
+          dailyAttendnaceNavigatorKey.currentState?.pop();
+          // Navigator.pop(context);
         },
         
         child: const Text("取消"),
@@ -880,7 +853,8 @@ class TaskEdit extends StatelessWidget {
       
       TextButton(
         onPressed: () {
-          navigatorKey.currentState?.pop(goal);
+          dailyAttendnaceNavigatorKey.currentState?.pop(goal);
+          // Navigator.pop(context, goal);
         },
         
         child: const Text("确定"),
@@ -894,7 +868,7 @@ class TaskEdit extends StatelessWidget {
         goal = value;
       }),
 
-      actions: actions,
+      actions: actions(context),
     ));
   }
 
@@ -1004,7 +978,7 @@ class TaskEdit extends StatelessWidget {
                 )).toList(),
 
                 onChanged: (value) {
-                  if (value != null && positiveRegex.hasMatch(value)) {
+                  if (value != null) {
                     setState(() {
                       unit = value;
                       resultGoal = da.GoalAmount(total: int.parse(textTotal), unit: value, eachAmount: int.parse(textEachAmount));
@@ -1095,15 +1069,13 @@ class TaskEdit extends StatelessWidget {
         break;
     }
 
-    final names = ["早上", "中午", "晚上", "其他"];
-
-
+    final names = ["上午", "中午", "晚上", "其他"];
 
     return Container(
         decoration: settings["page.daily-attendance.taskedit.wrapper.decoration"],
         padding: settings["page.daily-attendance.taskedit.wrapper.padding"],
         margin: settings["page.daily-attendance.taskedit.wrapper.margin"],
-        constraints: BoxConstraints(minWidth: width),
+        width: double.infinity,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1223,7 +1195,7 @@ class TaskEdit extends StatelessWidget {
       decoration: settings["page.daily-attendance.taskedit.wrapper.decoration"],
       padding: settings["page.daily-attendance.taskedit.wrapper.padding"],
       margin: settings["page.daily-attendance.taskedit.wrapper.margin"],
-      constraints: BoxConstraints(minWidth: width),
+      width: double.infinity,
       child: column,
     );
   }
@@ -1237,10 +1209,8 @@ class TaskEdit extends StatelessWidget {
             initialTime: initialTime,
             cancelText: "清除",
 
-            builder: (context, child) => WillPopScope(
-              onWillPop: () async {
-                return false;
-              },
+            builder: (context, child) => PopScope(
+              canPop: false,
               child: child!,
             )
         );
@@ -1295,14 +1265,13 @@ class TaskEdit extends StatelessWidget {
       decoration: settings["page.daily-attendance.taskedit.wrapper.decoration"],
       padding: settings["page.daily-attendance.taskedit.wrapper.padding"],
       margin: settings["page.daily-attendance.taskedit.wrapper.margin"],
-      constraints: BoxConstraints(minWidth: width),
       child: column,
     );
   }
 }
 
 class TaskEditFrequency extends StatefulWidget {
-  final da.DailyAttendanceTask task;
+  final da.Task task;
 
   TaskEditFrequency({required this.task});
 

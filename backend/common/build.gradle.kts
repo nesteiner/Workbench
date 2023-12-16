@@ -27,3 +27,7 @@ tasks.bootJar {
 tasks.jar {
     enabled = true
 }
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}

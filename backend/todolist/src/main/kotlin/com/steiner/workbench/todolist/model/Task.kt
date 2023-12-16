@@ -17,7 +17,6 @@ class Task(
 
         val expectTime: Int,
         val finishTime: Int,
-
         val deadline: Instant?,
         val notifyTime: Instant?,
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import "dart:math" as math;
+import "dart:io";
 
 String zeroPadding(int number) {
   if (number < 10) {
@@ -34,4 +36,57 @@ extension HexColor on Color {
       '${red.toRadixString(16).padLeft(2, '0')}'
       '${green.toRadixString(16).padLeft(2, '0')}'
       '${blue.toRadixString(16).padLeft(2, '0')}';
+}
+
+const List<String> suffix = ["B", "KB", "MG", "GB", "TB"];
+const List<int> powbase = [
+  1,
+  1024,
+  1048576,
+  1073741824,
+  1099511627776
+];
+
+String formatBytes(int bytes, [int precision = 2]) {
+  final base = (bytes == 0) ? 0 : (math.log(bytes) / math.log(1024)).floor();
+  final size = bytes / powbase[base];
+  final formattedSize = size.toStringAsFixed(precision);
+  return "$formattedSize ${suffix[base]}";
+}
+
+String parentOf(String path) {
+  int rootEnd = -1;
+  if (Platform.isWindows) {
+    if (path.startsWith(RegExp(r'^(?:\\\\|[a-zA-Z]:[/\\])'))) {
+      // Root ends at first / or \ after the first two characters.
+      rootEnd = path.indexOf(new RegExp(r'[/\\]'), 2);
+      if (rootEnd == -1) return path;
+    } else if (path.startsWith('\\') || path.startsWith('/')) {
+      rootEnd = 0;
+    }
+  } else if (path.startsWith('/')) {
+    rootEnd = 0;
+  }
+  // Ignore trailing slashes.
+  // All non-trivial cases have separators between two non-separators.
+  int pos = path.lastIndexOf(Platform.isWindows
+      ? RegExp(r'[^/\\][/\\]+[^/\\]')
+      : RegExp(r'[^/]/+[^/]'));
+  if (pos > rootEnd) {
+    return path.substring(0, pos + 1);
+  } else if (rootEnd > -1) {
+    return path.substring(0, rootEnd + 1);
+  } else {
+    return path;
+  }
+}
+
+String basename(String path) {
+  final segments = path.split("/");
+
+  if (path.endsWith("/")) {
+    return segments[segments.length - 2];
+  } else {
+    return segments.last;
+  }
 }
