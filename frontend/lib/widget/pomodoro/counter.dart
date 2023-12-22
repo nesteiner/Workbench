@@ -5,7 +5,10 @@ import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
 class CounterWidget extends StatelessWidget {
-  late final TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
+
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();

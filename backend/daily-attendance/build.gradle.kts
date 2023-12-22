@@ -17,6 +17,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation(project(":common"))
     implementation(project(":login"))
+    implementation(project(":websocket"))
 }
 
 tasks.withType<Test> {

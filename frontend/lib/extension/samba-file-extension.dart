@@ -8,7 +8,7 @@ extension SambaFileExtensions on List<SambaFile> {
     for (final entity in this) {
       if (entity.filetype == FileType.directory) {
         dirs.add(entity);
-      } else if (entity.filetype != FileType.unknown) {
+      } else {
         files.add(entity);
       }
     }
@@ -32,7 +32,7 @@ extension SambaFileExtensions on List<SambaFile> {
     for (final entity in this) {
       if (entity.filetype == FileType.directory) {
         dirs.add(entity);
-      } else if (entity.filetype != FileType.unknown) {
+      } else {
         files.add(entity);
       }
     }
@@ -50,7 +50,7 @@ extension SambaFileExtensions on List<SambaFile> {
     for (final entity in this) {
       if (entity.filetype == FileType.directory) {
         dirs.add(entity);
-      } else if (entity.filetype != FileType.unknown) {
+      } else {
         files.add(entity);
       }
     }

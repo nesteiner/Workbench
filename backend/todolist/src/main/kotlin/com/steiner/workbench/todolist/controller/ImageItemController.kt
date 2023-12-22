@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @RestController
-@RequestMapping("/todolist/image")
+@RequestMapping("/{uid}/todolist/image")
 class ImageItemController(
         val sdf: SimpleDateFormat = SimpleDateFormat("yyyyMMdd")
 ) {

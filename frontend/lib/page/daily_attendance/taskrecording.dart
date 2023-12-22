@@ -13,7 +13,10 @@ import 'package:provider/provider.dart';
 /// ATTENTION
 /// fuck you, you can give a getter function
 class TaskRecording extends StatelessWidget {
-  late final DailyAttendanceState state;
+  DailyAttendanceState? _state;
+  DailyAttendanceState get state => _state!;
+  set state(DailyAttendanceState value) => _state ??= value;
+
   late final Widget backgroundImage;
 
   late final ValueNotifier<bool> isdoneNotifier;
@@ -133,7 +136,7 @@ class TaskRecording extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Icon(Icons.archive, color: Colors.black,),
+                      const Icon(Icons.archive_outlined, color: Colors.black,),
                       SizedBox(width: settings["common.unit.size"]),
                       const Text("归档")
                     ],
@@ -146,8 +149,8 @@ class TaskRecording extends StatelessWidget {
                 actions(BuildContext context1) => [
                   TextButton(
                     onPressed: () {
-                      dailyAttendnaceNavigatorKey.currentState?.pop();
-                      // Navigator.pop(context1);
+                      // dailyAttendnaceNavigatorKey.currentState?.pop();
+                      Navigator.pop(context1);
                     },
 
                     child: const Text("取消"),
@@ -155,7 +158,7 @@ class TaskRecording extends StatelessWidget {
 
                   TextButton(
                     onPressed: () async {
-                      // Navigator.pop(context1);
+                      Navigator.pop(context1);
                       dailyAttendnaceNavigatorKey.currentState?.popUntil(ModalRoute.withName(dailyAttendanceRoutes["taskpage"]!));
                       await state.deleteTask(currentTask);
                     },

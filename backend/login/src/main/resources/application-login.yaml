@@ -9,9 +9,10 @@ open:
   urls:
     - "/authenticate"
     - "/user/register"
-    - "/todolist/image/download/*"
-    - "/daily-attendance/icon/**"
+    - "/*/todolist/image/download/*"
+    - "/*/daily-attendance/icon/**"
     - "/samba/play"
     - "/samba/play-test"
     - "/check"
     - "/samba/check/login"
+    - "/websocket/**"

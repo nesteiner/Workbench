@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":daily-attendance"))
     implementation(project(":clipboard"))
     implementation(project(":samba"))
+    implementation(project(":websocket"))
 }
 
 tasks.withType<Test> {

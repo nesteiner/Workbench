@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
-import 'package:frontend/page/todolist/taskdetail.dart';
+import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/utils.dart';
 import 'package:provider/provider.dart';
@@ -20,12 +20,20 @@ class TaskWidget extends StatefulWidget {
 }
 
 class TaskWidgetState extends State<TaskWidget> {
-  late TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
+
+  GlobalState? _globalState;
+  GlobalState get globalState => _globalState!;
+  set globalState(GlobalState value) => _globalState ??= value;
+
   bool ishover = false;
 
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
+    globalState = context.read<GlobalState>();
 
     return GestureDetector(
       onTap: () {
@@ -66,18 +74,18 @@ class TaskWidgetState extends State<TaskWidget> {
       child: text
     );
 
-    final color = Color.fromRGBO(0, 0, 0, 0.3);
+    const color = Color.fromRGBO(0, 0, 0, 0.3);
 
     late List<Widget> children;
 
-    if (widget.task.subtasks != null && widget.task.subtasks!.length > 0) {
+    if (widget.task.subtasks != null && widget.task.subtasks!.isNotEmpty) {
       final attachSubTask = SizedBox(
         height: settings["widget.task.attach.height"],
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.list, color: color,),
+            const Icon(Icons.list, color: color,),
             Selector<TodoListState, String>(
               selector: (_, state) {
                 int subtaskCount = widget.task.subtasks!.length;
@@ -85,7 +93,7 @@ class TaskWidgetState extends State<TaskWidget> {
                 return "$subtaskDoneCount/$subtaskCount";
               },
 
-              builder: (_, value, child) => Text(value, style: TextStyle(color: color),),
+              builder: (_, value, child) => Text(value, style: const TextStyle(fontSize: 16, color: color),),
             )
           ],
         ),
@@ -103,9 +111,10 @@ class TaskWidgetState extends State<TaskWidget> {
     if (!(widget.task.note?.isEmpty ?? true)) {
       final noteAttach = Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SvgPicture.asset("assets/note.svg", height: settings["widget.task.attach.height"],),
-          SizedBox(width: 2,)
+          const SizedBox(width: 2,)
         ],
       );
 
@@ -114,21 +123,26 @@ class TaskWidgetState extends State<TaskWidget> {
 
     late Widget taskAttachment;
     if (children.isEmpty) {
-      taskAttachment = SizedBox.shrink();
+      taskAttachment = const SizedBox.shrink();
     } else {
       taskAttachment = Container(
         padding: settings["widget.task.attach.padding"],
         child: Wrap(
           direction: Axis.horizontal,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: children,
         ),
       );
     }
 
+    double? width;
+
+    if (globalState.isDesktop) {
+      width = settings["widget.task.width"];
+    }
 
     final body = Container(
-      width: settings["widget.task.width"],
-
+      width: width,
       constraints: BoxConstraints(
         minHeight: settings["widget.task.height"],
       ),
@@ -174,7 +188,7 @@ class TaskWidgetState extends State<TaskWidget> {
               top: 0,
               left: 0,
               bottom: 0,
-              child: _leftline(),
+              child: leftline(),
             )
           ],
         ),
@@ -187,7 +201,7 @@ class TaskWidgetState extends State<TaskWidget> {
     );
   }
 
-  Widget _leftline() {
+  Widget leftline() {
     getwidget(Color color, double width) => Container(
       width: width,
       decoration: BoxDecoration(

@@ -1,7 +1,7 @@
 package com.steiner.workbench.daily_attendance
 
 import com.steiner.workbench.common.util.CURRENT_TIME_ZONE
-import com.steiner.workbench.common.util.shanghaiNow
+import com.steiner.workbench.common.util.now
 import kotlinx.datetime.toLocalDateTime
 import org.junit.jupiter.api.Test
 import kotlin.time.DurationUnit
@@ -10,7 +10,7 @@ import com.steiner.workbench.daily_attendance.iterate.rangeTo
 class Latest7DayTest {
     @Test
     fun `test latest 7 day`() {
-        val currentDay = shanghaiNow()
+        val currentDay = now()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
         val past6Local = currentDay.minus(6.toDuration(DurationUnit.DAYS))
         val past6LocalDate = past6Local.toLocalDateTime(CURRENT_TIME_ZONE).date

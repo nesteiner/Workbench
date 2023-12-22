@@ -8,7 +8,9 @@ import 'package:provider/provider.dart';
 class TaskWidget extends StatelessWidget {
   final da.Task task;
 
-  late final DailyAttendanceState state;
+  DailyAttendanceState? _state;
+  DailyAttendanceState get state => _state!;
+  set state(DailyAttendanceState value) => _state ??= value;
 
   TaskWidget({required this.task});
 
@@ -23,7 +25,7 @@ class TaskWidget extends StatelessWidget {
         final isdone = value.$2;
         if (icon is da.IconWord) {
           if (isdone) {
-            return Container(
+            return SizedBox(
               width: settings["widget.daily-attendance.task.icon.size"],
               height: settings["widget.daily-attendance.task.icon.size"],
               child: Center(

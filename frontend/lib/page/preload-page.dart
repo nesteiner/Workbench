@@ -1,8 +1,11 @@
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/api/clipboard-api.dart';
 import 'package:frontend/api/daily-attendance-api.dart';
-import 'package:frontend/api/login-api.dart';
+import 'package:frontend/api/user-api.dart';
 import 'package:frontend/api/preload-api.dart';
 import 'package:frontend/api/samba-api.dart';
 import 'package:frontend/api/todolist-api.dart';
@@ -11,7 +14,7 @@ import 'package:frontend/controller/file-manager-controller.dart';
 import 'package:frontend/state/clipboard-state.dart';
 import 'package:frontend/state/daily-attendance-state.dart';
 import 'package:frontend/state/global-state.dart';
-import 'package:frontend/state/login-state.dart';
+import 'package:frontend/state/user-state.dart';
 import 'package:frontend/state/samba-state.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
@@ -37,17 +40,22 @@ class PreloadPageState extends State<PreloadPage> {
   // for modify
   int index = 0;
 
+  // for get device info
+  final deviceInfo = DeviceInfoPlugin();
+
   final Map<String, TextEditingController> controllers = {
     "backend-url": TextEditingController(text: "http://192.168.31.72:8082/api"),
     "samba-host-url": TextEditingController(text: "192.168.31.72"),
     "samba-user": TextEditingController(text: "steiner"),
-    "samba-password": TextEditingController(text: "779151714")
+    "samba-password": TextEditingController(text: "779151714"),
+    "nickname": TextEditingController()
   };
 
   String get backendUrl => controllers["backend-url"]!.text;
   String get sambaHostUrl => controllers["samba-host-url"]!.text;
   String get sambaUser => controllers["samba-user"]!.text;
   String get sambaPassword => controllers["samba-password"]!.text;
+  String get nickname => controllers["nickname"]!.text;
   
   @override
   Widget build(BuildContext context) {
@@ -57,6 +65,7 @@ class PreloadPageState extends State<PreloadPage> {
     return Scaffold(
       appBar: AppBar(title: const Text("第一次加载"),),
       body: buildBody(context),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -112,9 +121,15 @@ class PreloadPageState extends State<PreloadPage> {
               break;
             }
 
+            setState(() {
+              index += 1;
+            });
             scaffoldMessenger?.clearSnackBars();
             scaffoldMessenger?.showSnackBar(okSnackbar);
+
+          case 2:
             await Future.wait([
+              state.preferences.setString(keyOfNickname, nickname),
               state.preferences.setString(keyOfBackendUrl, backendUrl),
               state.preferences.setString(keyOfSambaHostUrl, sambaHostUrl),
               state.preferences.setString(keyOfSambaUser, sambaUser),
@@ -122,23 +137,23 @@ class PreloadPageState extends State<PreloadPage> {
             ]);
 
             state.preferences.setBool(keyOfConfigured, true);
-            final loginApi = LoginApi(loginUrl: join(backendUrl, "authenticate"), userUrl: join(backendUrl, "user"), errorHandler: errorHandler);
-            final loginState = LoginState(api: loginApi);
-            state.loginState = loginState;
+            final loginApi = UserApi(loginUrl: state.loginUrl, userUrl: state.userUrl, defaultRoleUrl: state.defaultRoleUrl, errorHandler: errorHandler);
+            final loginState = UserState(api: loginApi);
+            state.userState = loginState;
 
-            final todolistApi = TodoListApi(todolistUrl: join(backendUrl, "todolist"), errorHandler: errorHandler);
+            final todolistApi = TodoListApi(todolistUrl: state.todolistUrl, errorHandler: errorHandler);
             final todolistState = TodoListState(api: todolistApi);
             state.todolistState = todolistState;
 
-            final dailyAttendanceApi = DailyAttendanceApi(dailyAttendanceUrl: join(backendUrl, "daily-attendance"), errorHandler: errorHandler);
+            final dailyAttendanceApi = DailyAttendanceApi(dailyAttendanceUrl: state.dailyAttendanceUrl, errorHandler: errorHandler);
             final dailyAttendanceState = DailyAttendanceState(api: dailyAttendanceApi, plugin: GlobalState.plugin);
             state.dailyAttendanceState = dailyAttendanceState;
 
-            final sambaApi = SambaApi(sambaUrl: join(backendUrl, "samba"), sambaHostUrl: sambaHostUrl, errorHandler: errorHandler);
+            final sambaApi = SambaApi(sambaUrl: state.sambaUrl, sambaHostUrl: sambaHostUrl, errorHandler: errorHandler);
             final sambaState = SambaState(api: sambaApi, controller: FileManagerController());
             state.sambaState = sambaState;
 
-            final clipboardApi = ClipboardApi(clipboardUrl: join(backendUrl, "clipboard"), errorHandler: errorHandler);
+            final clipboardApi = ClipboardApi(clipboardUrl: state.clipboardUrl, errorHandler: errorHandler);
             final clipboardState = ClipboardState(api: clipboardApi, size: 10);
             state.clipboardState = clipboardState;
 
@@ -197,6 +212,30 @@ class PreloadPageState extends State<PreloadPage> {
             )
         ),
 
+        Step(
+          title: const Text("设置 昵称"),
+          content: FutureBuilder(
+            future: loadDeviceInfo(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text(snapshot.error.toString());
+              }
+
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              controllers["nickname"]!.text = snapshot.requireData;
+              return TextField(
+                controller: controllers["nickname"],
+                decoration: const InputDecoration(
+                    hintText: "输入 昵称",
+                    labelText: "昵称"
+                ),
+              );
+            }
+          )
+        )
       ],
     );
   }
@@ -205,8 +244,23 @@ class PreloadPageState extends State<PreloadPage> {
     logger.e("error", error: exception.error, stackTrace: exception.stackTrace);
 
     if (exception.response?.statusCode == 401) {
-      state.logout();
+      await state.logout();
       state.update();
+    }
+  }
+
+  Future<String> loadDeviceInfo() async {
+    if (Platform.isAndroid) {
+      final android = await deviceInfo.androidInfo;
+      return android.model;
+    } else if (Platform.isLinux) {
+      final linux = await deviceInfo.linuxInfo;
+      return linux.name;
+    } else if (Platform.isWindows) {
+      final windows = await deviceInfo.windowsInfo;
+      return windows.computerName;
+    } else {
+      throw Exception("this platform is not supported");
     }
   }
 }

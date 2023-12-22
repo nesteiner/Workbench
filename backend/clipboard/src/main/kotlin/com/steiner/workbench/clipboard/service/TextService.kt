@@ -4,7 +4,7 @@ import com.steiner.workbench.clipboard.model.Text
 import com.steiner.workbench.clipboard.request.PostTextRequest
 import com.steiner.workbench.clipboard.table.Texts
 import com.steiner.workbench.common.util.Page
-import com.steiner.workbench.common.util.shanghaiNow
+import com.steiner.workbench.common.util.now
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -20,7 +20,7 @@ class TextService {
     fun insertOne(request: PostTextRequest): Text {
         val id = Texts.insert {
             it[text] = request.text
-            it[createTime] = shanghaiNow()
+            it[createTime] = now()
             it[userid] = request.userid
         } get Texts.id
 

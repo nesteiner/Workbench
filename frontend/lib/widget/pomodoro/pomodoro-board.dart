@@ -8,7 +8,9 @@ import 'package:frontend/widget/pomodoro/taskcard.dart';
 import 'package:provider/provider.dart';
 
 class PomodoroBoard extends StatelessWidget {
-  late final TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class PomodoroBoard extends StatelessWidget {
 
         final child = Container(
             decoration: BoxDecoration(color: getcolor(focusState)),
+            padding: settings["widget.pomodoro.padding"],
             child: SingleChildScrollView(child: column)
         );
 

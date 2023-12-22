@@ -13,7 +13,9 @@ import 'package:provider/provider.dart';
 
 class TaskGroupWidget extends StatelessWidget {
   final TaskGroup taskgroup;
-  late final TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
   TaskGroupWidget({super.key, required this.taskgroup});
 
   @override
@@ -139,7 +141,7 @@ class TaskGroupWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(children: [name, SizedBox(width: 12,), count],),
+        Row(children: [name, const SizedBox(width: 12,), count],),
         Row(children: [pomodoroButton, options],)
       ],
     );
@@ -318,9 +320,14 @@ class TaskGroupWidget extends StatelessWidget {
   }
 
   Widget buildTaskWidgetDrag(BuildContext context, Task task, int taskgroupIndex, Material child) {
-    final feedback = Opacity(opacity: 0.5, child: child,);
+    final size = MediaQuery.of(context).size;
 
-    return Draggable<Task>(
+    final feedback = SizedBox(
+        width: size.width * 0.95,
+        child: Opacity(opacity: 0.5, child: child,)
+    );
+
+    return LongPressDraggable<Task>(
       data: task,
       child: child,
       feedback: feedback,
@@ -439,7 +446,7 @@ class TaskGroupWidget extends StatelessWidget {
       ],
     );
 
-    showDialog(context: context, builder: (context) => AlertDialog(
+    showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: title,
       content: content,
       actions: actions(context),
@@ -496,7 +503,7 @@ class TaskGroupWidget extends StatelessWidget {
       ],
     );
 
-    showDialog(context: context, builder: (context) => AlertDialog(
+    showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: title,
       content: content,
       actions: actions(context),
@@ -535,7 +542,7 @@ class TaskGroupWidget extends StatelessWidget {
       ],
     );
 
-    showDialog(context: context, builder: (context) => AlertDialog(
+    showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: title,
       content: content,
       actions: actions(context),

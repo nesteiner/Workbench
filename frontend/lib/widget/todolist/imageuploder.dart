@@ -68,8 +68,8 @@ class ImageUploaderState extends State<ImageUploader> {
               ),
 
               onPressed: () {
-                // navigatorKey.currentState?.pop();
-                Navigator.pop(context);
+                navigatorKey.currentState?.pop();
+                // Navigator.pop(context);
               },
 
               child: const Text("取消", style: TextStyle(color: Colors.blue),),
@@ -86,8 +86,8 @@ class ImageUploaderState extends State<ImageUploader> {
 
               onPressed: () async {
                 controller.crop();
-                // navigatorKey.currentState?.pop();
-                Navigator.pop(context);
+                navigatorKey.currentState?.pop();
+                // Navigator.pop(context);
               },
 
               child: const Text("确定", style: TextStyle(color: Colors.white),),
@@ -112,7 +112,7 @@ class ImageUploaderState extends State<ImageUploader> {
 
           showDialog(
               context: context,
-
+              useRootNavigator: false,
               builder: (context) => Center(child: content)
           );
 

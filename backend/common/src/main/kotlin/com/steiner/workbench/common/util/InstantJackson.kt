@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.SerializerProvider
 
 import com.steiner.workbench.common.formatDateFormat
 import com.steiner.workbench.common.parseDateFormat
-import com.steiner.workbench.common.truncedDateFormat
 import kotlinx.datetime.Instant
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.toInstant
@@ -17,8 +16,8 @@ import kotlinx.datetime.toLocalDateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.jackson.JsonComponent
-import java.time.LocalDateTime
-
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @JsonComponent
 class InstantJackson {
@@ -27,6 +26,7 @@ class InstantJackson {
     }
 
     class Serializer : JsonSerializer<Instant>() {
+        @Synchronized
         override fun serialize(value: Instant, gen: JsonGenerator, serializers: SerializerProvider) {
             val isostring = value.toLocalDateTime(CURRENT_TIME_ZONE).toInstant(UtcOffset(-8)).toString()
             /**
@@ -44,14 +44,16 @@ class InstantJackson {
             gen.writeString(result)
             **/
 
-            val result: String = try {
-                val time = LocalDateTime.parse(isostring, formatDateFormat)
-                time.format(formatDateFormat)
-            } catch (exception: Exception) {
-                val time = LocalDateTime.parse(isostring, truncedDateFormat)
-                time.format(truncedDateFormat)
-            }
+//            val result: String = try {
+//                val time = LocalDateTime.parse(isostring, formatDateFormat)
+//                time.format(formatDateFormat)
+//            } catch (exception: Exception) {
+//                val time = LocalDateTime.parse(isostring, truncedDateFormat)
+//                time.format(truncedDateFormat)
+//            }
 
+            val date = ZonedDateTime.parse(isostring).toInstant()
+            val result = formatDateFormat.format(date.atZone(ZoneOffset.UTC))
             gen.writeString(result)
 
         }

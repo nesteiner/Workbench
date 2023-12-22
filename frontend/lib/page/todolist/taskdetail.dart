@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
+import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/utils.dart';
 import 'package:provider/provider.dart';
@@ -22,8 +23,12 @@ class TaskDetailState extends State<TaskDetail> {
   bool toggleSearch = false;
 
   TodoListState? _state;
-
   TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
+
+  GlobalState? _globalState;
+  GlobalState get globalState => _globalState!;
+  set globalState(GlobalState value) => _globalState ??= value;
 
   late void Function(void Function()) setStateToggleCreate;
   late void Function(void Function()) setStateToggleSearch;
@@ -35,26 +40,33 @@ class TaskDetailState extends State<TaskDetail> {
   @override
   Widget build(BuildContext context) {
     // TODO later to look up state
-    _state ??= context.read<TodoListState>();
+    state = context.read<TodoListState>();
+    globalState = context.read<GlobalState>();
 
-    final center = Center(
-      child: Column(
-        children: [
-          buildInput(context),
-          buildState(context),
-          buildTime(context),
-          buildNote(context),
-          buildPriority(context),
-          buildTags(context),
-          buildEditExpectAndFinishTime(context),
-          buildSubTasks(context),
-        ],
+    final center = Align(
+      alignment: Alignment.topCenter,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            buildInput(context),
+            buildState(context),
+            buildDeadline(context),
+            buildNotifyTime(context),
+            buildNote(context),
+            buildPriority(context),
+            buildTags(context),
+            buildEditExpectAndFinishTime(context),
+            buildSubTasks(context),
+          ],
+        ),
       ),
     );
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.task.name),),
-      body: Padding(padding: settings["widget.task.form.padding"], child: center,)
+      body: Padding(padding: settings["widget.task.form.padding"], child: center,),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -144,11 +156,52 @@ class TaskDetailState extends State<TaskDetail> {
     );
   }
 
-  Widget buildTime(BuildContext context) {
-    late void Function(void Function()) setStateDeadline;
-    late void Function(void Function()) setStateNotify;
+  Widget buildDeadline(BuildContext context) {
+    onPressedDeadline(bool exist) async {
+      final now = DateTime.now();
+      DateTime? date;
 
-    final rowTimeLeft = SizedBox(
+      if (exist) {
+        date = await showDatePicker(
+            context: context,
+            initialDate: now,
+            firstDate: now,
+            lastDate: now.add(const Duration(days: 30)),
+            cancelText: "删除",
+            builder: (context, child) => PopScope(
+                canPop: false,
+                child: child!
+            )
+        );
+      } else {
+        date = await showDatePicker(
+          context: context,
+          initialDate: now,
+          firstDate: now,
+          lastDate: now.add(const Duration(days: 30)),
+        );
+      }
+
+      if (date != null) {
+        final timeOfDay = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+
+        if (timeOfDay != null) {
+          final datetime = DateTime(date.year, date.month, date.day, timeOfDay.hour, timeOfDay.minute);
+
+          widget.task.deadline = datetime;
+
+          final request = UpdateTaskRequest(id: widget.task.id, deadline: formatDateTime(datetime));
+          await state.updateTask(request);
+        }
+      } else if (date == null && exist) {
+        widget.task.deadline = null;
+
+        await state.removeDeadline(widget.task.id);
+      }
+
+    }
+
+    final left = SizedBox(
       width: settings["widget.task.form.left.width"],
       height: settings["widget.task.form.item.height"],
       child: const Row(
@@ -157,133 +210,130 @@ class TaskDetailState extends State<TaskDetail> {
         children: [
           Icon(Icons.calendar_today_outlined, color: Color.fromRGBO(0, 0, 0, 0.5),),
           SizedBox(width: 8,),
-          Text("时间", style: TextStyle(color: Color.fromRGBO(140, 140, 140, 1)))
+          Text("截止时间", style: TextStyle(color: Color.fromRGBO(140, 140, 140, 1)))
         ],
       ),
     );
 
-    final deadlineText = StatefulBuilder(builder: (context, setState) {
-      setStateDeadline = setState;
-      final flagDeadline = widget.task.deadline != null;
+    return Selector<TodoListState, DateTime?>(
+      selector: (_, state) => widget.task.deadline,
+      builder: (_, value, child) {
+        final exist = value != null;
 
-      if (flagDeadline) {
-        return Text(formatDateTime(widget.task.deadline!), style: const TextStyle(color: Colors.blue),);
-      } else {
-        return const Text("设置截止时间", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),);
-      }
-    },);
-
-
-    final deadlinePart = TextButton(
-      style: TextButton.styleFrom(
-        padding: EdgeInsets.zero
-      ),
-      onPressed: () async {
-        final now = DateTime.now();
-        final date = await showDatePicker(context: context, initialDate: now, firstDate: now, lastDate: now.add(const Duration(days: 30)));
-        if (date != null) {
-          final timeOfDay = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-
-          if (timeOfDay != null) {
-            final datetime = DateTime(date.year, date.month, date.day, timeOfDay.hour, timeOfDay.minute);
-
-            setStateDeadline(() {
-              widget.task.deadline = datetime;
-            });
-
-            final request = UpdateTaskRequest(id: widget.task.id, deadline: formatDateTime(datetime));
-            await state.updateTask(request);
-          }
+        late Widget deadlineText;
+        if (exist) {
+          deadlineText = Text(formatDateTime(value), style: const TextStyle(color: Colors.blue),);
+        } else {
+          deadlineText = const Text("设置截止时间");
         }
-      },
-      child: deadlineText
-    );
 
-    onPressedNotifyTime() async {
+        return Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            left,
+
+            TextButton(
+                style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero
+                ),
+
+                onPressed: () async => await onPressedDeadline(exist),
+                child: deadlineText
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildNotifyTime(BuildContext context) {
+    onPressedNotifyTime(bool exist) async {
       final now = DateTime.now();
-      final date = await showDatePicker(context: context, initialDate: now, firstDate: now, lastDate: now.add(const Duration(days: 30)));
+      DateTime? date;
+
+      if (exist) {
+        date = await showDatePicker(
+            context: context,
+            initialDate: now,
+            firstDate: now,
+            lastDate: now.add(const Duration(days: 30)),
+            cancelText: "删除",
+            builder: (context, child) => PopScope(
+                canPop: false,
+                child: child!
+            )
+        );
+      } else {
+        date = await showDatePicker(
+          context: context,
+          initialDate: now,
+          firstDate: now,
+          lastDate: now.add(const Duration(days: 30)),
+        );
+      }
+
       if (date != null) {
         final timeOfDay = await showTimePicker(context: context, initialTime: TimeOfDay.now());
 
         if (timeOfDay != null) {
           final datetime = DateTime(date.year, date.month, date.day, timeOfDay.hour, timeOfDay.minute);
 
-          setStateNotify(() {
-            widget.task.notifyTime = datetime;
-          });
+          widget.task.notifyTime = datetime;
 
           final request = UpdateTaskRequest(id: widget.task.id, notifyTime: formatDateTime(datetime));
           await state.updateTask(request);
         }
+      } else if (date == null && exist) {
+        widget.task.notifyTime = null;
+
+        await state.removeNotifyTime(widget.task.id);
       }
     }
 
-    final notifyTimePart = StatefulBuilder(builder: (context, setState) {
-      setStateNotify = setState;
-      final flagNotifyTime = widget.task.notifyTime != null;
-
-      if (flagNotifyTime) {
-        return TextButton(
-          onPressed: onPressedNotifyTime,
-          child: Text(formatDateTime(widget.task.notifyTime!), style: const TextStyle(color: Colors.blue),)
-        );
-      } else {
-        return IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: onPressedNotifyTime,
-          icon: const Icon(Icons.alarm, color: Color.fromRGBO(0, 0, 0, 0.5),),
-        );
-      }
-    });
-
-    final resetPart = PopupMenuButton(
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          onTap: () async {
-            setStateDeadline(() {
-              widget.task.deadline = null;
-            });
-
-            await state.removeDeadline(widget.task.id);
-          },
-
-          child: const Text("重置截止时间"),
-        ),
-
-        PopupMenuItem(
-          onTap: () async {
-            setStateNotify(() {
-              widget.task.notifyTime = null;
-            });
-
-            await state.removeNotifyTime(widget.task.id);
-          },
-
-          child: const Text("重置提醒时间"),
-        )
-      ],
-      child: const Icon(Icons.refresh, color: Color.fromRGBO(0, 0, 0, 0.5),),
+    final left = SizedBox(
+      width: settings["widget.task.form.left.width"],
+      height: settings["widget.task.form.item.height"],
+      child: const Row(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.calendar_today_outlined, color: Color.fromRGBO(0, 0, 0, 0.5),),
+          SizedBox(width: 8,),
+          Text("提醒时间", style: TextStyle(color: Color.fromRGBO(140, 140, 140, 1)))
+        ],
+      ),
     );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        rowTimeLeft,
-        Row(
+    return Selector<TodoListState, DateTime?>(
+      selector: (_, state) => widget.task.notifyTime,
+      builder: (_, value, child) {
+
+        final exist = value != null;
+        late Widget buttonText;
+        if (exist) {
+          buttonText = Text(formatDateTime(widget.task.notifyTime!), style: const TextStyle(color: Colors.blue),);
+        } else {
+          buttonText = const Text("设置提醒时间",);
+        }
+
+        return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            deadlinePart,
-            const SizedBox(width: 16,),
-            notifyTimePart,
+            left,
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero
+              ),
 
-            const SizedBox(width: 16,),
-            resetPart
+              onPressed: () async => await onPressedNotifyTime(exist),
+              child: buttonText,
+            )
           ],
-        )
-      ],
+        );
+      },
     );
   }
+
 
   Widget buildNote(BuildContext context) {
     bool toggled = false;
@@ -305,9 +355,8 @@ class TaskDetailState extends State<TaskDetail> {
       ),
     );
 
-    final width = MediaQuery.of(context).size.width;
+    
     final textfield = Container(
-      width: width * 0.6,
       // TODO later to check this
       margin: settings["widget.task.form.note.edit.margin"],
       child: TextField(
@@ -371,13 +420,12 @@ class TaskDetailState extends State<TaskDetail> {
 
           child: SizedBox(
             // height: settings["widget.task.form.item.height"],
-            child: Center(
-              child: Column(
-               children: [
-                 SizedBox(height: 8,),
-                 noteentry,
-               ],
-              )
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 8,),
+                noteentry,
+              ],
             )
           ),
         );
@@ -400,7 +448,7 @@ class TaskDetailState extends State<TaskDetail> {
 
       children: [
         rowNoteLeft,
-        noteedit
+        Expanded(child: noteedit)
       ],
     );
 
@@ -891,6 +939,7 @@ class TaskDetailState extends State<TaskDetail> {
           setState(() {
             toggled = true;
           });
+
         },
 
         child: const Row(children: [Icon(Icons.add, color: Colors.blue,), Text("添加子任务", style: TextStyle(color: Colors.blue),)],),
@@ -982,15 +1031,16 @@ class TaskDetailState extends State<TaskDetail> {
       height: settings["widget.task.form.item.height"],
       // 微调
       padding: const EdgeInsets.only(left: 4),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text("Ast/Est", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),)
-        ],
+      child: const Align(
+          widthFactor: 1,
+          heightFactor: 1,
+          alignment: Alignment.centerLeft,
+          child: Text("Ast/Est", style: TextStyle(color: Color.fromRGBO(0, 0, 0, 0.5)),)
       ),
     );
 
-    final right = Row(
+    final field = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Selector<TodoListState, int>(
           selector: (_, state) => widget.task.finishTime,
@@ -1017,7 +1067,11 @@ class TaskDetailState extends State<TaskDetail> {
             child: Text(value.toString()),
           ),
         ),
+      ]);
 
+    final buttons = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
         Container(
           padding: settings["page.taskdetail.edit.expect-finish.button.padding"],
           margin: settings["page.taskdetail.edit.expect-finish.button.margin"],
@@ -1029,8 +1083,8 @@ class TaskDetailState extends State<TaskDetail> {
               await state.updateTask(request);
             },
 
-            child: Center(
-              child: const Icon(Icons.arrow_drop_up),
+            child: const Center(
+              child: Icon(Icons.arrow_drop_up),
             ),
           ),
         ),
@@ -1051,19 +1105,28 @@ class TaskDetailState extends State<TaskDetail> {
               }
             },
 
-            child: Center(
-              child: const Icon(Icons.arrow_drop_down),
+            child: const Center(
+              child: Icon(Icons.arrow_drop_down),
             ),
           ),
         )
       ],
     );
 
+
     return Row(
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         left,
-        right
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            field,
+            buttons
+          ],
+        )
       ],
     );
   }
@@ -1117,6 +1180,7 @@ class TaskDetailState extends State<TaskDetail> {
 
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (context) => AlertDialog(
         title: const Text("编辑这个标签"),
         content: textfield,

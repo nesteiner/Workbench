@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/utils.dart';
 import 'package:logger/logger.dart';
+import 'package:web_socket_channel/io.dart';
 
 Map<String, dynamic> settings = {
   "page.login.body.padding": const EdgeInsets.symmetric(vertical: 10.0),
   "page.login.body.margin-top": 50.0,
   "page.login.button.height": 50.0,
+  "page.taskproject-add.content.padding": const EdgeInsets.symmetric(horizontal: 8),
+  "page.taskproject-add.item.margin": const EdgeInsets.symmetric(vertical: 4),
+
   "page.taskgroup-board.appbar.font.color": const Color.fromRGBO(0, 0, 0, 0.5),
   "page.taskgroup-board.appbar.menu.padding": const EdgeInsets.only(left: 12),
   "page.taskgroup-board.appbar.menu.icon.margin": 10.0,
@@ -22,15 +26,17 @@ Map<String, dynamic> settings = {
       color: Colors.white),
   "page.taskgroup-board.appbar.dialog.edit.width": 300.0,
   "page.taskgroup-board.appbar.dialog.edit.padding": const EdgeInsets.all(16),
-  "page.taskgroup-board.appbar.dialog.edit.title.input-decoration": const InputDecoration(
-    border: OutlineInputBorder(),
-    contentPadding: EdgeInsets.symmetric(horizontal: 8),
+  "page.taskgroup-board.appbar.dialog.edit.title.input-decoration": (String labelText) => InputDecoration(
+    border: const OutlineInputBorder(),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+    labelText: labelText
   ),
 
-  "page.taskgroup-board.appbar.dialog.edit.profile.input-decoration": const InputDecoration(
-      border: OutlineInputBorder(),
-      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      hintText: "请描述项目概述"
+  "page.taskgroup-board.appbar.dialog.edit.profile.input-decoration": (String labelText) => InputDecoration(
+      border: const OutlineInputBorder(),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      hintText: "请描述项目概述",
+      labelText: labelText
   ),
 
   "page.taskdetail.edit.expect-finish.text-container.padding": const EdgeInsets
@@ -205,6 +211,9 @@ Map<String, dynamic> settings = {
 
   "widget.taskproject.thumbnail.max-height": 100.0,
   "widget.taskproject.thumbnail.size.mobile": 40.0,
+  "widget.taskproject.thumbnail.text-style": const TextStyle(fontSize: 24),
+  "widget.taskproject.thumbnail.footer.text-style": const TextStyle(fontSize: 16, color: Color.fromRGBO(0, 0, 0, 0.3)),
+  "widget.taskproject.padding": const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8),
 
   "page.taskgroup-board.width": 296.0,
   "page.taskgroup-board.items.padding": const EdgeInsets.symmetric(
@@ -214,7 +223,6 @@ Map<String, dynamic> settings = {
       left: 4, right: 8),
 
   "widget.taskgroup.head.height": 40.0,
-  "widget.taskgroup.height.mobile": 50.0,
 
   "widget.image-uploader.buttons.margin": 10.0,
 
@@ -242,7 +250,7 @@ Map<String, dynamic> settings = {
       color: Colors.grey),
 
   "widget.pomodoro.taskcard.image.size": 22.0,
-
+  "widget.pomodoro.padding": const EdgeInsets.symmetric(horizontal: 8.0),
   // please edit this two item together
   "widget.pomodoro.taskcard.padding": const EdgeInsets.only(
       top: 18, bottom: 18, left: 14, right: 14),
@@ -388,9 +396,12 @@ Map<String, dynamic> settings = {
 
   "page.daily-attendance.statistics.panel.item.padding": const EdgeInsets.all(8.0),
   "page.daily-attendance.statistics.panel.item.margin": const EdgeInsets.all(8.0),
+  "page.daily-attendance.statistics.panel.item.margin.mobile": const EdgeInsets.all(4.0),
   "page.daily-attendance.statistics.week.panel.item.size": 32.0,
+  "page.daily-attendance.statistics.week.panel.item.size.mobile": 24.0,
   "page.daily-attendance.statistics.week.panel.font.size": 16.0,
   "page.daily-attendance.statistics.panel.padding": const EdgeInsets.all(16.0),
+  "page.daily-attendance.statistics.panel.padding.mobile": const EdgeInsets.all(4.0),
   "page.daily-attendance.statistics.panel.width": 600.0,
   "page.daily-attendance.statistics.panel.margin": const EdgeInsets.only(top: 8),
   "page.daily-attendance.statistics.panel.decoration": const BoxDecoration(
@@ -486,12 +497,14 @@ const Map<String, String> dailyAttendanceRoutes = {
   "taskedit": "/edit",
   "task-recording": "/recording",
   "statistics": "/statistics",
-  "color-select": "/color-select"
+  "color-select": "/color-select",
+  "task-manage": "/task-manage"
 };
 
 const keyOfConfigured = "isconfigured";
 const keyOfJwtToken = "jwttoken";
 const keyOfBackendUrl = "backend-url";
+const keyOfNickname = "nickname";
 const keyOfSambaHostUrl = "samba-host-url";
 const keyOfSambaUser = "samba-user";
 const keyOfSambaPassword = "samba-password";
@@ -502,3 +515,5 @@ final logger = Logger(
   printer: PrettyPrinter(),
   output: null
 );
+
+IOWebSocketChannel? socket;

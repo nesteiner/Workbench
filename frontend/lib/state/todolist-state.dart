@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/api/api.dart';
 import 'package:frontend/api/todolist-api.dart';
+import 'package:frontend/constants.dart';
 import 'package:frontend/model/login.dart';
 import 'package:frontend/model/pomodoro.dart';
 import 'package:frontend/model/todolist.dart';
@@ -173,10 +174,12 @@ class TodoListState extends ChangeNotifier implements Api {
 
   Future<void> removeDeadline(int id) async {
     await api.removeDeadline(id);
+    notifyListeners();
   }
 
   Future<void> removeNotifyTime(int id) async {
     await api.removeNotifyTime(id);
+    notifyListeners();
   }
 
   Future<void> removeTag(int tagid, Task task) async {
@@ -226,7 +229,7 @@ class TodoListState extends ChangeNotifier implements Api {
     notifyListeners();
   }
 
- Future<void> insertTaskProject(PostTaskProjectRequest request) async {
+  Future<void> insertTaskProject(PostTaskProjectRequest request) async {
     TaskProject taskproject = await api.insertTaskProject(request);
     taskprojects.insert(0, taskproject);
     notifyListeners();
@@ -334,4 +337,20 @@ class TodoListState extends ChangeNotifier implements Api {
     }
   }
 
+  Future<void> loadTaskGroup(int id) async {
+    int index = taskgroups.indexWhere((element) => element.id == id);
+    logger.i("index is $index, id is $id");
+    if (index != -1) {
+      taskgroups[index] = await api.findTaskGroup(id);
+      notifyListeners();
+    }
+  }
+
+  Future<Task> loadTask(int id) async {
+    return await api.findTask(id);
+  }
+
+  void update() {
+    notifyListeners();
+  }
 }

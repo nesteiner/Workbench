@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import "dart:math" as math;
 import "dart:io";
 
+import "package:frontend/page/root-page.dart";
+
 String zeroPadding(int number) {
   if (number < 10) {
     return "0$number";
@@ -90,3 +92,5 @@ String basename(String path) {
     return segments.last;
   }
 }
+
+typedef SetStateCallback = void Function(void Function());

@@ -57,11 +57,11 @@ class JwtTokenUtil {
 
     private fun doGenerateToken(claims: Map<String, Any>, subject: String): String {
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(Date(System.currentTimeMillis()))
-                .setExpiration(Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
-                .signWith(SignatureAlgorithm.HS512, secret).compact()
+            .setClaims(claims)
+            .setSubject(subject)
+            .setIssuedAt(Date(System.currentTimeMillis()))
+            .setExpiration(Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+            .signWith(SignatureAlgorithm.HS512, secret).compact()
     }
 
     fun canTokenBeRefreshed(token: String): Boolean {

@@ -523,7 +523,7 @@ class ProgressDoing extends Progress {
   }
 }
 
-class Task {
+class Task implements Comparable<Task> {
   final int id;
   String name;
   Icon icon;
@@ -622,6 +622,12 @@ class Task {
         "-$persistenceDays"
         "-$consecutiveDays";
   }
+
+  @override
+  int compareTo(Task other) {
+    return id - other.id;
+  }
+
 }
 
 class ImageItem {

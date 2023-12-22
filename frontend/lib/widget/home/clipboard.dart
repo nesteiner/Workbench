@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/request/clipboard.dart';
 import 'package:frontend/state/clipboard-state.dart';
-import 'package:frontend/state/login-state.dart';
+import 'package:frontend/state/user-state.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
@@ -17,9 +17,9 @@ class ClipboardWidgetState extends State<ClipboardWidget> {
   ClipboardState? _state;
   ClipboardState get state => _state!;
   set state(ClipboardState value) => _state ??= value;
-  LoginState? _loginState;
-  LoginState get loginState => _loginState!;
-  set loginState(LoginState value) => _loginState ??= value;
+  UserState? _loginState;
+  UserState get loginState => _loginState!;
+  set loginState(UserState value) => _loginState ??= value;
 
   ClipboardWriter? clipboardWriter;
 
@@ -38,7 +38,7 @@ class ClipboardWidgetState extends State<ClipboardWidget> {
   @override
   Widget build(BuildContext context) {
     state = context.read<ClipboardState>();
-    loginState = context.read<LoginState>();
+    loginState = context.read<UserState>();
 
     return Container(
       decoration: settings["widget.home.clipboard.decoration"],
@@ -46,7 +46,7 @@ class ClipboardWidgetState extends State<ClipboardWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          buildListView(context),
+          Expanded(child: buildListView(context)),
           buildTextField(context)
         ],
       ),

@@ -19,10 +19,6 @@ enum ShowMode {
 
 class DailyAttendanceState extends ChangeNotifier implements Api {
   static final cron = Cron();
-  static const details = NotificationDetails(
-    linux: LinuxNotificationDetails(),
-    android: AndroidNotificationDetails("workbench", "workbench"),
-  );
 
   final DailyAttendanceApi api;
   final FlutterLocalNotificationsPlugin plugin;
@@ -45,13 +41,6 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     return currentDay == weekdays.last;
   }
 
-  bool? _notifyAble;
-  bool get notifyAble {
-    _notifyAble ??= Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
-    
-    return _notifyAble!;
-  }
-  
   DailyAttendanceState({required this.api, required this.plugin});
     
 
@@ -96,25 +85,11 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
       tasks[task.group] = [task];
     }
 
-    final now = DateTime.now();
     for (final notifyTime in task.notifyTimes) {
-      if (notifyAble) {
-        final scheduledDate = tz.TZDateTime(
-            tz.local, now.year, now.month, now.day, notifyTime.hour,
-            notifyTime.minute);
-        plugin.zonedSchedule(
-            task.id,
-            task.name,
-            task.encouragement,
-            scheduledDate,
-            details,
-            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime
-        );
-      } else {
-        cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
-          plugin.show(task.id, task.name, task.encouragement, null);
-        });
-      }
+      cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
+        plugin.show(task.id, task.name, task.encouragement, null);
+      });
+
     }
 
     notifyListeners();
@@ -167,25 +142,10 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
 
     plugin.cancel(request.id);
 
-    final now = DateTime.now();
     for (final notifyTime in task1.notifyTimes) {
-      if (notifyAble) {
-        final scheduledDate = tz.TZDateTime(
-            tz.local, now.year, now.month, now.day, notifyTime.hour,
-            notifyTime.minute);
-        plugin.zonedSchedule(
-            task1.id,
-            task1.name,
-            task1.encouragement,
-            scheduledDate,
-            details,
-            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime
-        );
-      } else {
-        cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
-          plugin.show(task1.id, task1.name, task1.encouragement, null);
-        });
-      }
+      cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
+        plugin.show(task1.id, task1.name, task1.encouragement, null);
+      });
     }
 
     notifyListeners();
@@ -253,26 +213,11 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     plugin.cancelAll();
 
     final tasksOfCurrentDay = await api.findAllOfCurrentDay();
-    final now = DateTime.now();
     for (final task in tasksOfCurrentDay) {
       for (final notifyTime in task.notifyTimes) {
-        if (notifyAble) {
-          final scheduledDate = tz.TZDateTime(
-              tz.local, now.year, now.month, now.day, notifyTime.hour,
-              notifyTime.minute);
-          plugin.zonedSchedule(
-              task.id,
-              task.name,
-              task.encouragement,
-              scheduledDate,
-              details,
-              uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime
-          );
-        } else {
-          cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
-            plugin.show(task.id, task.name, task.encouragement, null);
-          });
-        }
+        cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
+          plugin.show(task.id, task.name, task.encouragement, null);
+        });
       }
     }
 
@@ -312,6 +257,18 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
       mode = ShowMode.persistence;
     }
 
+    notifyListeners();
+  }
+
+  Future<List<da.Task>> findAvailableTasks(bool isarchive) async {
+    return await api.findAvailableTasks(isarchive);
+  }
+
+  Future<da.Task> findOne(int id) async {
+    return await api.findOne(id);
+  }
+
+  void update() {
     notifyListeners();
   }
 }

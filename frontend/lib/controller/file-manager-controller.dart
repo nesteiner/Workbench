@@ -7,7 +7,6 @@ class FileManagerController {
   final shouldRebuild = ValueNotifier(0);
   final titleNotifier = ValueNotifier("/");
 
-  String get currentPath => path;
   String get path => state.$1;
   SortBy get sort => state.$2;
 

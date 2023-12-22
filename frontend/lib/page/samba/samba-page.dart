@@ -1,18 +1,45 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:frontend/controller/file-manager-controller.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:frontend/constants.dart';
+import 'package:frontend/extension/samba-file-extension.dart';
+import 'package:frontend/model/samba.dart';
+import 'package:path/path.dart';
 import 'package:frontend/model/samba.dart' as sm;
 import 'package:frontend/page/error-page.dart';
 import 'package:frontend/page/loading-page.dart';
 import 'package:frontend/page/samba/file-manager.dart';
 import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/samba-state.dart';
-import 'package:frontend/utils.dart';
+import 'package:frontend/utils.dart' as utils;
 import 'package:provider/provider.dart';
 
-class SambaPage extends StatelessWidget {
-  late final GlobalState globalState;
-  late final SambaState state;
+
+class SambaPage extends StatefulWidget {
+  @override
+  State<SambaPage> createState() => _SambaPageState();
+}
+
+class _SambaPageState extends State<SambaPage> {
+  GlobalState? _globalState;
+
+  GlobalState get globalState => _globalState!;
+
+  set globalState(GlobalState value) => _globalState ??= value;
+
+  SambaState? _state;
+
+  SambaState get state => _state!;
+
+  set state(SambaState value) => _state ??= value;
+
+  List<SambaFile> files = [];
+
+  utils.SetStateCallback? _setStateFiles;
+
+  utils.SetStateCallback get setStateFiles => _setStateFiles!;
+
+  set setStateFiles(utils.SetStateCallback value) => _setStateFiles ??= value;
 
   @override
   Widget build(BuildContext context) {
@@ -37,33 +64,41 @@ class SambaPage extends StatelessWidget {
 
           return Scaffold(
             appBar: buildAppBar(context),
+            resizeToAvoidBottomInset: false,
             body: ControlBackButton(
               controller: state.controller,
               child: FileManager(
                   controller: state.controller,
                   api: state.api,
-                  builder: (context, snapshot) => ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    itemCount: snapshot.length,
-                    itemBuilder: (context, index) {
-                      final entity = snapshot[index];
-                      return Card(
-                        child: ListTile(
-                          leading: leadingIcon(context, entity.filetype),
-                          title: Text(basename(entity.path), style: const TextStyle(color: Colors.black),),
-                          subtitle: buildSubTitle(context, entity),
-                          trailing: trailingButtons(context, entity),
+                  builder: (context, snapshot) {
+                    files = snapshot;
+                    return StatefulBuilder(
+                      builder: (_, setState) {
+                        setStateFiles = setState;
 
-                          onTap: () async {
-                            if (entity.filetype == sm.FileType.directory) {
-                              state.controller.openDirectory(entity.path, false);
-                            }
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          itemCount: files.length,
+                          itemBuilder: (context, index) {
+                            return buildListItem(context, index);
                           },
-                        ),
-                      );
-                    },
-                  )
+                        );
+                      }
+                    );
+                  }
               ),
+            ),
+
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                final result = await FilePicker.platform.pickFiles();
+                if (result != null) {
+                  final path = result.files.single.path;
+                  await state.upload(state.controller.path, path!);
+                }
+              },
+
+              child: const Icon(Icons.add),
             ),
           );
         }
@@ -89,27 +124,158 @@ class SambaPage extends StatelessWidget {
         IconButton(
           onPressed: () {
             // TODO create folder
+            final controller = TextEditingController();
+            final disabledNotifier = ValueNotifier(true);
+            showDialog(context: context, useRootNavigator: false, builder: (_) => AlertDialog(
+              title: const Text("创建新文件夹"),
+              content: TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: "文件夹名",
+                  hintText: "输入文件夹名"
+                ),
+
+                onChanged: (value) {
+                  disabledNotifier.value = files.any((element) => element.name == value) && controller.text.isNotEmpty;
+                },
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    sambaNavigatorKey.currentState?.pop();
+                  },
+
+                  child: const Text("取消"),
+                ),
+
+                ValueListenableBuilder(
+                    valueListenable: disabledNotifier,
+                    builder: (_, value, child) => TextButton(
+                      onPressed: value ? null : () async {
+                        final path = join(state.controller.path, controller.text);
+                        logger.i("path is $path");
+                        await state.createDirectory(path);
+
+                        sambaNavigatorKey.currentState?.pop();
+                      },
+
+                      child: const Text("确定"),
+                    )
+                )
+              ],
+            ));
           },
 
           icon: const Icon(Icons.create_new_folder_outlined),
         ),
 
-        IconButton(
-          onPressed: () {
-            // TODO sort
-          },
+        PopupMenuButton(
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              onTap: () {
+                setStateFiles(() {
+                  files = files.sortByName;
+                });
+              },
 
-          icon: const Icon(Icons.sort_rounded),
-        ),
+              child: const Text("按名称排序")
+            ),
 
-        IconButton(
-          onPressed: () {
-            // TODO select storage
-          },
+            PopupMenuItem(
+              onTap: () {
+                setStateFiles(() {
+                  files = files.sortByDate;
+                });
+              },
 
-          icon: const Icon(Icons.sd_storage_rounded),
+              child: const Text("按日期排序")
+            ),
+
+            PopupMenuItem(
+              onTap: () {
+                setStateFiles(() {
+                  files = files.sortBySize;
+                });
+              },
+
+              child: const Text("按大小排序"),
+            ),
+
+            PopupMenuItem(
+              onTap: () {
+                setStateFiles(() {
+                  files = files.sortByType;
+                });
+
+              },
+
+              child: const Text("按类型排序"),
+            )
+          ],
+
+          child: const Icon(Icons.sort_rounded),
         )
       ],
+    );
+  }
+
+  Widget buildListItem(BuildContext context, int index) {
+    final entity = files[index];
+    return Slidable(
+      key: ValueKey("${entity.path}-${entity.name}"),
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              showDialog(context: context, useRootNavigator: false, builder: (_) => AlertDialog(
+                title: const Text("确定删除吗"),
+                content: const Text("这个操作无法恢复"),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      sambaNavigatorKey.currentState?.pop();
+                    },
+
+                    child: const Text("取消"),
+                  ),
+
+                  TextButton(
+                    onPressed: () async {
+                      await state.deleteFile(entity.path);
+                      sambaNavigatorKey.currentState?.pop();
+                    },
+
+                    child: const Text("确定"),
+                  )
+                ],
+              ));
+            },
+
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: "Delete",
+          )
+        ],
+      ),
+
+      child: Card(
+        child: ListTile(
+          leading: leadingIcon(context, entity.filetype),
+          title: Text(utils.basename(entity.path),
+            style: const TextStyle(color: Colors.black),),
+          subtitle: buildSubTitle(context, entity),
+          trailing: trailingButtons(context, entity),
+
+          onTap: () async {
+            if (entity.filetype == sm.FileType.directory) {
+              state.controller.openDirectory(entity.path, false);
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -117,7 +283,7 @@ class SambaPage extends StatelessWidget {
     if (sambaFile.filetype == sm.FileType.directory) {
       return Text("${sambaFile.lastModified}".substring(0, 10));
     } else {
-      return Text(formatBytes(sambaFile.size!));
+      return Text(utils.formatBytes(sambaFile.size!));
     }
   }
 
@@ -144,7 +310,40 @@ class SambaPage extends StatelessWidget {
 
     final button = IconButton(
         onPressed: () async {
-          final result = await FilePicker.platform.saveFile(fileName: "temp");
+          late String? result;
+          if (globalState.isDesktop) {
+            result = await FilePicker.platform.saveFile(fileName: "temp");
+          } else {
+
+            final flag = await showDialog<bool?>(context: context, useRootNavigator: false, builder: (_) => AlertDialog(
+              title: const Text("保存文件"),
+              content: const Text("文件将会被保存到Download目录中"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    sambaNavigatorKey.currentState?.pop(null);
+                  },
+
+                  child: const Text("取消"),
+                ),
+
+                TextButton(
+                  onPressed: () {
+                    sambaNavigatorKey.currentState?.pop(true);
+                  },
+
+                  child: const Text("确定"),
+                )
+              ],
+            )) ?? false;
+
+            if (flag) {
+              result = join("/storage/emulated/0/Download", entity.name);
+              logger.i("result is $result");
+            }
+          }
+
+
           if (result != null) {
             final path = result;
             await state.download(entity.path, path);

@@ -21,13 +21,12 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/admin/role")
 @Validated
 class RoleController {
     @Autowired
     lateinit var roleService: RoleService
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/role/{id}")
     fun findOne(@PathVariable id: Int): Response<Role> {
         val role = roleService.findOne(id)
         return if (role == null) {
@@ -37,22 +36,28 @@ class RoleController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/role/default")
+    fun findOne(): Response<Role> {
+        val role = roleService.findDefault()
+        return Response.Ok("default role", role)
+    }
+
+    @GetMapping("/admin/role")
     fun findAll(): Response<List<Role>> {
         return Response.Ok("all roles", roleService.findAll())
     }
 
-    @GetMapping(params = ["page", "size"])
+    @GetMapping("/admin/role", params = ["page", "size"])
     fun findAll(@RequestParam("page") page: Int, @RequestParam("size") size: Int): Response<Page<Role>> {
         return Response.Ok("all roles", roleService.findAll(page, size))
     }
 
-    @PostMapping
+    @PostMapping("/admin/role")
     fun insertOne(@RequestBody @Valid request: PostRoleRequest, result: BindingResult): Response<Role> {
         return Response.Ok("insert ok", roleService.insertOne(request))
     }
 
-    @PutMapping
+    @PutMapping("/admin/role")
     fun updateOne(@RequestBody @Valid request: UpdateRoleRequest, result: BindingResult): Response<Role> {
         return Response.Ok("update ok", roleService.updateOne(request))
     }

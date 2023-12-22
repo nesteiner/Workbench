@@ -8,7 +8,7 @@ import 'package:frontend/model/daily-attendance.dart' as da;
 import 'package:frontend/page/daily_attendance/color-select.dart';
 import 'package:frontend/request/daily-attendance.dart';
 import 'package:frontend/state/daily-attendance-state.dart';
-import 'package:frontend/state/login-state.dart';
+import 'package:frontend/state/user-state.dart';
 import 'package:frontend/widget/daily_attendance/checkbox.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:provider/provider.dart';
@@ -19,9 +19,17 @@ class TaskAdd extends StatelessWidget {
   ];
   static final positiveRegex = RegExp(r"^[1-9]\d*$");
 
-  late final LoginState loginState;
+  UserState? _loginState;
+  UserState get loginState => _loginState!;
+  set loginState(UserState value) => _loginState ??= value;
+
   late final PostDailyAttendanceTaskRequest request;
-  late final DailyAttendanceState dailyAttendanceState;
+
+
+  DailyAttendanceState? _dailyAttendanceState;
+  DailyAttendanceState get dailyAttendanceState => _dailyAttendanceState!;
+  set dailyAttendanceState(DailyAttendanceState value) => _dailyAttendanceState ??= value;
+
 
   Color? color;
 
@@ -55,7 +63,7 @@ class TaskAdd extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    loginState = context.read<LoginState>();
+    loginState = context.read<UserState>();
     dailyAttendanceState = context.read<DailyAttendanceState>();
     int userid = loginState.userid;
     request = PostDailyAttendanceTaskRequest(
@@ -396,7 +404,7 @@ class TaskAdd extends StatelessWidget {
     return InkWell(
       onTap: () async {
         // final result = await navigatorKey.currentState?.push<Color?>(MaterialPageRoute(builder: (_) => ColorSelect()));
-        final result = await dailyAttendnaceNavigatorKey.currentState?.pushNamed<Color?>(dailyAttendanceRoutes["color-select"]!);
+        final result = await dailyAttendnaceNavigatorKey.currentState?.pushNamed<dynamic?>(dailyAttendanceRoutes["color-select"]!);
         if (result != null) {
           setStateBackgroundColor(() {
             backgroundColor = result;
@@ -612,7 +620,7 @@ class TaskAdd extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        showDialog(context: context, builder: (context) => AlertDialog(
+        showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
           title: const Text("坚持天数", style: TextStyle(fontWeight: FontWeight.bold),),
           content: ValueListenableBuilder(
             valueListenable: keepdays,
@@ -783,7 +791,7 @@ class TaskAdd extends StatelessWidget {
     ];
 
 
-    return await showDialog(context: context, builder: (context) => AlertDialog(
+    return await showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: const Text("目标", style: TextStyle(fontWeight: FontWeight.bold),),
       content: buildEditGoalContent(context, (value) {
         goal = value;

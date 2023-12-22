@@ -13,7 +13,7 @@ class SambaApi extends Api {
 
   final String sambaUrl;
   final String sambaHostUrl;
-  void Function(DioException) errorHandler;
+  Future<void> Function(DioException) errorHandler;
 
   SambaApi({required this.sambaUrl, required this.sambaHostUrl, required this.errorHandler}): assert(!sambaUrl.endsWith("/")) {
     final baseOptions0 = BaseOptions(baseUrl: sambaUrl, responseType: ResponseType.json);
@@ -78,6 +78,8 @@ class SambaApi extends Api {
     await targetFile.writeAsBytes(bytes);
   }
 
+  /// @params path: 上传路径
+  /// @params filepath: 文件路径
   Future<void> upload(String path, String filepath) async {
     final formData = FormData.fromMap({
       "path": path,

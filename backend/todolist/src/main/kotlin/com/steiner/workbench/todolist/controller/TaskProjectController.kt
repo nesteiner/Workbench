@@ -8,6 +8,8 @@ import com.steiner.workbench.todolist.model.TaskProject
 import com.steiner.workbench.todolist.request.PostTaskProjectRequest
 import com.steiner.workbench.todolist.request.UpdateTaskProjectRequest
 import com.steiner.workbench.todolist.service.TaskProjectService
+import com.steiner.workbench.websocket.endpoint.WebSocketEndpoint
+import com.steiner.workbench.websocket.model.Operation
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
@@ -24,27 +26,33 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/todolist/taskproject")
+@RequestMapping("/{uid}/todolist/taskproject")
 @Validated
 class TaskProjectController {
     @Autowired
     lateinit var taskprojectService: TaskProjectService
     @Autowired
     lateinit var userService: UserService
+
     @PostMapping
-    fun insertOne(@RequestBody @Valid request: PostTaskProjectRequest, bindingResult: BindingResult): Response<TaskProject> {
-        return Response.Ok("insert ok", taskprojectService.insertOne(request))
+    fun insertOne(@RequestBody @Valid request: PostTaskProjectRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskProject> {
+        val result = taskprojectService.insertOne(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.TaskProjectPost)
+        return Response.Ok("insert ok", result)
     }
 
     @DeleteMapping("/{id}")
-    fun deleteOne(@PathVariable("id") id: Int): Response<Unit> {
+    fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response<Unit> {
         taskprojectService.deleteOne(id)
+        WebSocketEndpoint.notifyAll(uid, Operation.TaskProjectDelete(id))
         return Response.Ok("delete ok", Unit)
     }
 
     @PutMapping
-    fun updateOne(@RequestBody @Valid request: UpdateTaskProjectRequest, bindingResult: BindingResult): Response<TaskProject> {
-        return Response.Ok("update ok", taskprojectService.updateOne(request))
+    fun updateOne(@RequestBody @Valid request: UpdateTaskProjectRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskProject> {
+        val result = taskprojectService.updateOne(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.TaskProjectUpdate(request.id))
+        return Response.Ok("update ok", result)
     }
 
     @GetMapping

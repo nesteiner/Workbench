@@ -4,8 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
+import 'package:frontend/page/todolist/taskproject-add.dart';
 import 'package:frontend/request/todolist.dart';
-import 'package:frontend/state/login-state.dart';
+import 'package:frontend/state/global-state.dart';
+import 'package:frontend/state/user-state.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
 import 'package:frontend/widget/todolist/taskproject.dart';
@@ -14,14 +16,22 @@ import 'package:provider/provider.dart';
 class TaskProjectPage extends StatelessWidget {
   TodoListState? _state;
   TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
 
-  LoginState? _loginState;
-  LoginState get loginState => _loginState!;
+  UserState? _loginState;
+  UserState get loginState => _loginState!;
+  set loginState(UserState value) => _loginState ??= value;
+
+  GlobalState? _globalState;
+  GlobalState get globalState => _globalState!;
+  set globalState(GlobalState value) => _globalState ??= value;
 
   @override
   Widget build(BuildContext context) {
-    _state ??= context.read<TodoListState>();
-    _loginState ??= context.read<LoginState>();
+    state = context.read<TodoListState>();
+    loginState = context.read<UserState>();
+    globalState = context.read<GlobalState>();
+
     final child = FutureBuilder(
         future: loadTaskProjects(),
         builder: (context, snapshot) {
@@ -42,13 +52,35 @@ class TaskProjectPage extends StatelessWidget {
         }
     );
 
+    FloatingActionButton? floatingActionButton;
+
+    if (!globalState.isDesktop) {
+      floatingActionButton = FloatingActionButton(
+        onPressed: () {
+          todolistNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskProjectAdd()));
+        },
+
+        child: const Icon(Icons.add),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text("待办清单"),),
       body: child,
+      floatingActionButton: floatingActionButton,
+      resizeToAvoidBottomInset: false,
     );
   }
 
   Widget buildBody(BuildContext context) {
+    if (globalState.isDesktop) {
+      return buildDesktop(context);
+    } else {
+      return buildMobile(context);
+    }
+  }
+
+  Widget buildDesktop(BuildContext context) {
     late void Function(void Function()) setStateOrder;
     late List<TaskProject> taskprojects;
     final width = MediaQuery.of(context).size.width;
@@ -60,7 +92,7 @@ class TaskProjectPage extends StatelessWidget {
       children: [
         const Text("全部项目", style: TextStyle(fontWeight: FontWeight.bold),),
         PopupMenuButton(
-            child: Row(children: const [Text("排序方式"), SizedBox(width: 10,), Icon(Icons.more_horiz)]),
+            child: const Row(children: [Text("排序方式"), SizedBox(width: 10,), Icon(Icons.more_horiz)]),
             itemBuilder: (context) => [
               PopupMenuItem(
                 onTap: () {
@@ -94,54 +126,38 @@ class TaskProjectPage extends StatelessWidget {
 
     late Widget child;
 
-    if (Platform.isAndroid || Platform.isIOS) {
-      child = Selector<TodoListState, String>(
-          selector: (_, state) => state.taskprojects.map((e) => "${e.id}-${e.avatarid}-${e.name}").join(","),
-          builder: (_, value, child) {
-          taskprojects = state.taskprojects;
+    const ratio = 208 / 135;
 
-          return StatefulBuilder(builder: (context, setState) {
-            setStateOrder = setState;
-            return ListView(
+    final child0 = Selector<TodoListState, String>(
+      selector: (_, state) => state.taskprojects.map((e) => "${e.id}-${e.avatarid}-${e.name}").join(","),
+      builder: (_, value, child) {
+        taskprojects = state.taskprojects;
+
+        return StatefulBuilder(builder: (context, setState) {
+          setStateOrder = setState;
+
+          final children = taskprojects.map<Widget>((e) => TaskProjectWidget(taskproject: e)).toList();
+          children.add(buildTaskProjectAdd(context));
+          return GridView(
               shrinkWrap: true,
-              children: taskprojects.map((e) => TaskProjectWidget(taskproject: e)).toList(),
-            );
-          });
-      });
-    } else {
-      final ratio = 208 / 135;
+              scrollDirection: Axis.vertical,
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: settings["widget.taskproject.max-width"],
+                  childAspectRatio: ratio
+              ),
 
-      final child0 = Selector<TodoListState, String>(
-        selector: (_, state) => state.taskprojects.map((e) => "${e.id}-${e.avatarid}-${e.name}").join(","),
-        builder: (_, value, child) {
-          taskprojects = state.taskprojects;
+              children: children
+          );
+        });
+      },);
 
-          return StatefulBuilder(builder: (context, setState) {
-            setStateOrder = setState;
+    child = ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: width,
+      ),
 
-            final children = taskprojects.map<Widget>((e) => TaskProjectWidget(taskproject: e)).toList();
-            children.add(buildTaskProjectAdd(context));
-            return GridView(
-                shrinkWrap: true,
-                scrollDirection: Axis.vertical,
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: settings["widget.taskproject.max-width"],
-                    childAspectRatio: ratio
-                ),
-
-                children: children
-            );
-          });
-        },);
-
-      child = ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: width,
-        ),
-
-        child: child0,
-      );
-    }
+      child: child0,
+    );
 
     final column = Column(
       mainAxisSize: MainAxisSize.min,
@@ -158,6 +174,21 @@ class TaskProjectPage extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: column,
     );
+
+  }
+
+  Widget buildMobile(BuildContext context) {
+    List<TaskProject> taskprojects = [];
+
+    return Selector<TodoListState, String>(
+        selector: (_, state) => state.taskprojects.map((e) => "${e.id}-${e.avatarid}-${e.name}").join(","),
+        builder: (_, value, child) {
+          taskprojects = state.taskprojects;
+          return ListView(
+            scrollDirection: Axis.vertical,
+            children: taskprojects.map((e) => TaskProjectWidget(taskproject: e)).toList(),
+          );
+        });
   }
 
   Widget buildTaskProjectAdd(BuildContext context) {
@@ -227,96 +258,100 @@ class TaskProjectPage extends StatelessWidget {
     final nameController = TextEditingController();
     final profileController = TextEditingController();
     
-    final imageselect = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("选择图片"),
-        ImageUploader(image: Image.network(await state.todolistDefaultImageUrl, fit: BoxFit.cover, alignment: Alignment.topCenter,), onTap: (path) {
-          localImagePath = path;
-        },)
-      ],
+    final imageselect = Container(
+      margin: settings["page.taskproject-add.item.margin"],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("选择图片"),
+          ImageUploader(image: Image.network(await state.todolistDefaultImageUrl, fit: BoxFit.cover, alignment: Alignment.topCenter,), onTap: (path) {
+            localImagePath = path;
+          },)
+        ],
+      ),
     );
     
-    final name = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("项目名称"),
-        TextField(
-          controller: nameController,
-          decoration: settings["page.taskgroup-board.appbar.dialog.edit.title.input-decoration"],
-        )
-      ],
+    final name = Container(
+      margin: settings["page.taskproject-add.item.margin"],
+      child: TextField(
+        controller: nameController,
+        decoration: settings["page.taskgroup-board.appbar.dialog.edit.title.input-decoration"]("项目名称"),
+      ),
     );
     
-    final profile = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("项目简介"),
-        TextField(
-          controller: profileController,
-          decoration: settings["page.taskgroup-board.appbar.dialog.edit.profile.input-decoration"],
-          minLines: 4,
-          maxLines: 10,
-        )
-      ],
+    final profile = Container(
+      margin: settings["page.taskproject-add.item.margin"],
+      child: TextField(
+        controller: profileController,
+        decoration: settings["page.taskgroup-board.appbar.dialog.edit.profile.input-decoration"]("项目简介"),
+        minLines: 4,
+        maxLines: 10,
+      ),
     );
     
-    final content = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        imageselect,
-        name,
-        profile
-      ],
+    final content = Container(
+      padding: settings["page.taskproject-add.content.padding"],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          imageselect,
+          name,
+          profile
+        ],
+      ),
     );
 
     if (!context.mounted) {
       return;
     }
 
-    showDialog(context: context, builder: (context) => AlertDialog(
-      
-      content: content,
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          
-          child: const Text("取消"),
-        ),
-        
-        TextButton(
-          onPressed: () async {
-            if (nameController.text.isEmpty) {
-              final snackbar = SnackBar(content: const Text("项目名称不能为空"));
-              ScaffoldMessenger.of(context).showSnackBar(snackbar);
-              return;
-            }
-            
-            final request = PostTaskProjectRequest(userid: loginState.userid, name: nameController.text.trim());
+    showDialog(
+        context: context,
+        useRootNavigator: false,
+        builder: (context) => AlertDialog(
+          content: content,
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Navigator.pop(context);
+                todolistNavigatorKey.currentState?.pop();
+              },
 
-            if (profileController.text.isNotEmpty) {
-              request.profile = profileController.text.trim();
-            }
+              child: const Text("取消"),
+            ),
 
-            if (localImagePath != null) {
-              final file = await MultipartFile.fromFile(localImagePath!);
-              final imageitem = await state.uploadImage(file);
-              request.avatarid = imageitem.id;
-            } else {
-              final imageitem = await state.defaultTodoListImage();
-              request.avatarid = imageitem.id;
-            }
+            TextButton(
+              onPressed: () async {
+                if (nameController.text.isEmpty) {
+                  final snackbar = SnackBar(content: const Text("项目名称不能为空"));
+                  ScaffoldMessenger.of(context).showSnackBar(snackbar);
+                  return;
+                }
 
-            await state.insertTaskProject(request);
+                final request = PostTaskProjectRequest(userid: loginState.userid, name: nameController.text.trim());
 
-            Navigator.pop(context);
-          },
-          
-          child: const Text("确定"),
-        )
-      ],
+                if (profileController.text.isNotEmpty) {
+                  request.profile = profileController.text.trim();
+                }
+
+                if (localImagePath != null) {
+                  final file = await MultipartFile.fromFile(localImagePath!);
+                  final imageitem = await state.uploadImage(file);
+                  request.avatarid = imageitem.id;
+                } else {
+                  final imageitem = await state.defaultTodoListImage();
+                  request.avatarid = imageitem.id;
+                }
+
+                await state.insertTaskProject(request);
+
+                // Navigator.pop(context);
+                todolistNavigatorKey.currentState?.pop();
+              },
+
+              child: const Text("确定"),
+            )
+          ],
     ));
     
   }

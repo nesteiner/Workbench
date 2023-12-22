@@ -4,6 +4,7 @@ import 'package:frontend/page/daily_attendance/color-select.dart';
 import 'package:frontend/page/daily_attendance/statistics.dart';
 import 'package:frontend/page/daily_attendance/taskadd.dart';
 import 'package:frontend/page/daily_attendance/taskedit.dart';
+import 'package:frontend/page/daily_attendance/taskmanage.dart';
 import 'package:frontend/page/daily_attendance/taskpage.dart';
 import 'package:frontend/page/daily_attendance/taskrecording.dart';
 import 'package:frontend/page/home-page.dart';
@@ -16,8 +17,6 @@ import 'package:frontend/widget/keepalive.dart';
 import 'package:frontend/widget/pomodoro/pomodoro-board.dart';
 import 'package:provider/provider.dart';
 import 'package:sidebarx/sidebarx.dart';
-
-typedef SetStateCallback = void Function(void Function());
 
 class RootPage extends StatefulWidget {
   @override
@@ -93,6 +92,8 @@ class _RootPageState extends State<RootPage> with SingleTickerProviderStateMixin
             pageChild = StatisticsPage();
           } else if (settings1.name!.endsWith(dailyAttendanceRoutes["color-select"]!)) {
             pageChild = ColorSelect();
+          } else if (settings1.name!.endsWith(dailyAttendanceRoutes["task-manage"]!)) {
+            pageChild = TaskManage();
           } else {
             throw Exception("daily attendance page: no route define for ${settings1.name}");
           }
@@ -113,39 +114,72 @@ class _RootPageState extends State<RootPage> with SingleTickerProviderStateMixin
 
     };
 
-    return Scaffold(
-      body: Row(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          SidebarX(
-            controller: controller,
-            items: [
-              SidebarXItem(icon: Icons.home, label: "home", onTap: () => tabController.index = 0),
-              SidebarXItem(icon: Icons.list, label: "todolist", onTap: () => tabController.index = 1),
-              SidebarXItem(icon: Icons.calendar_month, label: "daily attendance", onTap: () => tabController.index = 2),
-              SidebarXItem(icon: Icons.file_open_sharp, label: "samba", onTap: () => tabController.index = 3),
-              SidebarXItem(icon: Icons.logout, label: "logout", onTap: () async {
-                await state.logout();
-                state.update();
-              }),
-              SidebarXItem(icon: Icons.clear, label: "clear", onTap: () async {
-                await state.clear();
-                state.update();
-              })
-            ],
-          ),
 
-          Expanded(child: TabBarView(
-            controller: tabController,
-            children: [
-              KeepAliveWrapper(child: pageRecord["home"]!),
-              KeepAliveWrapper(child: pageRecord["todolist"]!),
-              KeepAliveWrapper(child: pageRecord["daily-attendance"]!),
-              KeepAliveWrapper(child: pageRecord["samba"]!),
-            ],
-          ))
+    if (state.isDesktop) {
+      return buildDesktop(context);
+    } else {
+      return buildMobile(context);
+    }
+  }
+
+  Widget buildDesktop(BuildContext context) {
+    return Scaffold(
+        body: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            SidebarX(
+              controller: controller,
+              items: [
+                SidebarXItem(icon: Icons.home, label: "home", onTap: () => tabController.index = 0),
+                SidebarXItem(icon: Icons.list, label: "todolist", onTap: () => tabController.index = 1),
+                SidebarXItem(icon: Icons.calendar_month, label: "daily attendance", onTap: () => tabController.index = 2),
+                SidebarXItem(icon: Icons.file_open_outlined, label: "samba", onTap: () => tabController.index = 3),
+                SidebarXItem(icon: Icons.logout, label: "logout", onTap: () async {
+                  await state.logout();
+                  state.update();
+                }),
+                SidebarXItem(icon: Icons.clear, label: "clear", onTap: () async {
+                  await state.clear();
+                  state.update();
+                })
+              ],
+            ),
+
+            Expanded(child: TabBarView(
+              controller: tabController,
+              children: [
+                KeepAliveWrapper(child: pageRecord["home"]!),
+                KeepAliveWrapper(child: pageRecord["todolist"]!),
+                KeepAliveWrapper(child: pageRecord["daily-attendance"]!),
+                KeepAliveWrapper(child: pageRecord["samba"]!),
+              ],
+            ))
+          ],
+        )
+    );
+  }
+
+  Widget buildMobile(BuildContext context) {
+    return Scaffold(
+      bottomNavigationBar: TabBar(
+        controller: tabController,
+        tabs: const [
+          Tab(icon: Icon(Icons.home),),
+          Tab(icon: Icon(Icons.list)),
+          Tab(icon: Icon(Icons.calendar_month),),
+          Tab(icon: Icon(Icons.file_open_outlined),)
+        ],),
+
+
+      body: TabBarView(
+        controller: tabController,
+        children: [
+          KeepAliveWrapper(child: pageRecord["home"]!),
+          KeepAliveWrapper(child: pageRecord["todolist"]!),
+          KeepAliveWrapper(child: pageRecord["daily-attendance"]!),
+          KeepAliveWrapper(child: pageRecord["samba"]!)
         ],
-      )
+      ),
     );
   }
 }

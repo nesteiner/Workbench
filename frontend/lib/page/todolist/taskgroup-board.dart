@@ -4,14 +4,23 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
+import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/todolist-state.dart';
+import 'package:frontend/widget/pages.dart';
 import 'package:frontend/widget/pomodoro/pomodoro-board.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
 import 'package:frontend/widget/todolist/taskgroup.dart';
 import 'package:provider/provider.dart';
 
 class TaskGroupBoard extends StatelessWidget {
-  late final TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
+
+  GlobalState? _globalState;
+  GlobalState get globalState => _globalState!;
+  set globalState(GlobalState value) => _globalState ??= value;
+
   final TaskProject taskproject;
   late void Function(void Function()) setStateName;
 
@@ -22,11 +31,22 @@ class TaskGroupBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
+    globalState = context.read<GlobalState>();
+
+    late Widget body;
+
+    if (globalState.isDesktop) {
+      body = buildDesktop(context);
+    } else {
+      body = buildMobile(context);
+    }
+
     // TODO: implement build
     return Scaffold(
       appBar: buildAppBar(context),
-      body: buildBody(context),
+      body: body,
       floatingActionButton: buildFloatingActionButton(context),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -48,7 +68,7 @@ class TaskGroupBoard extends StatelessWidget {
       itemBuilder: (_) => [
         PopupMenuItem(
           onTap: () {
-            showDialog(context: context, builder: (context) => buildEditTaskProject(context) );
+            showDialog(context: context, useRootNavigator: false, builder: (context) => buildEditTaskProject(context) );
           },
 
           child: buildMenuRow(context, Row(
@@ -63,7 +83,7 @@ class TaskGroupBoard extends StatelessWidget {
 
         PopupMenuItem(
           onTap: () {
-            showDialog(context: context, builder: (_) => buildDeleteTaskProject(context));
+            showDialog(context: context, useRootNavigator: false, builder: (_) => buildDeleteTaskProject(context));
           },
 
           child: buildMenuRow(context, Row(
@@ -89,7 +109,7 @@ class TaskGroupBoard extends StatelessWidget {
     );
   }
 
-  Widget buildBody(BuildContext context) {
+  Widget buildDesktop(BuildContext context) {
     return Selector<TodoListState, String>(
       // in this way, reorder will not flash
       // any way, don't build expensive widget in builder
@@ -123,31 +143,13 @@ class TaskGroupBoard extends StatelessWidget {
     );
   }
 
-  Widget buildTaskGroupAdd(BuildContext context) {
-    return Container(
-      padding: settings["page.taskgroup-board.items.padding"],
-      width: settings["page.taskgroup-board.width"],
-
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-
-        children: [
-          SizedBox(
-            height: settings["widget.taskgroup.head.height"],
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  margin: settings["page.taskgroup-board.add.icon.margin"],
-                  child: Icon(Icons.add, color: settings["page.taskgroup-board.add.font.color"],),
-                ),
-
-                Text("新建任务列表", style: TextStyle(color: settings["page.taskgroup-board.add.font.color"]),)
-              ]
-            ),
-          )
-        ],
-      ),
+  Widget buildMobile(BuildContext context) {
+    return Selector<TodoListState, String>(
+      selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
+      builder: (_, value, child) {
+        final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("${e.id}-${e.name}"), taskgroup: e)).toList();
+        return Pages(children: children);
+      },
     );
   }
 
@@ -168,28 +170,16 @@ class TaskGroupBoard extends StatelessWidget {
       ],
     );
 
-    final name = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("项目名称"),
-        TextField(
-          controller: nameController,
-          decoration: settings["page.taskgroup-board.appbar.dialog.edit.title.input-decoration"],
-        )
-      ],
+    final name = TextField(
+      controller: nameController,
+      decoration: settings["page.taskgroup-board.appbar.dialog.edit.title.input-decoration"]("项目名称"),
     );
     
-    final profile = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("项目简介"),
-        TextField(
-          controller: profileController,
-          decoration: settings["page.taskgroup-board.appbar.dialog.edit.profile.input-decoration"],
-          minLines: 4,
-          maxLines: 10,
-        )
-      ],
+    final profile = TextField(
+      controller: profileController,
+      decoration: settings["page.taskgroup-board.appbar.dialog.edit.profile.input-decoration"]("项目简介"),
+      minLines: 4,
+      maxLines: 10,
     );
 
     return AlertDialog(
@@ -279,7 +269,7 @@ class TaskGroupBoard extends StatelessWidget {
               foregroundColor: const Color.fromRGBO(0, 0, 255, 0.2)
             ),
             
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => todolistNavigatorKey.currentState?.pop(),
             child: Text("取消", style: settings["page.taskgroup-board.appbar.dialog.delete.cancel.font.style"],)
         ),
         
@@ -293,7 +283,7 @@ class TaskGroupBoard extends StatelessWidget {
             // navigatorKey.currentState?.popUntil(ModalRoute.withName("/taskproject"));
             // Navigator.pop(context);
             // Navigator.pop(context);
-
+            // Navigator.pop(context);
             todolistNavigatorKey.currentState?.popUntil(ModalRoute.withName(todolistRoutes["taskproject"]!));
           },
 
@@ -425,7 +415,7 @@ class TaskGroupBoard extends StatelessWidget {
 
     ];
 
-    showDialog(context: context, builder: (context) => AlertDialog(
+    showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: title,
       content: content,
       actions: actions(context),
@@ -540,7 +530,7 @@ class TaskGroupBoard extends StatelessWidget {
       ),
     ];
 
-    showDialog(context: context, builder: (context) => AlertDialog(
+    showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: title,
       content: content,
       actions: actions(context),

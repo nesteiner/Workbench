@@ -1,8 +1,7 @@
 package com.steiner.workbench.runner
 
 import com.steiner.workbench.clipboard.table.Texts
-import com.steiner.workbench.common.util.CURRENT_TIME_ZONE
-import com.steiner.workbench.common.util.shanghaiNow
+import com.steiner.workbench.common.util.now
 import com.steiner.workbench.daily_attendance.model.*
 import com.steiner.workbench.daily_attendance.request.PostTaskRequest
 import com.steiner.workbench.todolist.model.Task as tlTask
@@ -107,61 +106,61 @@ class WorkbenchRunner: ApplicationRunner {
         }
 
         val taskprojects = listOf(
-            TaskProject(id = 1, name = "taskproject1", avatarid = 1, index = 1, profile = null, userid = 2, createTime = shanghaiNow(), updateTime = shanghaiNow() + 2.toDuration(
+            TaskProject(id = 1, name = "taskproject1", avatarid = 1, index = 1, profile = null, userid = 2, createTime = now(), updateTime = now() + 2.toDuration(
                 DurationUnit.SECONDS)),
-            TaskProject(id = 2, name = "taskproject2", avatarid = 1, index = 2, profile = null, userid = 2, createTime = shanghaiNow(), updateTime = shanghaiNow() + 1.toDuration(DurationUnit.SECONDS)),
-            TaskProject(id = 3, name = "taskproject3", avatarid = 1, index = 3, profile = null, userid = 2, createTime = shanghaiNow(), updateTime = shanghaiNow()),
-            TaskProject(id = 4, name = "taskproject4", avatarid = 1, index = 4, profile = null, userid = 2, createTime = shanghaiNow(), updateTime = shanghaiNow()),
+            TaskProject(id = 2, name = "taskproject2", avatarid = 1, index = 2, profile = null, userid = 2, createTime = now(), updateTime = now() + 1.toDuration(DurationUnit.SECONDS)),
+            TaskProject(id = 3, name = "taskproject3", avatarid = 1, index = 3, profile = null, userid = 2, createTime = now(), updateTime = now()),
+            TaskProject(id = 4, name = "taskproject4", avatarid = 1, index = 4, profile = null, userid = 2, createTime = now(), updateTime = now()),
         )
 
         val tasksOfGroup1 = listOf(
-            tlTask(id = 1, index = 1, name = "task1", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
-            tlTask(id = 2, index = 2, name = "task2", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
-            tlTask(id = 3, index = 3, name = "task3", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
-            tlTask(id = 4, index = 4, name = "task4", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
-            tlTask(id = 5, index = 5, name = "task5", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
+            tlTask(id = 1, index = 1, name = "task1", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
+            tlTask(id = 2, index = 2, name = "task2", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
+            tlTask(id = 3, index = 3, name = "task3", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
+            tlTask(id = 4, index = 4, name = "task4", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
+            tlTask(id = 5, index = 5, name = "task5", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 1, subtasks = null, tags = null),
         )
 
         val tasksOfGroup2 = listOf(
-            tlTask(id = 6, index = 1, name = "task6", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 7, index = 2, name = "task7", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 8, index = 3, name = "task8", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 9, index = 4, name = "task9", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 10, index = 5, name = "task10", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 11, index = 6, name = "task11", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 12, index = 7, name = "task12", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 13, index = 8, name = "task13", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 14, index = 9, name = "task14", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 15, index = 10, name = "task15", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 16, index = 11, name = "task16", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 17, index = 12, name = "task17", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 18, index = 13, name = "task18", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 19, index = 14, name = "task19", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 20, index = 15, name = "task20", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 21, index = 16, name = "task21", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 22, index = 17, name = "task22", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 23, index = 18, name = "task23", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 24, index = 19, name = "task24", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 25, index = 20, name = "task25", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 26, index = 21, name = "task26", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 27, index = 22, name = "task27", isdone = false, priority = 0, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 28, index = 23, name = "task28", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 29, index = 24, name = "task29", isdone = false, priority = 2, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
-            tlTask(id = 30, index = 25, name = "task30", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 6, index = 1, name = "task6", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 7, index = 2, name = "task7", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 8, index = 3, name = "task8", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 9, index = 4, name = "task9", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 10, index = 5, name = "task10", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 11, index = 6, name = "task11", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 12, index = 7, name = "task12", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 13, index = 8, name = "task13", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 14, index = 9, name = "task14", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 15, index = 10, name = "task15", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 16, index = 11, name = "task16", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 17, index = 12, name = "task17", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 18, index = 13, name = "task18", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 19, index = 14, name = "task19", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 20, index = 15, name = "task20", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 21, index = 16, name = "task21", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 22, index = 17, name = "task22", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 23, index = 18, name = "task23", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 24, index = 19, name = "task24", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 25, index = 20, name = "task25", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 26, index = 21, name = "task26", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 27, index = 22, name = "task27", isdone = false, priority = 0, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 28, index = 23, name = "task28", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 29, index = 24, name = "task29", isdone = false, priority = 2, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
+            tlTask(id = 30, index = 25, name = "task30", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 2, subtasks = null, tags = null),
         )
 
         val tasksOfGroup3 = listOf(
-            tlTask(id = 31, index = 1, name = "task31", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
-            tlTask(id = 32, index = 2, name = "task32", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
-            tlTask(id = 33, index = 3, name = "task33", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
-            tlTask(id = 34, index = 4, name = "task34", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
-            tlTask(id = 35, index = 5, name = "task35", isdone = false, priority = 1, createTime = shanghaiNow(), updateTime = shanghaiNow(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
+            tlTask(id = 31, index = 1, name = "task31", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
+            tlTask(id = 32, index = 2, name = "task32", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
+            tlTask(id = 33, index = 3, name = "task33", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
+            tlTask(id = 34, index = 4, name = "task34", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
+            tlTask(id = 35, index = 5, name = "task35", isdone = false, priority = 1, createTime = now(), updateTime = now(), deadline = null, notifyTime = null, expectTime = 4, finishTime = 0, note = null, parentid = 3, subtasks = null, tags = null),
         )
 
         val taskgroups = listOf(
-            TaskGroup(id = 1, index = 1, name = "taskgroup1", tasks = tasksOfGroup1, createTime = shanghaiNow(), parentid = 1, updateTime = shanghaiNow()),
-            TaskGroup(id = 2, index = 2, name = "taskgroup2", tasks = tasksOfGroup2, createTime = shanghaiNow(), parentid = 1, updateTime = shanghaiNow()),
-            TaskGroup(id = 3, index = 3, name = "taskgroup3", tasks = tasksOfGroup3, createTime = shanghaiNow(), parentid = 1, updateTime = shanghaiNow()),
+            TaskGroup(id = 1, index = 1, name = "taskgroup1", tasks = tasksOfGroup1, createTime = now(), parentid = 1, updateTime = now()),
+            TaskGroup(id = 2, index = 2, name = "taskgroup2", tasks = tasksOfGroup2, createTime = now(), parentid = 1, updateTime = now()),
+            TaskGroup(id = 3, index = 3, name = "taskgroup3", tasks = tasksOfGroup3, createTime = now(), parentid = 1, updateTime = now()),
         )
 
         taskprojects.forEach { taskproject ->

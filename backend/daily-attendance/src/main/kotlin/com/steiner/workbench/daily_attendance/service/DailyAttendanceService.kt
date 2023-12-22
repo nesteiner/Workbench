@@ -2,7 +2,7 @@ package com.steiner.workbench.daily_attendance.service
 
 import com.steiner.workbench.common.exception.BadRequestException
 import com.steiner.workbench.common.util.CURRENT_TIME_ZONE
-import com.steiner.workbench.common.util.shanghaiNow
+import com.steiner.workbench.common.util.now
 import com.steiner.workbench.daily_attendance.request.UpdateProgressRequest
 import com.steiner.workbench.daily_attendance.table.Tasks
 import com.steiner.workbench.daily_attendance.iterate.*
@@ -117,7 +117,7 @@ class DailyAttendanceService {
             it[progress] = progress0
         }
 
-        val now0 = shanghaiNow()
+        val now0 = now()
         val yesterday = (now0 - 1.toDuration(DurationUnit.DAYS)).toLocalDateTime(CURRENT_TIME_ZONE).date
         Tasks.slice(Tasks.id, Tasks.name, Tasks.consecutiveDays, Tasks.persistenceDays)
                 .select(Tasks.id eq request.id)
@@ -209,7 +209,7 @@ class DailyAttendanceService {
 
     /// find the tasks which is not archived
     fun findAll(userid: Int): List<Task> {
-        val currentDay = shanghaiNow()
+        val currentDay = now()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
         return findAll(currentDayLocalDate, userid)
     }
@@ -303,7 +303,7 @@ class DailyAttendanceService {
     }
 
     fun findLatest7Days(userid: Int): Map<DayOfWeek, List<Task>> {
-        val currentDay = shanghaiNow()
+        val currentDay = now()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
         val past6LocalDate = currentDay.minus(6.toDuration(DurationUnit.DAYS)).toLocalDateTime(CURRENT_TIME_ZONE).date
 
@@ -322,7 +322,7 @@ class DailyAttendanceService {
     fun refreshDataDaily() {
         // this should be called once a day
         // given a now instant, refresh progress by frequency and former progress
-        val currentDay = shanghaiNow()
+        val currentDay = now()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
 
         Tasks.select((Tasks.isarchived eq false) and (Tasks.startTime lessEq currentDayLocalDate))
@@ -403,7 +403,7 @@ class DailyAttendanceService {
     }
 
     fun findAllEventsOfCurrentWeek(taskid: Int): List<TaskEvent> {
-        val currentDay = shanghaiNow()
+        val currentDay = now()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
 
         val distance = dayDistance[currentDayLocalDate.dayOfWeek]!!
@@ -472,7 +472,7 @@ class DailyAttendanceService {
     }
 
     fun resetTaskCurrentDay(id: Int): Task {
-        val currentDay = shanghaiNow()
+        val currentDay = now()
         val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
         val (progress1, cday, pday) = with (Tasks) {
             slice(progress, consecutiveDays, persistenceDays)
@@ -527,7 +527,7 @@ class DailyAttendanceService {
     fun statisticsThisWeek(offset: Int, userid: Int): Map<Int, Map<DayOfWeek, Progress>> {
         assert(offset < 0)
 
-        val now = shanghaiNow()
+        val now = now()
         val nowLocalDate = now.toLocalDateTime(CURRENT_TIME_ZONE).date
         val distance = dayDistance[nowLocalDate.dayOfWeek]!!
         val startOfWeek = nowLocalDate.minus(distance, DateTimeUnit.DAY)
@@ -559,7 +559,7 @@ class DailyAttendanceService {
     fun statisticsThisMonth(offset: Int, userid: Int): Map<Int, Map<Int, Progress>> {
         assert(offset < 0)
 
-        val now = shanghaiNow()
+        val now = now()
         val nowLocalDate = now.toLocalDateTime(CURRENT_TIME_ZONE).date
         val startOfMonth = LocalDate(nowLocalDate.year, nowLocalDate.monthNumber, 1)
         val thisMonth = startOfMonth.minus(abs(offset), DateTimeUnit.MONTH)
@@ -582,6 +582,16 @@ class DailyAttendanceService {
         return progressRecord
     }
 
+    /// this is for management
+    fun findAllAvailable(userid: Int, isarchive: Boolean): List<Task> {
+        return with (Tasks) {
+            select((this.userid eq userid) and (this.isarchived eq isarchive))
+                .map {
+                    findOne(it[id].value)!!
+                }
+        }
+    }
+    
     private fun isSameDay(left: LocalDate, right: LocalDate): Boolean {
         return left.year == right.year && left.month == right.month && left.dayOfMonth == right.dayOfMonth
     }

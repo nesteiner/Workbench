@@ -6,8 +6,10 @@ import 'package:frontend/api/api.dart';
 import 'package:frontend/api/interceptor.dart';
 import 'package:frontend/model/login.dart';
 import 'package:frontend/request/login.dart';
+import 'package:path/path.dart';
+import 'package:web_socket_channel/io.dart';
 
-class LoginApi {
+class UserApi {
   static const String contentType = "application/json; charset=utf-8";
   static const ResponseType responseType = ResponseType.json;
   static BaseOptions defaultOptions = BaseOptions(contentType: contentType, responseType: responseType);
@@ -17,13 +19,18 @@ class LoginApi {
   User? user;
   String? username;
 
-  String loginUrl;
-  String userUrl;
+  final String loginUrl;
+  final String userUrl;
+  final String defaultRoleUrl;
 
+  Future<void> Function(DioException) errorHandler;
 
-  void Function(DioException) errorHandler;
-
-  LoginApi({required this.loginUrl, required this.userUrl, required this.errorHandler}): assert(!loginUrl.endsWith("/")), assert(!userUrl.endsWith("/")) {
+  UserApi({
+    required this.loginUrl,
+    required this.userUrl,
+    required this.defaultRoleUrl,
+    required this.errorHandler
+  }): assert(!loginUrl.endsWith("/")), assert(!userUrl.endsWith("/")) {
     instance = Dio(defaultOptions);
     instance.interceptors.add(CustomInterceptors(errorHandler: errorHandler));
   }
@@ -35,7 +42,7 @@ class LoginApi {
     Response<Map<String, dynamic>> response = await instance.post(loginUrl, data: request.toJson());
     Map<String, dynamic> data = response.data!["data"];
     jwttoken = data["jwttoken"];
-    instance.options.headers["Authorization"] = "Bearer $jwttoken";
+    // instance.options.headers["Authorization"] = "Bearer $jwttoken";
   }
 
   Future<User> login(String name, String password) async {
@@ -43,11 +50,17 @@ class LoginApi {
     // if you use authenticate flatten, the server will return 400 status
     await authenticate(name, password);
 
-    Response<Map<String, dynamic>> response = await instance.get("$userUrl?name=$name");
+    Response<Map<String, dynamic>> response = await instance.get("$userUrl?name=$name", options: Options(
+      headers: {
+        "Authorization": jwttoken.startsWith("Bearer") ? jwttoken : "Bearer $jwttoken"
+      }
+    ));
+
     Map<String, dynamic> data = response.data!["data"];
 
     final result = User.fromJson(data);
     user = result;
+
     return result;
   }
 
@@ -64,15 +77,28 @@ class LoginApi {
     }
 
     jwttoken = token1;
-    instance.options.headers["Authorization"] = token1;
+    // instance.options.headers["Authorization"] = token1;
 
-    Response<Map<String, dynamic>> response = await instance.get("$userUrl");
+    Response<Map<String, dynamic>> response = await instance.get("$userUrl", options: Options(
+      headers: {
+        "Authorization": jwttoken.startsWith("Bearer") ? jwttoken : "Bearer $jwttoken"
+      }
+    ));
+
     Map<String, dynamic> data = response.data!["data"];
 
     final result = User.fromJson(data);
     user = result;
   }
+  
+  Future<void> register(PostUserRequest request) async {
+    final registerUrl = join(userUrl, "register");
+    await instance.post(registerUrl, data: request.toJson());
+  }
 
-
+  Future<Role> findDefaultRole() async {
+    Response<Map<String, dynamic>> response = await instance.get(defaultRoleUrl);
+    return Role.fromJson(response.data!["data"]);
+  }
 }
 

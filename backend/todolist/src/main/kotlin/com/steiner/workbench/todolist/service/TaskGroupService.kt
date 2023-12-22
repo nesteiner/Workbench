@@ -7,7 +7,7 @@ import com.steiner.workbench.todolist.table.TaskGroups
 import com.steiner.workbench.todolist.table.TaskProjects
 import com.steiner.workbench.todolist.table.Tasks
 import com.steiner.workbench.todolist.util.mustExistIn
-import com.steiner.workbench.common.util.shanghaiNow
+import com.steiner.workbench.common.util.now
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -30,7 +30,7 @@ class TaskGroupService {
 
         val count = TaskGroups.selectAll().count().toInt()
 
-        val nowInstant = shanghaiNow()
+        val nowInstant = now()
         val id = TaskGroups.insert {
             it[parentid] = request.parentid
             it[index] = count + 1
@@ -59,7 +59,7 @@ class TaskGroupService {
             }
         }
 
-        val nowInstant = shanghaiNow()
+        val nowInstant = now()
         val id = TaskGroups.insert {
             it[parentid] = request.parentid
             it[index] = after + 1
@@ -154,7 +154,7 @@ class TaskGroupService {
                 it[name] = request.name
             }
 
-            it[updateTime] = shanghaiNow()
+            it[updateTime] = now()
 
             if (request.reorderAt != null) {
                 it[index] = request.reorderAt
@@ -182,7 +182,8 @@ class TaskGroupService {
                 }
     }
 
-    fun findAll(projectid: Int): List<TaskGroup> {
+    fun
+            findAll(projectid: Int): List<TaskGroup> {
         return TaskGroups.select(TaskGroups.parentid eq projectid)
                 .orderBy(TaskGroups.index)
                 .map {

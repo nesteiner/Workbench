@@ -12,7 +12,7 @@ import com.steiner.workbench.todolist.table.TaskGroups
 import com.steiner.workbench.todolist.table.TaskTag
 import com.steiner.workbench.todolist.table.Tasks
 import com.steiner.workbench.todolist.util.mustExistIn
-import com.steiner.workbench.common.util.shanghaiNow
+import com.steiner.workbench.common.util.now
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -39,7 +39,7 @@ class TaskService {
             }
         }
 
-        val nowInstant = shanghaiNow()
+        val nowInstant = now()
         val id = Tasks.insert {
             it[name] = request.name
             it[index] = 1
@@ -225,7 +225,7 @@ class TaskService {
                 it[parentid] = request.parentid
             }
 
-            it[updateTime] = shanghaiNow()
+            it[updateTime] = now()
         }
 
         return findOne(request.id) ?: throw BadRequestException("no such task")

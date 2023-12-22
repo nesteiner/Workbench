@@ -66,4 +66,8 @@ class ClipboardState extends ChangeNotifier implements Api{
 
     notifyListeners();
   }
+
+  void update() {
+    notifyListeners();
+  }
 }

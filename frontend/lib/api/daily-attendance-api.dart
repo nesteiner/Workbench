@@ -31,7 +31,7 @@ class DailyAttendanceApi extends Api {
   late final Dio instance;
 
   String dailyAttendanceUrl;
-  void Function(DioException) errorHandler;
+  Future<void> Function(DioException) errorHandler;
   DailyAttendanceApi({required this.dailyAttendanceUrl, required this.errorHandler}): assert(!dailyAttendanceUrl.endsWith("/")) {
     instance = Dio(defaultOptions);
     instance.interceptors.add(CustomInterceptors(errorHandler: errorHandler));
@@ -73,13 +73,10 @@ class DailyAttendanceApi extends Api {
     await instance.delete("$dailyAttendanceUrl/$id");
   }
 
-  Future<da.Task?> findOne(int id) async {
+  Future<da.Task> findOne(int id) async {
     Response<Map<String, dynamic>> response = await instance.get("$dailyAttendanceUrl/$id");
-    if (response.data!["data"] == null) {
-      return null;
-    } else {
-      return da.Task.fromJson(response.data!["data"]);
-    }
+    return da.Task.fromJson(response.data!["data"]);
+
   }
 
   Future<Map<String, List<da.Task>>> findAllOfLatest7Days() async {
@@ -140,7 +137,7 @@ class DailyAttendanceApi extends Api {
     for (final entry0 in data.entries) {
       final id = int.parse(entry0.key);
       final task = await findOne(id);
-      result[task!] = List<da.Progress>.generate(7, (index) => da.ProgressNotScheduled());
+      result[task] = List<da.Progress>.generate(7, (index) => da.ProgressNotScheduled());
       
       for (final entry1 in entry0.value.entries) {
         final dayOfWeek = entry1.key;
@@ -167,7 +164,7 @@ class DailyAttendanceApi extends Api {
     for (final entry0 in data.entries) {
       final id = int.parse(entry0.key);
       final task = await findOne(id);
-      result[task!] = List<da.Progress>.generate(numberOfDays, (index) => da.ProgressNotScheduled());
+      result[task] = List<da.Progress>.generate(numberOfDays, (index) => da.ProgressNotScheduled());
 
       for (final entry1 in entry0.value.entries) {
         final dayOfMonth = int.parse(entry1.key);
@@ -178,5 +175,15 @@ class DailyAttendanceApi extends Api {
     }
 
     return result;
+  }
+
+  Future<List<da.Task>> findAvailableTasks(bool isarchive) async {
+    Response<Map<String, dynamic>> response = await instance.get(dailyAttendanceUrl, queryParameters: {
+      "archive": isarchive
+    });
+
+    final data = response.data!["data"];
+
+    return data.map<da.Task>((e) => da.Task.fromJson(e)).toList();
   }
 }

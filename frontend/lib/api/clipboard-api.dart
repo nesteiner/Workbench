@@ -8,7 +8,7 @@ class ClipboardApi extends Api {
   late final Dio instance;
 
   final String clipboardUrl;
-  void Function(DioException) errorHandler;
+  Future<void> Function(DioException) errorHandler;
 
   ClipboardApi({required this.clipboardUrl, required this.errorHandler}): assert(!clipboardUrl.endsWith("/")) {
     final baseOptions0 = BaseOptions(baseUrl: clipboardUrl, responseType: ResponseType.json);

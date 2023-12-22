@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/constants.dart';
+import 'package:path/path.dart';
 
 class PreloadApi {
   final instance = Dio(BaseOptions(responseType: ResponseType.json));
@@ -16,25 +17,29 @@ class PreloadApi {
       await instance.get("$url1/check");
       return true;
     } on DioException catch (exception) {
-      logger.e("error in check connection", error: exception.error, stackTrace: exception.stackTrace);
+      logger.e("error in check connection", error: exception.error,
+          stackTrace: exception.stackTrace);
       return false;
     }
   }
 
-  Future<bool> checkLogin(String backendUrl, String hostUrl, String username, String password) async {
-    late String url;
-    if (backendUrl.endsWith("/")) {
-      url = backendUrl.substring(0, backendUrl.length - 1);
-    } else {
-      url = backendUrl;
+  Future<bool> checkLogin(String backendUrl, String hostUrl, String username,
+      String password) async {
+    final url = join(backendUrl, "samba/check/login");
+
+    try {
+      final Response<Map<String, dynamic>> response = await instance.post(
+          url, data: {
+        "url": hostUrl,
+        "username": username,
+        "password": password
+      });
+
+      return response.data!["data"];
+    } on DioException catch (exception, stackTrace) {
+      logger.e("error in check login samba", error: exception.error,
+          stackTrace: stackTrace);
+      return false;
     }
-
-    final Response<Map<String, dynamic>> response = await instance.post("$url/samba/check/login", data: {
-      "url": hostUrl,
-      "username": username,
-      "password": password
-    });
-
-    return response.data!["data"];
   }
 }

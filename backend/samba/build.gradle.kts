@@ -9,6 +9,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.codelibs:jcifs:2.1.37")
     implementation(project(":common"))
+    implementation(project(":websocket"))
 }
 
 tasks.withType<Test> {

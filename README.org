@@ -17,10 +17,14 @@
 - [ ] 401 exception
 - [ ] refresh
 - [ ] hint text
-- [ ] step by step
+- [X] step by step
 - [ ] pageview 
-
-
+- [ ] use ScrollBar instead of SingleChildScrollView
+- [ ] samba upload file
+- [ ] statistics page of android
+- [ ] drop ios features
+- [ ] try watch statistics page
+- [ ] *try global error handler*
 ** loading page
 - [ ] when login, using loading page
 

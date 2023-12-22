@@ -9,6 +9,8 @@ import com.steiner.workbench.daily_attendance.request.UpdateProgressRequest
 import com.steiner.workbench.daily_attendance.request.UpdateTaskRequest
 import com.steiner.workbench.daily_attendance.service.DailyAttendanceService
 import com.steiner.workbench.login.service.UserService
+import com.steiner.workbench.websocket.endpoint.WebSocketEndpoint
+import com.steiner.workbench.websocket.model.Operation
 import jakarta.validation.Valid
 import kotlinx.datetime.DayOfWeek
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,46 +31,60 @@ import org.springframework.web.bind.annotation.RestController
 /// because Response has not been serialized by kotlinx.serialization
 /// but its derived types are
 @RestController
-@RequestMapping("/daily-attendance")
+@RequestMapping("/{uid}/daily-attendance")
 @Validated
 class DailyAttendanceController {
     @Autowired
     lateinit var dailyAttendanceService: DailyAttendanceService
     @Autowired
     lateinit var userService: UserService
+    @Autowired
+    lateinit var websocket: WebSocketEndpoint
+
     @PostMapping
-    fun insertOne(@RequestBody @Valid request: PostTaskRequest, bindingResult: BindingResult): Response.Ok<Task> {
+    fun insertOne(@RequestBody @Valid request: PostTaskRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response.Ok<Task> {
+        val result = dailyAttendanceService.insertOne(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendancePost)
+
         return Response.Ok(
                 "insert ok",
-                dailyAttendanceService.insertOne(request)
+                result
         )
     }
 
     @PutMapping
-    fun updateOne(@RequestBody @Valid request: UpdateTaskRequest, bindingResult: BindingResult): Response.Ok<Task> {
+    fun updateOne(@RequestBody @Valid request: UpdateTaskRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response.Ok<Task> {
+        val result = dailyAttendanceService.updateOne(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(request.id))
+
         return Response.Ok(
                 "update ok",
-                dailyAttendanceService.updateOne(request)
+                result
         )
     }
 
     @PutMapping("/progress")
-    fun updateOne(@RequestBody request: UpdateProgressRequest): Response.Ok<Task> {
+    fun updateOne(@RequestBody request: UpdateProgressRequest, @PathVariable("uid") uid: String): Response.Ok<Task> {
+        val result = dailyAttendanceService.updateProgress(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(request.id))
+
         return Response.Ok(
                 "update ok",
-                dailyAttendanceService.updateProgress(request)
+                result
         )
     }
 
 
     @PutMapping("/archive")
-    fun updateArchiveOne(@RequestBody request: UpdateArchiveTaskRequest): Response.Ok<Unit> {
+    fun updateArchiveOne(@RequestBody request: UpdateArchiveTaskRequest, @PathVariable("uid") uid: String): Response.Ok<Unit> {
         dailyAttendanceService.updateArchive(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(request.id))
         return Response.Ok("update archive ok", Unit)
     }
     @DeleteMapping("/{id}")
-    fun deleteOne(@PathVariable("id") id: Int): Response.Ok<Unit> {
+    fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response.Ok<Unit> {
         dailyAttendanceService.deleteOne(id)
+        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceDelete(id))
         return Response.Ok("delete ok", Unit)
     }
 
@@ -90,9 +106,18 @@ class DailyAttendanceController {
         return Response.Ok("this daily attendance", item)
     }
 
+    @GetMapping(params = ["archive"])
+    fun findAll(@RequestParam("archive") archive: Boolean): Response.Ok<List<Task>> {
+        val userid = userService.currentUserId()
+        val list = dailyAttendanceService.findAllAvailable(userid, archive)
+        return Response.Ok("all available", list)
+    }
+
     @PutMapping("/reset/{id}")
-    fun resetToday(@PathVariable("id") id: Int): Response.Ok<Task> {
-        return Response.Ok("reset ok", dailyAttendanceService.resetTaskCurrentDay(id))
+    fun resetToday(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response.Ok<Task> {
+        val result = dailyAttendanceService.resetTaskCurrentDay(id)
+        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(id))
+        return Response.Ok("reset ok", result)
     }
 
     @GetMapping("/statistics/week", params = ["offset"])

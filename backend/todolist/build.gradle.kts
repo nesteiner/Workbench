@@ -17,6 +17,7 @@ dependencies {
 
     implementation(project(":common"))
     implementation(project(":login"))
+    implementation(project(":websocket"))
 }
 
 tasks.withType<Test> {

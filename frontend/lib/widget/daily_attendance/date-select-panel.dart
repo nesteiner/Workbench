@@ -16,7 +16,9 @@ class DateSelectPanel extends StatelessWidget {
 
   late final List<String> weekdays;
   late final List<int> days;
-  late final DailyAttendanceState state;
+  DailyAttendanceState? _state;
+  DailyAttendanceState get state => _state!;
+  set state(DailyAttendanceState value) => _state ??= value;
 
   DateSelectPanel() {
     final lastDay = DateTime.now();

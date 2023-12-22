@@ -4,6 +4,7 @@ import 'package:frontend/api/interceptor.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
 import 'package:frontend/utils.dart';
+import 'package:path/path.dart';
 
 class TodoListApi extends Api {
   static const String contentType = "application/json; charset=utf-8";
@@ -12,7 +13,7 @@ class TodoListApi extends Api {
 
   late final Dio instance;
   String todolistUrl;
-  void Function(DioException) errorHandler;
+  Future<void> Function(DioException) errorHandler;
 
   TodoListApi({required this.todolistUrl, required this.errorHandler}): assert(!todolistUrl.endsWith("/")) {
     instance = Dio(defaultOptions);
@@ -113,6 +114,16 @@ class TodoListApi extends Api {
   Future<List<TaskGroup>> findAllTaskGroups(int projectid) async {
     Response<Map<String, dynamic>> response = await instance.get("$todolistUrl/taskgroup?projectid=$projectid");
     return response.data!["data"].map<TaskGroup>((e) => TaskGroup.fromJson(e)).toList();
+  }
+
+  Future<TaskGroup> findTaskGroup(int id) async {
+    Response<Map<String, dynamic>> response = await instance.get(join(todolistUrl, "taskgroup", id.toString()));
+    return TaskGroup.fromJson(response.data!["data"]);
+  }
+
+  Future<Task> findTask(int id) async {
+    Response<Map<String, dynamic>> response = await instance.get(join(todolistUrl, "task", id.toString()));
+    return Task.fromJson(response.data!["data"]);
   }
 
   Future<TaskProject> insertTaskProject(PostTaskProjectRequest request) async {

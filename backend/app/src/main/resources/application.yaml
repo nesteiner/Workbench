@@ -24,6 +24,11 @@ server:
   servlet:
     context-path: "/api"
 
+  tomcat:
+    threads:
+      max: 4
+
+
 
 file:
   storage:

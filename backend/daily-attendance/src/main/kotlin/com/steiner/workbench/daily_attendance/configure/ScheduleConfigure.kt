@@ -1,6 +1,5 @@
 package com.steiner.workbench.daily_attendance.configure
 
-import com.steiner.workbench.common.util.shanghaiNow
 import com.steiner.workbench.daily_attendance.service.DailyAttendanceService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

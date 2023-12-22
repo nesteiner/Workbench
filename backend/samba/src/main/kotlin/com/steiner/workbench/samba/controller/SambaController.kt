@@ -4,12 +4,15 @@ import com.steiner.workbench.common.util.Response
 import com.steiner.workbench.samba.model.SambaFile
 import com.steiner.workbench.samba.request.LoginRequest
 import com.steiner.workbench.samba.util.SambaUtil
+import com.steiner.workbench.websocket.endpoint.WebSocketEndpoint
+import com.steiner.workbench.websocket.model.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jcifs.smb1.smb1.SmbAuthException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -23,7 +26,7 @@ import java.io.RandomAccessFile
 import java.net.URLConnection
 
 @RestController
-@RequestMapping("/samba")
+@RequestMapping("/{uid}/samba")
 class SambaController {
     @Autowired
     lateinit var sambaUtil: SambaUtil
@@ -44,7 +47,7 @@ class SambaController {
     }
 
     @DeleteMapping(params = ["path"])
-    fun deleteFile(@RequestParam("path") path: String): Response<Unit> {
+    fun deleteFile(@RequestParam("path") path: String, @PathVariable("uid") uid: String): Response<Unit> {
         val file = sambaUtil.file(path)
         if (file.isDirectory) {
             sambaUtil.deleteDirectory(path)
@@ -52,31 +55,30 @@ class SambaController {
             sambaUtil.deleteFile(path)
         }
 
+        WebSocketEndpoint.notifyAll(uid, Operation.SambaUpdate(file.parent))
+
         return Response.Ok("delete ok", Unit)
     }
 
     @PostMapping(params = ["path"])
-    fun createDirectory(@RequestParam("path") path: String): Response<Unit> {
+    fun createDirectory(@RequestParam("path") path: String, @PathVariable("uid") uid: String): Response<Unit> {
         val sambafile = sambaUtil.file(path)
         if (!sambafile.exists()) {
             sambaUtil.createDirectory(path)
         }
 
+        WebSocketEndpoint.notifyAll(uid, Operation.SambaUpdate(sambafile.parent))
         return Response.Ok("create dir ok", Unit)
-    }
-
-
-    @GetMapping("/size", params = ["path"])
-    fun findSize(@RequestParam("path") path: String): Response<Long> {
-        return Response.Ok("size of $path", sambaUtil.sizeof(path))
     }
 
     @PostMapping("/upload", consumes = ["multipart/form-data"])
     fun uploadFile(@RequestPart("file") file: MultipartFile,
-                   @RequestPart("path") path: String): Response<Unit> {
+                   @RequestPart("path") path: String,
+                   @PathVariable("uid") uid: String): Response<Unit> {
 
         sambaUtil.uploadFile(remotepath = path, filename = file.originalFilename ?: "untitled", inputStream = file.inputStream)
 
+        WebSocketEndpoint.notifyAll(uid, Operation.SambaUpdate(path))
         return Response.Ok("upload ok", Unit)
     }
 
@@ -90,16 +92,5 @@ class SambaController {
 
         val outputStream = response.outputStream
         sambaUtil.downloadFile(sambafile, outputStream)
-    }
-
-    @PostMapping("/check/login")
-    fun checkLogin(@RequestBody request: LoginRequest): Response<Boolean> {
-        try {
-            sambaUtil.login(request.url, request.username, request.password)
-            return Response.Ok("check ok", true)
-        } catch (exception: SmbAuthException) {
-            return Response.Ok("check failed", false)
-        }
-
     }
 }

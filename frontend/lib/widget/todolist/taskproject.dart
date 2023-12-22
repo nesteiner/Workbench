@@ -4,23 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
 import 'package:frontend/page/todolist/taskgroup-board.dart';
+import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/todolist-state.dart';
 import 'package:provider/provider.dart';
 
 class TaskProjectWidget extends StatelessWidget {
   final TaskProject taskproject;
-  late final TodoListState state;
+  TodoListState? _state;
+  TodoListState get state => _state!;
+  set state(TodoListState value) => _state ??= value;
+
+  GlobalState? _globalState;
+  GlobalState get globalState => _globalState!;
+  set globalState(GlobalState value) => _globalState ??= value;
+
   TaskProjectWidget({super.key, required this.taskproject});
 
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
+    globalState = context.read<GlobalState>();
+
     late Widget container;
 
-    if (Platform.isAndroid || Platform.isIOS) {
-      container = buildMobile(context);
-    } else {
+    if (globalState.isDesktop) {
       container = buildDesktop(context);
+    } else {
+      container = buildMobile(context);
     }
 
     return GestureDetector(
@@ -104,7 +114,7 @@ class TaskProjectWidget extends StatelessWidget {
             children: [
               Text(
                 taskproject.name,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: settings["widget.taskproject.thumbnail.text-style"],
                 overflow: TextOverflow.ellipsis,
               )
             ],),
@@ -114,7 +124,7 @@ class TaskProjectWidget extends StatelessWidget {
               Text(
                 taskproject.profile!,
                 style: TextStyle(
-                    fontSize: 10, color: Color.fromRGBO(0, 0, 0, 0.5)
+                    fontSize: 14, color: Color.fromRGBO(0, 0, 0, 0.5)
                 ),
                 overflow: TextOverflow.ellipsis,
               )
@@ -129,7 +139,7 @@ class TaskProjectWidget extends StatelessWidget {
                 children: [
                   Text(
                     taskproject.name,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: settings["widget.taskproject.thumbnail.text-style"],
                     overflow: TextOverflow.ellipsis,
                   )
                 ]
@@ -140,11 +150,12 @@ class TaskProjectWidget extends StatelessWidget {
 
 
     return Container(
-      height: settings["widget.taskproject.height.mobile"],
+      padding: settings["widget.taskproject.padding"],
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           thumbnail,
+          SizedBox(width: settings["common.unit.size"],),
           footer
         ],
       ),

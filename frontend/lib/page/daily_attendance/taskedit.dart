@@ -17,7 +17,10 @@ class TaskEdit extends StatelessWidget {
   ];
   static final positiveRegex = RegExp(r"^[1-9]\d*$");
   
-  late final DailyAttendanceState state;
+  DailyAttendanceState? _state;
+  DailyAttendanceState get state => _state!;
+  set state(DailyAttendanceState value) => _state ??= value;
+
   late void Function(void Function()) setStateBackgroundColor;
   late void Function(void Function()) setStateEditIcon;
   late void Function(void Function()) setStateSubmitMode;
@@ -66,6 +69,7 @@ class TaskEdit extends StatelessWidget {
     return Scaffold(
       appBar: buildAppBar(context),
       body: buildBody(context),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -178,7 +182,7 @@ class TaskEdit extends StatelessWidget {
 
     final iconEdit = GestureDetector(
       onTap: () {
-        showDialog(context: context, builder: (context) => AlertDialog(
+        showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
           title: const Text("图标"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -691,7 +695,7 @@ class TaskEdit extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        showDialog(context: context, builder: (context) => AlertDialog(
+        showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
           title: const Text("坚持天数", style: TextStyle(fontWeight: FontWeight.bold),),
           content: ValueListenableBuilder(
             valueListenable: keepdays,
@@ -862,7 +866,7 @@ class TaskEdit extends StatelessWidget {
     ];
 
 
-    return await showDialog(context: context, builder: (context) => AlertDialog(
+    return await showDialog(context: context, useRootNavigator: false, builder: (context) => AlertDialog(
       title: const Text("目标", style: TextStyle(fontWeight: FontWeight.bold),),
       content: buildEditGoalContent(context, (value) {
         goal = value;

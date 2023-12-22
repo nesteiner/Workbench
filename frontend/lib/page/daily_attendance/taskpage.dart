@@ -18,12 +18,21 @@ class TaskPage extends StatelessWidget {
     state = context.read<DailyAttendanceState>();
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text("打卡", style: settings["page.daily-attendance.taskpage.appbar.text-style"],),
         actions: [
           InkWell(
             onTap: () {
-              dailyAttendnaceNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => StatisticsPage()));
+              dailyAttendnaceNavigatorKey.currentState?.pushNamed(dailyAttendanceRoutes["task-manage"]!);
+            },
+
+            child: Image.asset("assets/tar.png"),
+          ),
+
+          InkWell(
+            onTap: () {
+              dailyAttendnaceNavigatorKey.currentState?.pushNamed(dailyAttendanceRoutes["statistics"]!);
             },
 
             child: Image.asset("assets/statistics.png"),

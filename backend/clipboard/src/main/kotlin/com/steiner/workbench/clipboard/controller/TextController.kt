@@ -6,6 +6,8 @@ import com.steiner.workbench.clipboard.service.TextService
 import com.steiner.workbench.common.util.Page
 import com.steiner.workbench.common.util.Response
 import com.steiner.workbench.login.service.UserService
+import com.steiner.workbench.websocket.endpoint.WebSocketEndpoint
+import com.steiner.workbench.websocket.model.Operation
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.validation.BindingResult
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @Validated
-@RequestMapping("/clipboard")
+@RequestMapping("/{uid}/clipboard")
 /// ATTENTION, consider there is no @Serializable in Text, there is no need to use `Response.Ok`
 class TextController {
     @Autowired
@@ -33,13 +35,16 @@ class TextController {
         get() = userService.currentUserId()
 
     @PostMapping
-    fun insertOne(@RequestBody @Valid request: PostTextRequest, bindingResult: BindingResult): Response<Text> {
-        return Response.Ok("insert ok", textService.insertOne(request))
+    fun insertOne(@RequestBody @Valid request: PostTextRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<Text> {
+        val result = textService.insertOne(request)
+        WebSocketEndpoint.notifyAll(uid, Operation.ClipboardPost)
+        return Response.Ok("insert ok", result)
     }
 
     @DeleteMapping("/{id}")
-    fun deleteOne(@PathVariable("id") id: Int): Response<Unit> {
+    fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response<Unit> {
         textService.deleteOne(id)
+        WebSocketEndpoint.notifyAll(uid, Operation.ClipboardDelete(id))
         return Response.Ok("delete ok", Unit)
     }
 

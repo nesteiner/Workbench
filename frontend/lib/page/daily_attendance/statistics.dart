@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/state/daily-attendance-state.dart';
+import 'package:frontend/state/global-state.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/model/daily-attendance.dart' as da;
 
@@ -22,8 +23,12 @@ class StatisticsPage extends StatefulWidget {
 
 class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProviderStateMixin {
   DailyAttendanceState?  _state;
-
   DailyAttendanceState get state => _state!;
+  set state(DailyAttendanceState value) => _state ??= value;
+
+  GlobalState? _globalState;
+  GlobalState get globalState => _globalState!;
+  set globalState(GlobalState value) => _globalState ??= value;
 
   late void Function(void Function()) setStateChangeWeek;
 
@@ -89,35 +94,38 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    _state ??= context.read<DailyAttendanceState>();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("统计",),
-        bottom: tabs,
-        leading: BackButton(
-          onPressed: () {
-            dailyAttendnaceNavigatorKey.currentState?.pop();
-            // Navigator.pop(context);
+    state = context.read<DailyAttendanceState>();
+    globalState = context.read<GlobalState>();
 
-          },
+    return Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          title: const Text("统计",),
+          bottom: tabs,
+          leading: BackButton(
+            onPressed: () {
+              dailyAttendnaceNavigatorKey.currentState?.pop();
+              // Navigator.pop(context);
+
+            },
+          ),
         ),
-      ),
-      body: ValueListenableBuilder(
-        valueListenable: tabIndexNotifier,
-        builder: (_, value, child) {
-          if (value == 0) {
-            return ValueListenableBuilder(
-                valueListenable: offsetWeekNotifier,
-                builder: (context, value, child) => buildStatisticsWeekly(context, value)
-            );
-          } else {
-            return ValueListenableBuilder(
-                valueListenable: offsetMonthNotifier,
-                builder: (context, value, child) => buildStatisticsMonthly(context, value)
-            );
-          }
-        },
-      )
+        body: ValueListenableBuilder(
+          valueListenable: tabIndexNotifier,
+          builder: (_, value, child) {
+            if (value == 0) {
+              return ValueListenableBuilder(
+                  valueListenable: offsetWeekNotifier,
+                  builder: (context, value, child) => buildStatisticsWeekly(context, value)
+              );
+            } else {
+              return ValueListenableBuilder(
+                  valueListenable: offsetMonthNotifier,
+                  builder: (context, value, child) => buildStatisticsMonthly(context, value)
+              );
+            }
+          },
+        )
     );
   }
 
@@ -135,6 +143,19 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
           }
 
           final Map<da.Task, List<da.Progress>> data = snapshot.requireData;
+          late EdgeInsets margin;
+          late double size;
+          late EdgeInsets padding;
+          if (globalState.isDesktop) {
+            margin = settings["page.daily-attendance.statistics.panel.item.margin"];
+            size = settings["page.daily-attendance.statistics.week.panel.item.size"];
+            padding = settings["page.daily-attendance.statistics.panel.padding"];
+          } else {
+            margin = settings["page.daily-attendance.statistics.panel.item.margin.mobile"];
+            size = settings["page.daily-attendance.statistics.week.panel.item.size.mobile"];
+            padding = settings["page.daily-attendance.statistics.panel.padding.mobile"];
+          }
+
           final head = Row(
             mainAxisSize: MainAxisSize.max,
             children: [
@@ -153,9 +174,9 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
                               final color = flag ? Colors.white : Colors.black;
                               final style = TextStyle(color: color, fontSize: settings["page.daily-attendance.statistics.week.panel.font.size"]);
                               return Container(
-                                width: settings["page.daily-attendance.statistics.week.panel.item.size"],
-                                height: settings["page.daily-attendance.statistics.week.panel.item.size"],
-                                margin: settings["page.daily-attendance.statistics.panel.item.margin"],
+                                width: size,
+                                height: size,
+                                margin: margin,
                                 decoration: flag ? const BoxDecoration(
                                     color: Colors.blue,
                                     shape: BoxShape.circle
@@ -171,7 +192,7 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
 
           final keys = data.keys.toList();
           final listview = ListView.builder(
-              shrinkWrap: true,
+              // shrinkWrap: true,
               itemCount: data.length,
               itemBuilder: (context, index) {
                 late Color color;
@@ -184,8 +205,8 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
                   final icon0 = task.icon as da.IconWord;
                   color = icon0.color;
                   icon = Container(
-                    width: settings["page.daily-attendance.statistics.week.panel.item.size"],
-                    height: settings["page.daily-attendance.statistics.week.panel.item.size"],
+                    width: size,
+                    height: size,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: color
@@ -199,8 +220,8 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
                   color = icon0.backgroundColor;
 
                   icon = Container(
-                    width: settings["page.daily-attendance.statistics.week.panel.item.size"],
-                    height: settings["page.daily-attendance.statistics.week.panel.item.size"],
+                    width: size,
+                    height: size,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: color
@@ -229,10 +250,10 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
                   final progress = progresses[e.$1];
                   final itemColor = progressColor(progress, color);
                   return Container(
-                    width: settings["page.daily-attendance.statistics.week.panel.item.size"],
-                    height: settings["page.daily-attendance.statistics.week.panel.item.size"],
-                    margin: settings["page.daily-attendance.statistics.panel.item.margin"],
-                    padding: settings["page.daily-attendance.statistics.panel.item.padding"],
+                    width: size,
+                    height: size,
+                    margin: margin,
+                    padding: padding,
                     decoration: BoxDecoration(
                       color: itemColor
                     ),
@@ -257,25 +278,23 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
               }
           );
 
-          return SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                decoration: settings["page.daily-attendance.statistics.panel.decoration"],
-                width: settings["page.daily-attendance.statistics.panel.width"],
-                padding: settings["page.daily-attendance.statistics.panel.padding"],
-                margin: settings["page.daily-attendance.statistics.panel.margin"],
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    buildChangeWeek(context, data.isEmpty),
-                    SizedBox(height: settings["page.daily-attendance.statistics.change-week.margin-bottom"],),
-                    head,
-                    listview
-                  ],
-                ),
+          return Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              decoration: settings["page.daily-attendance.statistics.panel.decoration"],
+              width: settings["page.daily-attendance.statistics.panel.width"],
+              padding: settings["page.daily-attendance.statistics.panel.padding"],
+              margin: settings["page.daily-attendance.statistics.panel.margin"],
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  buildChangeWeek(context, data.isEmpty),
+                  SizedBox(height: settings["page.daily-attendance.statistics.change-week.margin-bottom"],),
+                  head,
+                  Expanded(child: listview)
+
+                ],
               ),
             ),
           );
