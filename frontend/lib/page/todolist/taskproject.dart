@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
@@ -9,6 +7,7 @@ import 'package:frontend/request/todolist.dart';
 import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/user-state.dart';
 import 'package:frontend/state/todolist-state.dart';
+import 'package:frontend/utils.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
 import 'package:frontend/widget/todolist/taskproject.dart';
 import 'package:provider/provider.dart';
@@ -22,15 +21,10 @@ class TaskProjectPage extends StatelessWidget {
   UserState get loginState => _loginState!;
   set loginState(UserState value) => _loginState ??= value;
 
-  GlobalState? _globalState;
-  GlobalState get globalState => _globalState!;
-  set globalState(GlobalState value) => _globalState ??= value;
-
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
     loginState = context.read<UserState>();
-    globalState = context.read<GlobalState>();
 
     final child = FutureBuilder(
         future: loadTaskProjects(),
@@ -54,7 +48,7 @@ class TaskProjectPage extends StatelessWidget {
 
     FloatingActionButton? floatingActionButton;
 
-    if (!globalState.isDesktop) {
+    if (!isDesktop) {
       floatingActionButton = FloatingActionButton(
         onPressed: () {
           todolistNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskProjectAdd()));
@@ -73,7 +67,7 @@ class TaskProjectPage extends StatelessWidget {
   }
 
   Widget buildBody(BuildContext context) {
-    if (globalState.isDesktop) {
+    if (isDesktop) {
       return buildDesktop(context);
     } else {
       return buildMobile(context);

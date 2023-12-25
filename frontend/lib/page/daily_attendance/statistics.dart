@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/state/daily-attendance-state.dart';
 import 'package:frontend/state/global-state.dart';
+import 'package:frontend/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/model/daily-attendance.dart' as da;
 
@@ -25,10 +26,6 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
   DailyAttendanceState?  _state;
   DailyAttendanceState get state => _state!;
   set state(DailyAttendanceState value) => _state ??= value;
-
-  GlobalState? _globalState;
-  GlobalState get globalState => _globalState!;
-  set globalState(GlobalState value) => _globalState ??= value;
 
   late void Function(void Function()) setStateChangeWeek;
 
@@ -95,7 +92,6 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     state = context.read<DailyAttendanceState>();
-    globalState = context.read<GlobalState>();
 
     return Scaffold(
         resizeToAvoidBottomInset: false,
@@ -146,7 +142,7 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
           late EdgeInsets margin;
           late double size;
           late EdgeInsets padding;
-          if (globalState.isDesktop) {
+          if (isDesktop) {
             margin = settings["page.daily-attendance.statistics.panel.item.margin"];
             size = settings["page.daily-attendance.statistics.week.panel.item.size"];
             padding = settings["page.daily-attendance.statistics.panel.padding"];

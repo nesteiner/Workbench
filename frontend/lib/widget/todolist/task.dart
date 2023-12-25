@@ -24,16 +24,11 @@ class TaskWidgetState extends State<TaskWidget> {
   TodoListState get state => _state!;
   set state(TodoListState value) => _state ??= value;
 
-  GlobalState? _globalState;
-  GlobalState get globalState => _globalState!;
-  set globalState(GlobalState value) => _globalState ??= value;
-
   bool ishover = false;
 
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
-    globalState = context.read<GlobalState>();
 
     return GestureDetector(
       onTap: () {
@@ -137,7 +132,7 @@ class TaskWidgetState extends State<TaskWidget> {
 
     double? width;
 
-    if (globalState.isDesktop) {
+    if (isDesktop) {
       width = settings["widget.task.width"];
     }
 

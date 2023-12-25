@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/extension/samba-file-extension.dart';
 import 'package:frontend/model/samba.dart';
+import 'package:frontend/utils.dart';
 import 'package:path/path.dart';
 import 'package:frontend/model/samba.dart' as sm;
 import 'package:frontend/page/error-page.dart';
@@ -311,7 +312,7 @@ class _SambaPageState extends State<SambaPage> {
     final button = IconButton(
         onPressed: () async {
           late String? result;
-          if (globalState.isDesktop) {
+          if (isDesktop) {
             result = await FilePicker.platform.saveFile(fileName: "temp");
           } else {
 

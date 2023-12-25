@@ -1,11 +1,9 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/model/todolist.dart';
-import 'package:frontend/page/todolist/taskgroup-board.dart';
-import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/todolist-state.dart';
+import 'package:frontend/utils.dart';
 import 'package:provider/provider.dart';
 
 class TaskProjectWidget extends StatelessWidget {
@@ -14,20 +12,15 @@ class TaskProjectWidget extends StatelessWidget {
   TodoListState get state => _state!;
   set state(TodoListState value) => _state ??= value;
 
-  GlobalState? _globalState;
-  GlobalState get globalState => _globalState!;
-  set globalState(GlobalState value) => _globalState ??= value;
-
   TaskProjectWidget({super.key, required this.taskproject});
 
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
-    globalState = context.read<GlobalState>();
 
     late Widget container;
 
-    if (globalState.isDesktop) {
+    if (isDesktop) {
       container = buildDesktop(context);
     } else {
       container = buildMobile(context);
@@ -55,7 +48,7 @@ class TaskProjectWidget extends StatelessWidget {
 
       child: Row(children: [
         Text(taskproject.name, overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontWeight: FontWeight.bold),)
+          style: const TextStyle(fontWeight: FontWeight.bold),)
       ],),
     );
 
@@ -123,7 +116,7 @@ class TaskProjectWidget extends StatelessWidget {
             children: [
               Text(
                 taskproject.profile!,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 14, color: Color.fromRGBO(0, 0, 0, 0.5)
                 ),
                 overflow: TextOverflow.ellipsis,

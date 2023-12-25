@@ -337,15 +337,6 @@ class TodoListState extends ChangeNotifier implements Api {
     }
   }
 
-  Future<void> loadTaskGroup(int id) async {
-    int index = taskgroups.indexWhere((element) => element.id == id);
-    logger.i("index is $index, id is $id");
-    if (index != -1) {
-      taskgroups[index] = await api.findTaskGroup(id);
-      notifyListeners();
-    }
-  }
-
   Future<Task> loadTask(int id) async {
     return await api.findTask(id);
   }

@@ -13,6 +13,7 @@ import 'package:frontend/page/todolist/taskdetail.dart';
 import 'package:frontend/page/todolist/taskgroup-board.dart';
 import 'package:frontend/page/todolist/taskproject.dart';
 import 'package:frontend/state/global-state.dart';
+import 'package:frontend/utils.dart';
 import 'package:frontend/widget/keepalive.dart';
 import 'package:frontend/widget/pomodoro/pomodoro-board.dart';
 import 'package:provider/provider.dart';
@@ -115,7 +116,7 @@ class _RootPageState extends State<RootPage> with SingleTickerProviderStateMixin
     };
 
 
-    if (state.isDesktop) {
+    if (isDesktop) {
       return buildDesktop(context);
     } else {
       return buildMobile(context);

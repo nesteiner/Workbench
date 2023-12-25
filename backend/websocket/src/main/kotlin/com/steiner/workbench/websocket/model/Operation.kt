@@ -32,7 +32,7 @@ sealed class Operation {
 
     @Serializable
     @SerialName("Task:Post")
-    class TaskPost(val taskprojectId: Int, val taskgroupId: Int): Operation()
+    class TaskPost(val taskprojectId: Int, val taskgroupId: Int, val id: Int): Operation()
 
     @Serializable
     @SerialName("Task:Delete")

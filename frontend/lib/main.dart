@@ -1,3 +1,4 @@
+import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:frontend/constants.dart';
@@ -34,8 +35,11 @@ class App extends StatelessWidget {
           )
         )
       ),
+
+      builder: BotToastInit(),
+      navigatorObservers: [BotToastNavigatorObserver()],
       home: FutureBuilder(
-        future: GlobalState.loadGlobalState(context),
+        future: GlobalState.loadGlobalState(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return ErrorPage(error: snapshot.error, stackTrace: snapshot.stackTrace,);

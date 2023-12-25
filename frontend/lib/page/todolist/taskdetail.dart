@@ -26,10 +26,6 @@ class TaskDetailState extends State<TaskDetail> {
   TodoListState get state => _state!;
   set state(TodoListState value) => _state ??= value;
 
-  GlobalState? _globalState;
-  GlobalState get globalState => _globalState!;
-  set globalState(GlobalState value) => _globalState ??= value;
-
   late void Function(void Function()) setStateToggleCreate;
   late void Function(void Function()) setStateToggleSearch;
   late void Function(void Function()) setStateToggleNote;
@@ -41,7 +37,6 @@ class TaskDetailState extends State<TaskDetail> {
   Widget build(BuildContext context) {
     // TODO later to look up state
     state = context.read<TodoListState>();
-    globalState = context.read<GlobalState>();
 
     final center = Align(
       alignment: Alignment.topCenter,
@@ -64,7 +59,19 @@ class TaskDetailState extends State<TaskDetail> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.task.name),),
+      appBar: AppBar(
+        title: Text(widget.task.name),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await state.deleteTask(widget.task.id, state.currentTaskGroup!.index - 1);
+              todolistNavigatorKey.currentState?.pop();
+            },
+
+            icon: const Icon(Icons.delete_forever_outlined, color: Colors.red,),
+          )
+        ],
+      ),
       body: Padding(padding: settings["widget.task.form.padding"], child: center,),
       resizeToAvoidBottomInset: false,
     );
@@ -1113,20 +1120,33 @@ class TaskDetailState extends State<TaskDetail> {
       ],
     );
 
+    late Widget right;
+
+    if (isDesktop) {
+      right = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          field,
+          buttons
+        ],
+      );
+    } else {
+      right = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          field,
+          buttons
+        ],
+      );
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         left,
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            field,
-            buttons
-          ],
-        )
+        right
       ],
     );
   }

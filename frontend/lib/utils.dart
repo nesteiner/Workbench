@@ -94,3 +94,9 @@ String basename(String path) {
 }
 
 typedef SetStateCallback = void Function(void Function());
+
+bool? _isDesktop;
+bool get isDesktop {
+  _isDesktop ??= Platform.isWindows || Platform.isLinux;
+  return _isDesktop!;
+}

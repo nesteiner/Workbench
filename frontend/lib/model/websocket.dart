@@ -69,7 +69,7 @@ abstract class Operation {
         final taskprojectId = json["taskprojectId"];
         final taskgroupId = json["taskgroupId"];
 
-        return TaskPost(taskprojectId: taskprojectId, taskgroupId: taskgroupId);
+        return TaskPost(taskprojectId: taskprojectId, taskgroupId: taskgroupId, id: json["id"]);
 
       case "Task:Delete":
         final taskprojectId = json["taskprojectId"];
@@ -152,8 +152,8 @@ class TaskGroupUpdate extends Operation {
 class TaskPost extends Operation {
   final int taskprojectId;
   final int taskgroupId;
-
-  TaskPost({required this.taskprojectId, required this.taskgroupId});
+  final int id;
+  TaskPost({required this.taskprojectId, required this.taskgroupId, required this.id});
 }
 
 class TaskDelete extends Operation {

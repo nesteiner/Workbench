@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/state/global-state.dart';
+import 'package:frontend/utils.dart';
 import 'package:frontend/widget/home/clipboard.dart';
 import 'package:frontend/widget/home/pomodoro.dart';
 import 'package:frontend/widget/pages.dart';
@@ -17,7 +18,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     state = context.read<GlobalState>();
     List<Widget> actions = [];
-    if (!state.isDesktop) {
+    if (!isDesktop) {
       actions = [PopupMenuButton(
           child: const Icon(Icons.more_vert),
           itemBuilder: (_) => [
@@ -54,7 +55,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget buildBody(BuildContext context) {
-    if (state.isDesktop) {
+    if (isDesktop) {
       return buildDesktop(context);
     } else {
       return buildMobile(context);

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -35,13 +36,13 @@ class GlobalState extends ChangeNotifier {
       "workbench"
   );
 
-  static Future<GlobalState> loadGlobalState(BuildContext context) async {
+  static Future<GlobalState> loadGlobalState() async {
     final prefs = await SharedPreferences.getInstance();
     // STUB
     // await prefs.clear();
     await plugin.initialize(InitializationSettings(linux: linuxSettings, android: androidSettings));
     tz.initializeTimeZones();
-    final state = GlobalState(preferences: prefs, context: context);
+    final state = GlobalState(preferences: prefs);
 
     Future<void> errorHandler(DioException exception) async {
       logger.e("error: ", error: exception.error);
@@ -92,17 +93,11 @@ class GlobalState extends ChangeNotifier {
 
 
   late SharedPreferences preferences;
-  late bool isDesktop;
   UserState? _userState;
   TodoListState? _todolistState;
   DailyAttendanceState? _dailyAttendanceState;
   SambaState? _sambaState;
   ClipboardState? _clipboardState;
-  BuildContext context;
-
-  GlobalState({required this.preferences, required this.context}) {
-    isDesktop = Platform.isLinux || Platform.isWindows || Platform.isMacOS;
-  }
 
   UserState? get userState => _userState;
   TodoListState? get todolistState => _todolistState;
@@ -170,8 +165,7 @@ class GlobalState extends ChangeNotifier {
   void bindWebsocket(IOWebSocketChannel websocket) {
     websocket.stream.listen((event) => listen(event),
         onError: (error) {
-          final snackbar = SnackBar(content: Text("error occur: $error"));
-          ScaffoldMessenger.of(context).showSnackBar(snackbar);
+          BotToast.showText(text: "error occur: $error");
         }
 
     );
@@ -237,7 +231,10 @@ class GlobalState extends ChangeNotifier {
         break;
 
       case TaskPost operation1:
-        await todolistState?.loadTaskGroup(operation1.taskgroupId);
+        final task = await todolistState!.loadTask(operation1.id);
+        final taskgroup = todolistState!.taskgroups.firstWhere((element) => element.id == operation1.taskgroupId);
+        taskgroup.tasks.insert(0, task);
+        todolistState!.update();
 
         break;
         
@@ -333,6 +330,6 @@ class GlobalState extends ChangeNotifier {
   }
 
   Future<void> listenError(String message) async {
-
+    BotToast.showText(text: "error: $message");
   }
 }

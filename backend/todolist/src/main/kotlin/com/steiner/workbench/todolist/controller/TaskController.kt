@@ -37,7 +37,7 @@ class TaskController {
     fun insertOne(@RequestBody @Valid request: PostTaskRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<Task> {
         val taskgroup = taskGroupService.findOne(request.parentid) ?: throw BadRequestException("no such task group with id ${request.parentid}")
         val result = taskService.insertOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskPost(taskgroup.parentid, taskgroup.id))
+        WebSocketEndpoint.notifyAll(uid, Operation.TaskPost(taskgroup.parentid, taskgroup.id, result.id))
 
         return Response.Ok("insert ok", result)
     }

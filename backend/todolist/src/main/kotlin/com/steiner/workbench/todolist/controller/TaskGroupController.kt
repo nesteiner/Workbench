@@ -30,7 +30,7 @@ class TaskGroupController {
     lateinit var taskgroupService: TaskGroupService
 
     @PostMapping
-    fun insertOne(@RequestBody @Valid request: PostTaskGroupRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskGroup> {
+    fun insertOne(@RequestBody @Valid request: PostTaskGroupRequest, @PathVariable("uid") uid: String, bindingResult: BindingResult,): Response<TaskGroup> {
         val result = taskgroupService.insertOne(request)
         WebSocketEndpoint.notifyAll(uid, Operation.TaskGroupPost(taskprojectId = request.parentid))
         return Response.Ok("insert ok", result)

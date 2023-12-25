@@ -6,6 +6,7 @@ import 'package:frontend/model/todolist.dart';
 import 'package:frontend/request/todolist.dart';
 import 'package:frontend/state/global-state.dart';
 import 'package:frontend/state/todolist-state.dart';
+import 'package:frontend/utils.dart';
 import 'package:frontend/widget/pages.dart';
 import 'package:frontend/widget/pomodoro/pomodoro-board.dart';
 import 'package:frontend/widget/todolist/imageuploder.dart';
@@ -17,10 +18,6 @@ class TaskGroupBoard extends StatelessWidget {
   TodoListState get state => _state!;
   set state(TodoListState value) => _state ??= value;
 
-  GlobalState? _globalState;
-  GlobalState get globalState => _globalState!;
-  set globalState(GlobalState value) => _globalState ??= value;
-
   final TaskProject taskproject;
   late void Function(void Function()) setStateName;
 
@@ -31,11 +28,10 @@ class TaskGroupBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     state = context.read<TodoListState>();
-    globalState = context.read<GlobalState>();
 
     late Widget body;
 
-    if (globalState.isDesktop) {
+    if (isDesktop) {
       body = buildDesktop(context);
     } else {
       body = buildMobile(context);
@@ -113,7 +109,8 @@ class TaskGroupBoard extends StatelessWidget {
     return Selector<TodoListState, String>(
       // in this way, reorder will not flash
       // any way, don't build expensive widget in builder
-      selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
+      selector: (_, state) => state.taskgroups.map((e) => taskGroupString(e)).join(","),
+      shouldRebuild: (oldvalue, newvalue) => oldvalue != newvalue,
       builder: (_, value, child) {
         final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("${e.id}-${e.name}"), taskgroup: e)).toList();
         return StatefulBuilder(builder: (context, setState) {
@@ -145,7 +142,7 @@ class TaskGroupBoard extends StatelessWidget {
 
   Widget buildMobile(BuildContext context) {
     return Selector<TodoListState, String>(
-      selector: (_, state) => state.taskgroups.map((e) => "${e.id}-${e.name}").join(","),
+      selector: (_, state) => state.taskgroups.map((e) => taskGroupString(e)).join(","),
       builder: (_, value, child) {
         final children = state.taskgroups.map<Widget>((e) => TaskGroupWidget(key: ValueKey("${e.id}-${e.name}"), taskgroup: e)).toList();
         return Pages(children: children);
@@ -535,5 +532,11 @@ class TaskGroupBoard extends StatelessWidget {
       content: content,
       actions: actions(context),
     ));
+  }
+
+  String taskGroupString(TaskGroup taskGroup) {
+    // final taskString = taskGroup.tasks.map((task) => "${task.id}-${task.name}-${task.isdone}").join(",");
+    // return "${taskGroup.id}-${taskGroup.name}-$taskString";
+    return "${taskGroup.id}-${taskGroup.name}";
   }
 }
