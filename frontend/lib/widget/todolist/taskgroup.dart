@@ -47,14 +47,14 @@ class TaskGroupWidget extends StatelessWidget {
                         final task = taskgroup.tasks[index];
                         final taskgroupIndex = taskgroup.index;
                         final child = Material(
-                          child: TaskWidget(task: task, taskgroupIndex: taskgroupIndex)
+                          child: TaskWidget(task: task)
 
                         );
 
                         return Stack(
                           children: [
-                            buildTaskWidgetDrag(context, task, taskgroupIndex, child),
-                            buildTaskWidgetDragTarget(context, task, taskgroupIndex, child),
+                            buildTaskWidgetDrag(context, task, child),
+                            buildTaskWidgetDragTarget(context, task, child),
                           ],
                         );
                       }
@@ -304,8 +304,8 @@ class TaskGroupWidget extends StatelessWidget {
                 return Column(
                   children: [
                     entry,
-                    SizedBox(height: 2,),
-                    ...datas.map((e) => Opacity(opacity: 0.5, child: TaskWidget(task: e!, taskgroupIndex: taskgroup.index))).toList()
+                    const SizedBox(height: 2,),
+                    ...datas.map((e) => Opacity(opacity: 0.5, child: TaskWidget(task: e!))).toList()
                   ],
                 );
               },
@@ -319,7 +319,7 @@ class TaskGroupWidget extends StatelessWidget {
     });
   }
 
-  Widget buildTaskWidgetDrag(BuildContext context, Task task, int taskgroupIndex, Material child) {
+  Widget buildTaskWidgetDrag(BuildContext context, Task task, Material child) {
     final size = MediaQuery.of(context).size;
 
     final feedback = SizedBox(
@@ -335,14 +335,14 @@ class TaskGroupWidget extends StatelessWidget {
     );
   }
 
-  Widget buildTaskWidgetDragTarget(BuildContext context, Task task, int taskgroupIndex, Material child) {
+  Widget buildTaskWidgetDragTarget(BuildContext context, Task task, Material child) {
     return DragTarget<Task>(
       onWillAccept: (from) => from?.id != task.id,
       onAccept: (from) async {
         final oldlist = state.taskgroups.firstWhere((element) => element.id == from.parentid);
         oldlist.tasks.removeWhere((element) => element.id == from.id);
 
-        final newlist = state.taskgroups[taskgroupIndex - 1];
+        final newlist = state.taskgroups.firstWhere((element) => element.id == task.parentid);
         int reorderAt = task.index + 1;
 
         if (from.parentid == task.parentid) {
@@ -388,7 +388,7 @@ class TaskGroupWidget extends StatelessWidget {
           children: [
             child,
             SizedBox(height: 4,),
-            ...datas.map((e) => Opacity(opacity: 0.5, child: TaskWidget(task: e!, taskgroupIndex: taskgroupIndex))).toList()
+            ...datas.map((e) => Opacity(opacity: 0.5, child: TaskWidget(task: e!))).toList()
           ],
         );
       },

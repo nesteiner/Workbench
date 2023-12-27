@@ -1,6 +1,5 @@
 package com.steiner.workbench.common
 
-import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -10,6 +9,8 @@ const val AUTHORIZATIOIN = "Authorization"
 const val USERNAME_ATTRIBUTE = "username"
 const val JWTTOKEN_ATTRIBUTE = "jwttoken"
 
+const val USER_NAME_LENGTH = 24
+const val USER_EMAIL_LENGTH = 48
 
 // for todolist
 const val SUBTASK_NAME_LENGTH = 128

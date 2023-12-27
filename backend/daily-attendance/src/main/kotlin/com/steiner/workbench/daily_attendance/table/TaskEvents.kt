@@ -12,7 +12,7 @@ private val formatter = Json {
 }
 
 object TaskEvents: IntIdTable("daily-attendance-taskevents") {
-    val taskname = reference("name", Tasks.name, onDelete = ReferenceOption.CASCADE)
+    val taskname = reference("taskname", Tasks.name, onDelete = ReferenceOption.CASCADE)
     val taskid = reference("taskid", Tasks, onDelete = ReferenceOption.CASCADE)
     val time = timestamp("time")
     val progress = jsonb<Progress>("progress", formatter)

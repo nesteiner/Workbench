@@ -57,7 +57,7 @@ class TaskGroupBoard extends StatelessWidget {
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.menu),
+          Icon(Icons.menu),
         ],
       ),
 
@@ -130,6 +130,7 @@ class TaskGroupBoard extends StatelessWidget {
 
 
                 await state.reorderTaskGroup(state.taskgroups[oldindex], oldindex, newindex + 1);
+                state.update();
               },
 
               footer: buildFooter(context)

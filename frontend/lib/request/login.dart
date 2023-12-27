@@ -29,7 +29,7 @@ class PostUserRequest {
     final passwordHash = md5.convert(utf8.encode(password)).toString();
     return {
       "name": name,
-      "roles": roles.map((e) => e.toJson()),
+      "roles": roles.map((e) => e.toJson()).toList(),
       "email": email,
       "enabled": true,
       "passwordHash": passwordHash

@@ -142,8 +142,8 @@ class TodoListState extends ChangeNotifier implements Api {
     taskgroups = await api.findAllTaskGroups(taskproject.id);
   }
 
-  void setCurrentTaskGroupAt(int index) {
-    currentTaskGroup = taskgroups[index];
+  void setCurrentTaskGroup(TaskGroup taskgroup) {
+    currentTaskGroup = taskgroup;
     currentTask = null;
   }
 
@@ -285,7 +285,6 @@ class TodoListState extends ChangeNotifier implements Api {
 
    final item = taskgroups.removeAt(oldindex);
    taskgroups.insert(newindex - 1, item);
-
  }
 
  Future<void> updateTaskGroup(UpdateTaskGroupRequest request, int index) async {

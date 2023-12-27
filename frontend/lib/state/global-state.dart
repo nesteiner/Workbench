@@ -92,7 +92,7 @@ class GlobalState extends ChangeNotifier {
   }
 
 
-  late SharedPreferences preferences;
+  SharedPreferences preferences;
   UserState? _userState;
   TodoListState? _todolistState;
   DailyAttendanceState? _dailyAttendanceState;
@@ -105,6 +105,7 @@ class GlobalState extends ChangeNotifier {
   SambaState? get sambaState => _sambaState;
   ClipboardState? get clipboardState => _clipboardState;
 
+  GlobalState({required this.preferences});
 
   set userState(UserState? value) {
     _userState = value;

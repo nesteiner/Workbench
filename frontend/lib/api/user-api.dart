@@ -24,6 +24,9 @@ class UserApi {
   final String defaultRoleUrl;
 
   Future<void> Function(DioException) errorHandler;
+  Map<String, String> get headers => {
+    "Authorization": jwttoken.startsWith("Bearer") ? jwttoken : "Bearer $jwttoken"
+  };
 
   UserApi({
     required this.loginUrl,
@@ -43,6 +46,15 @@ class UserApi {
     Map<String, dynamic> data = response.data!["data"];
     jwttoken = data["jwttoken"];
     // instance.options.headers["Authorization"] = "Bearer $jwttoken";
+
+    response = await instance.get("$userUrl", options: Options(
+        headers: headers
+    ));
+
+    data = response.data!["data"];
+
+    final result = User.fromJson(data);
+    user = result;
   }
 
   Future<User> login(String name, String password) async {
@@ -51,9 +63,7 @@ class UserApi {
     await authenticate(name, password);
 
     Response<Map<String, dynamic>> response = await instance.get("$userUrl?name=$name", options: Options(
-      headers: {
-        "Authorization": jwttoken.startsWith("Bearer") ? jwttoken : "Bearer $jwttoken"
-      }
+      headers: headers
     ));
 
     Map<String, dynamic> data = response.data!["data"];
@@ -79,16 +89,7 @@ class UserApi {
     jwttoken = token1;
     // instance.options.headers["Authorization"] = token1;
 
-    Response<Map<String, dynamic>> response = await instance.get("$userUrl", options: Options(
-      headers: {
-        "Authorization": jwttoken.startsWith("Bearer") ? jwttoken : "Bearer $jwttoken"
-      }
-    ));
 
-    Map<String, dynamic> data = response.data!["data"];
-
-    final result = User.fromJson(data);
-    user = result;
   }
   
   Future<void> register(PostUserRequest request) async {
@@ -97,7 +98,9 @@ class UserApi {
   }
 
   Future<Role> findDefaultRole() async {
-    Response<Map<String, dynamic>> response = await instance.get(defaultRoleUrl);
+    Response<Map<String, dynamic>> response = await instance.get(defaultRoleUrl, options: Options(
+      headers: headers
+    ));
     return Role.fromJson(response.data!["data"]);
   }
 }

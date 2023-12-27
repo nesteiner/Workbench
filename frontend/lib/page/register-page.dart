@@ -8,14 +8,20 @@ import 'package:frontend/state/user-state.dart';
 import 'package:provider/provider.dart';
 
 class RegisterPage extends StatelessWidget with StateMixin {
+  static final emailPattern = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
   final Map<String, TextEditingController> controllers = {
     "username": TextEditingController(),
     "password": TextEditingController(),
     "email": TextEditingController(),
   };
 
+  String get username => controllers["username"]!.text;
+  String get password => controllers["password"]!.text;
+  String get email => controllers["email"]!.text;
+
+  bool get enabled => username.isNotEmpty && password.isNotEmpty && emailPattern.hasMatch(email);
   final disabledNotifier = ValueNotifier(true);
-  bool get disabled => controllers.values.any((element) => element.text.isEmpty);
+  bool get disabled => !enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +112,7 @@ class RegisterPage extends StatelessWidget with StateMixin {
                     logger.e("error in register", error: excecption.error, stackTrace: stackTrace);
                     showDialog(context: context, builder: (_) => AlertDialog(
                       title: const Text("注册失败"),
-                      content: Text(excecption.message ?? "Fuck"),
+                      content: Text(excecption.response?.data["message"] ?? "Fuck"),
                       actions: [
                         TextButton(
                           onPressed: () {

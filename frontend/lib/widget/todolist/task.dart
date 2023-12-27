@@ -9,10 +9,7 @@ import 'package:provider/provider.dart';
 
 class TaskWidget extends StatefulWidget {
   Task task;
-  // index start from 1
-  int taskgroupIndex;
-
-  TaskWidget({required this.task, required this.taskgroupIndex});
+  TaskWidget({required this.task});
 
   @override
   TaskWidgetState createState() => TaskWidgetState();
@@ -32,7 +29,8 @@ class TaskWidgetState extends State<TaskWidget> {
 
     return GestureDetector(
       onTap: () {
-        state.setCurrentTaskGroupAt(widget.taskgroupIndex - 1);
+        final taskgroup = state.taskgroups.firstWhere((element) => element.id == widget.task.parentid);
+        state.setCurrentTaskGroup(taskgroup);
         // navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => TaskDetail(task: widget.task)));
         state.currentTask = widget.task;
         todolistNavigatorKey.currentState?.pushNamed(todolistRoutes["taskdetail"]!);
