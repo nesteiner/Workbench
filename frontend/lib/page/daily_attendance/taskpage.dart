@@ -88,7 +88,7 @@ class TaskPage extends StatelessWidget {
 
                   return StatefulBuilder(builder: (context, setState) => ExpansionPanel(
                     builder: (_) {
-                      if (children.length == 0 && values.where((element) => element.progress is! da.ProgressNotScheduled).isEmpty) {
+                      if (children.isEmpty && values.where((element) => element.progress is! da.ProgressNotScheduled).isEmpty) {
                         return null;
                       }
 

@@ -121,7 +121,7 @@ class TaskWidget extends StatelessWidget {
 
           GestureDetector(
             onTap: () {
-              state.swithMode();
+              state.switchMode();
             },
             child: text,
           )

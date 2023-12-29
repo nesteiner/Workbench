@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:frontend/api/api.dart';
 import 'package:frontend/api/daily-attendance-api.dart';
+import 'package:frontend/constants.dart';
 import 'package:frontend/model/daily-attendance.dart' as da;
 import 'package:frontend/request/daily-attendance.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -55,6 +56,7 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     }
 
     currentDay = day;
+    currentTask = null;
 
     final list = tasksOf7Days[day]!;
 
@@ -153,22 +155,28 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
 
   Future<void> updateProgress(UpdateProgressRequest request) async {
     final task = await api.updateProgress(request);
-    late List<da.Task> list0;
-    late int index0;
-    for (final key in tasks.keys) {
-      final list1 = tasks[key];
-      final index1 = list1?.indexWhere((element) => element.id == request.id) ??
-          -1;
 
-      if (index1 != -1) {
-        list0 = list1 ?? [];
-        index0 = index1;
+    for (final entry in tasksOf7Days.entries) {
+      final list = entry.value;
+      final index = list.indexWhere((element) => element.id == request.id);
+
+      if (index != -1) {
+        list[index] = task;
         break;
       }
     }
 
-    list0[index0] = task;
-    currentTask = task;
+    for (final entry in tasks.entries) {
+      final list = entry.value;
+      final index = list.indexWhere((element) => element.id == request.id);
+
+      if (index != -1) {
+        list[index] = task;
+        break;
+      }
+    }
+
+    currentTask?.progress = task.progress;
     notifyListeners();
   }
 
@@ -196,8 +204,8 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
   Future<bool> findAllOfLatest7Days() async {
     final result = await api.findAllOfLatest7Days();
     tasksOf7Days = result;
-    currentDay = tasksOf7Days.keys.last;
     weekdays = tasksOf7Days.keys.toList();
+    currentDay = weekdays.last;
 
     tasks.clear();
     for (final task in tasksOf7Days[currentDay]!) {
@@ -220,7 +228,6 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
         });
       }
     }
-
 
     return true;
   }
@@ -250,7 +257,7 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     return await api.statisticsMonthly(offset);
   }
 
-  void swithMode() {
+  void switchMode() {
     if (mode == ShowMode.persistence) {
       mode = ShowMode.consecutive;
     } else {

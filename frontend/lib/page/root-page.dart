@@ -56,7 +56,6 @@ class _RootPageState extends State<RootPage> with SingleTickerProviderStateMixin
         initialRoute: routes["todolist"]!,
         onGenerateRoute: (settings1) {
           late Widget pageChild;
-          logger.i("in todolist navigator: ${settings1.name}");
           if (settings1.name == routes["home"]! || settings1.name == todolistRoutes["taskproject"]!) {
             pageChild = TaskProjectPage();
           } else if (settings1.name!.endsWith(todolistRoutes["taskgroup-board"]!)) {
@@ -78,8 +77,6 @@ class _RootPageState extends State<RootPage> with SingleTickerProviderStateMixin
         initialRoute: routes["daily-attendance"]!,
         onGenerateRoute: (settings1) {
           late Widget pageChild;
-
-          logger.i("in daily attendance navigator: ${settings1.name}");
 
           if (settings1.name == routes["home"]! || settings1.name == dailyAttendanceRoutes["taskpage"]!) {
             pageChild = TaskPage();
@@ -107,8 +104,6 @@ class _RootPageState extends State<RootPage> with SingleTickerProviderStateMixin
         key: sambaNavigatorKey,
         initialRoute: routes["samba"]!,
         onGenerateRoute: (settings1) {
-          logger.i("in samba navigator: ${settings1.name}");
-
           return MaterialPageRoute(builder: (_) => SambaPage(), settings: settings1);
         },
       ),

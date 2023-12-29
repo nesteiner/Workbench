@@ -23,6 +23,7 @@ import kotlinx.datetime.*
 import com.steiner.workbench.todolist.table.Tasks as tlTasks
 import com.steiner.workbench.todolist.table.ImageItems as tlImageItems
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.insert
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.ApplicationArguments
@@ -32,8 +33,8 @@ import org.springframework.transaction.annotation.Transactional
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-@Component
-@Transactional
+//@Component
+//@Transactional
 class WorkbenchRunner: ApplicationRunner {
     @Autowired
     lateinit var dailyAttendanceService: DailyAttendanceService
@@ -275,7 +276,6 @@ class WorkbenchRunner: ApplicationRunner {
         requests.forEach {
             dailyAttendanceService.insertOne(it)
         }
-
     }
 
 

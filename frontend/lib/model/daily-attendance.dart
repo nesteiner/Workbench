@@ -608,14 +608,14 @@ class Task implements Comparable<Task> {
 
   String toString() {
     return "${id}"
-        "-${name}"
+        "-$name"
         "-${icon.toJson()}"
         "-$encouragement"
         "-${frequency.toJson()}"
         "-${goal.toJson()}"
         "-$startTime"
         "-${keepdays.toJson()}"
-        "-${group}"
+        "-$group"
         "-${notifyTimes.map((e) => e.toJson()).toList()}"
         "-${progress.toJson()}"
         "-$isarchived"

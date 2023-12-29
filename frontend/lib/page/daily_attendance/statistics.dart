@@ -96,13 +96,11 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
     return Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: const Text("统计",),
-          bottom: tabs,
+          title: tabs,
           leading: BackButton(
             onPressed: () {
               dailyAttendnaceNavigatorKey.currentState?.pop();
               // Navigator.pop(context);
-
             },
           ),
         ),

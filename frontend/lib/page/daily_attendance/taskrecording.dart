@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
+import 'package:frontend/controller/switcher-controller.dart';
 import 'package:frontend/model/daily-attendance.dart' as da;
 import 'package:frontend/page/daily_attendance/taskedit.dart';
 import 'package:frontend/request/daily-attendance.dart';
@@ -20,10 +21,10 @@ class TaskRecording extends StatelessWidget {
   late final Widget backgroundImage;
 
   late final ValueNotifier<bool> isdoneNotifier;
-  bool get isdone => currentTask.progress == da.ProgressDone();
+  bool get isdone => currentTask.progress is da.ProgressDone;
   da.Task get currentTask => state.currentTask!;
   bool get destroyed => state.currentTask == null;
-
+  final switcherController = SwitcherController(value: false);
   @override
   Widget build(BuildContext context) {
     state = context.read<DailyAttendanceState>();
@@ -202,9 +203,11 @@ class TaskRecording extends StatelessWidget {
     final switcher = Selector<DailyAttendanceState, da.Task>(
       selector: (_, state) => currentTask,
       builder: (_, datask, child) {
+        switcherController.value = datask.progress is da.ProgressDone;
+
         return Switcher(
             duration: const Duration(milliseconds: 500),
-            value: datask.progress == da.ProgressDone(),
+            controller: switcherController,
             onChanged: (boolvalue) async {
               late UpdateProgressRequest request;
               if (boolvalue) {
@@ -235,6 +238,11 @@ class TaskRecording extends StatelessWidget {
               }
 
               await state.updateProgress(request);
+
+              if (currentTask.progress is da.ProgressDoing) {
+                switcherController.value = false;
+              }
+
               isdoneNotifier.value = isdone;
             }
         );
@@ -278,19 +286,19 @@ class TaskRecording extends StatelessWidget {
 
           Selector<DailyAttendanceState, (bool, double?)>(
             selector: (_, state) {
-              final $1 = currentTask.progress is da.ProgressDoing;
-              late double? $2;
+              final value1 = currentTask.progress is da.ProgressDoing;
+              late double? value2;
 
               if (currentTask.progress is da.ProgressDone) {
-                $2 = 1;
+                value2 = 1;
               } else if (currentTask.progress is! da.ProgressDoing) {
-                $2 = null;
+                value2 = null;
               } else {
                 final progress = currentTask.progress as da.ProgressDoing;
-                $2 = progress.amount / progress.total;
+                value2 = progress.amount / progress.total;
               }
 
-              return ($1, $2);
+              return (value1, value2);
             },
 
             builder: (_, value, child) {

@@ -19,6 +19,8 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
 import org.jetbrains.exposed.sql.kotlin.datetime.day
 import org.jetbrains.exposed.sql.kotlin.datetime.month
 import org.jetbrains.exposed.sql.kotlin.datetime.year
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.abs
@@ -39,6 +41,7 @@ class DailyAttendanceService {
                 DayOfWeek.SUNDAY to 6
         )
 
+        val logger: Logger = LoggerFactory.getLogger(DailyAttendanceService::class.java)
     }
 
     fun insertOne(request: PostTaskRequest): Task {
@@ -238,8 +241,19 @@ class DailyAttendanceService {
                     }
                 }.map {
                 val taskEvents = findAllEventsUntilThisWeek(it[Tasks.id].value, localdate)
-                val lastProgress = taskEvents.lastOrNull()?.progress ?: Progress.Ready
+                // val lastProgress = taskEvents.lastOrNull()?.progress ?: Progress.Ready
+                val lastProgress = taskEvents.lastOrNull { event ->
+                    val time = event.time.toLocalDateTime(TimeZone.of("Asia/Shanghai"))
+                    time.run {
+                        year == localdate.year &&
+                                month == localdate.month &&
+                                dayOfMonth == localdate.dayOfMonth
+                    }
+                }?.progress ?: Progress.Ready
 
+                // STUB
+                // val name0 = it[Tasks.name]
+                // logger.info("$localdate - $name0: $lastProgress")
                 val progress = when (val frequency = it[Tasks.frequency]) {
                     is Frequency.Days -> {
                         if (frequency.weekdays.contains(localdate.dayOfWeek)) {
@@ -265,7 +279,10 @@ class DailyAttendanceService {
                         val lastEvent = findLastEventsUntilThisDay(it[Tasks.id].value, localdate)
                         val lastDate = lastEvent?.time?.toLocalDateTime(CURRENT_TIME_ZONE)?.date
                         val isScheduled: Boolean = if (lastDate != null) {
-                            isSameDay(lastDate.plus(frequency.count, DateTimeUnit.DAY), localdate)
+                            // isSameDay(lastDate.plus(frequency.count, DateTimeUnit.DAY), localdate)
+                            (lastDate..localdate step frequency.count).count { date ->
+                                isSameDay(date, localdate)
+                            } > 0
                         } else {
                             (it[Tasks.startTime]..localdate step frequency.count).count { date ->
                                 isSameDay(date, localdate)
@@ -427,6 +444,7 @@ class DailyAttendanceService {
         }
     }
 
+    /// task events: start of week to localdate
     fun findAllEventsUntilThisWeek(taskid: Int, localdate: LocalDate): List<TaskEvent> {
         val distance = dayDistance[localdate.dayOfWeek]!!
         val startOfWeek = localdate.minus(distance, DateTimeUnit.DAY)
@@ -541,7 +559,7 @@ class DailyAttendanceService {
             for (task in tasks) {
                 if (progressRecord.containsKey(task.id)) {
                     // result[task.id]?.add(task.progress)
-                    progressRecord[task.id]?.put(date.dayOfWeek, task.progress)
+                    progressRecord[task.id]!![date.dayOfWeek] = task.progress
                 } else {
                     // result[task.id] = mutableListOf(task.progress)
                     progressRecord[task.id] = mutableMapOf(date.dayOfWeek to task.progress)
