@@ -9,15 +9,15 @@
 话不多说，这里以linux平台的应用为例，看看怎么操作把
 
 ** 第一次进入应用
-[[file:./docs/第一次加载应用.mp4]]
+[[第一次加载应用][file:./docs/第一次加载应用.mp4]]
 ** 主页
-[[file:./docs/主页.mp4]]
+[[主页][file:./docs/主页.mp4]]
 ** 待办清单
-[[file:./docs/todolist.mp4]]
+[[todolist][file:./docs/todolist.mp4]]
 ** 习惯打卡
-[[file:./docs/daily-attendance.mp4]]
+[[daily-attendance][file:./docs/daily-attendance.mp4]]
 ** samba 文件共享
-[[file:./docs/samba.mp4]]
+[[samba][file:./docs/samba.mp4]]
 
 ** 其他操作
 需要登出了，就点击侧边的登出按扭
