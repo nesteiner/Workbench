@@ -96,6 +96,11 @@ abstract class Operation {
         final id = json["id"];
         return DailyAttendanceUpdate(id: id);
 
+      case "DailyAttendance:Archive":
+        final id = json["id"];
+        final archive = json["archive"];
+        return DailyAttendanceArchive(id: id, archive: archive);
+
       case "Clipboard:Post":
         return ClipboardPost();
 
@@ -186,6 +191,13 @@ class DailyAttendanceUpdate extends Operation {
   final int id;
 
   DailyAttendanceUpdate({required this.id});
+}
+
+class DailyAttendanceArchive extends Operation {
+  final int id;
+  final bool archive;
+
+  DailyAttendanceArchive({required this.id, required this.archive});
 }
 
 class ClipboardPost extends Operation {

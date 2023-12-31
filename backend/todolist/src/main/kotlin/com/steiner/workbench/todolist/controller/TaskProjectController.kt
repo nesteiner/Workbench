@@ -37,21 +37,21 @@ class TaskProjectController {
     @PostMapping
     fun insertOne(@RequestBody @Valid request: PostTaskProjectRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskProject> {
         val result = taskprojectService.insertOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskProjectPost)
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskProjectPost)
         return Response.Ok("insert ok", result)
     }
 
     @DeleteMapping("/{id}")
     fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response<Unit> {
         taskprojectService.deleteOne(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskProjectDelete(id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskProjectDelete(id))
         return Response.Ok("delete ok", Unit)
     }
 
     @PutMapping
     fun updateOne(@RequestBody @Valid request: UpdateTaskProjectRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskProject> {
         val result = taskprojectService.updateOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskProjectUpdate(request.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskProjectUpdate(request.id))
         return Response.Ok("update ok", result)
     }
 

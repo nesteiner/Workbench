@@ -19,7 +19,7 @@ class TaskWidget extends StatelessWidget {
     state = context.read<DailyAttendanceState>();
 
     final icon = Selector<DailyAttendanceState, (da.Icon, bool)>(
-      selector: (_, state) => (task.icon, task.progress == da.ProgressDone()),
+      selector: (_, state) => (task.icon, task.progress is da.ProgressDone),
       builder: (_, value, child) {
         final icon = value.$1;
         final isdone = value.$2;

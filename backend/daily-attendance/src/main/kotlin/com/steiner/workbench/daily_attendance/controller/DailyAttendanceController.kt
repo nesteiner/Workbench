@@ -38,13 +38,11 @@ class DailyAttendanceController {
     lateinit var dailyAttendanceService: DailyAttendanceService
     @Autowired
     lateinit var userService: UserService
-    @Autowired
-    lateinit var websocket: WebSocketEndpoint
 
     @PostMapping
     fun insertOne(@RequestBody @Valid request: PostTaskRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response.Ok<Task> {
         val result = dailyAttendanceService.insertOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendancePost)
+        WebSocketEndpoint.notifyFrom(uid, Operation.DailyAttendancePost)
 
         return Response.Ok(
                 "insert ok",
@@ -55,7 +53,7 @@ class DailyAttendanceController {
     @PutMapping
     fun updateOne(@RequestBody @Valid request: UpdateTaskRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response.Ok<Task> {
         val result = dailyAttendanceService.updateOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(request.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.DailyAttendanceUpdate(request.id))
 
         return Response.Ok(
                 "update ok",
@@ -66,7 +64,7 @@ class DailyAttendanceController {
     @PutMapping("/progress")
     fun updateOne(@RequestBody request: UpdateProgressRequest, @PathVariable("uid") uid: String): Response.Ok<Task> {
         val result = dailyAttendanceService.updateProgress(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(request.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.DailyAttendanceUpdate(request.id))
 
         return Response.Ok(
                 "update ok",
@@ -78,13 +76,13 @@ class DailyAttendanceController {
     @PutMapping("/archive")
     fun updateArchiveOne(@RequestBody request: UpdateArchiveTaskRequest, @PathVariable("uid") uid: String): Response.Ok<Unit> {
         dailyAttendanceService.updateArchive(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(request.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.DailyAttendanceArchive(request.id, request.isarchive))
         return Response.Ok("update archive ok", Unit)
     }
     @DeleteMapping("/{id}")
     fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response.Ok<Unit> {
         dailyAttendanceService.deleteOne(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceDelete(id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.DailyAttendanceDelete(id))
         return Response.Ok("delete ok", Unit)
     }
 
@@ -116,7 +114,7 @@ class DailyAttendanceController {
     @PutMapping("/reset/{id}")
     fun resetToday(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response.Ok<Task> {
         val result = dailyAttendanceService.resetTaskCurrentDay(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.DailyAttendanceUpdate(id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.DailyAttendanceUpdate(id))
         return Response.Ok("reset ok", result)
     }
 
@@ -136,5 +134,10 @@ class DailyAttendanceController {
             "statistics monthly",
             dailyAttendanceService.statisticsThisMonth(offset, userid)
         )
+    }
+
+    @GetMapping("/available/{id}")
+    fun isAvailable(@PathVariable("id") id: Int): Response<Boolean> {
+        return Response.Ok("isavailable", dailyAttendanceService.isAvailableIgnoreArchive(id))
     }
 }

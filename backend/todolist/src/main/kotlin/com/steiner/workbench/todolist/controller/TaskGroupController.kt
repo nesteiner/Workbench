@@ -32,14 +32,14 @@ class TaskGroupController {
     @PostMapping
     fun insertOne(@RequestBody @Valid request: PostTaskGroupRequest, @PathVariable("uid") uid: String, bindingResult: BindingResult,): Response<TaskGroup> {
         val result = taskgroupService.insertOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskGroupPost(taskprojectId = request.parentid))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskGroupPost(taskprojectId = request.parentid))
         return Response.Ok("insert ok", result)
     }
 
     @PostMapping(params = ["after"])
     fun insertOne(@RequestBody @Valid request: PostTaskGroupRequest, @RequestParam("after") after: Int, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskGroup> {
         val result = taskgroupService.insertOne(request, after)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskGroupPost(taskprojectId = request.parentid))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskGroupPost(taskprojectId = request.parentid))
         return Response.Ok("insert ok", result)
     }
 
@@ -47,14 +47,14 @@ class TaskGroupController {
     fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response<Unit> {
         val item = taskgroupService.findOne(id) ?: throw BadRequestException("no such taskgroup with id $id")
         taskgroupService.deleteOne(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskGroupDelete(item.parentid, item.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskGroupDelete(item.parentid, item.id))
         return Response.Ok("delete ok", Unit)
     }
 
     @PutMapping
     fun updateOne(@RequestBody @Valid request: UpdateTaskGroupRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<TaskGroup> {
         val result = taskgroupService.updateOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskGroupUpdate(result.parentid, result.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskGroupUpdate(result.parentid, result.id))
         return Response.Ok("update ok", result)
     }
 

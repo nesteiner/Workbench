@@ -37,14 +37,14 @@ class TextController {
     @PostMapping
     fun insertOne(@RequestBody @Valid request: PostTextRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<Text> {
         val result = textService.insertOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.ClipboardPost)
+        WebSocketEndpoint.notifyFrom(uid, Operation.ClipboardPost)
         return Response.Ok("insert ok", result)
     }
 
     @DeleteMapping("/{id}")
     fun deleteOne(@PathVariable("id") id: Int, @PathVariable("uid") uid: String): Response<Unit> {
         textService.deleteOne(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.ClipboardDelete(id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.ClipboardDelete(id))
         return Response.Ok("delete ok", Unit)
     }
 

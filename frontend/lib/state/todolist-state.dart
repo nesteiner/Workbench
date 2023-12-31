@@ -263,12 +263,12 @@ class TodoListState extends ChangeNotifier implements Api {
 
  Future<void> insertTaskGroupAfter(PostTaskGroupRequest request, int indexStartFrom0) async {
     TaskGroup taskgroup = await api.insertTaskGroupAfter(request, indexStartFrom0 + 1);
-    taskgroups.insert(0, taskgroup);
-    final otherRequest = UpdateTaskGroupRequest(id: taskgroup.id, reorderAt: indexStartFrom0 + 2);
-    await api.updateTaskGroup(otherRequest);
+    taskgroups.insert(indexStartFrom0 + 1, taskgroup);
+    // final otherRequest = UpdateTaskGroupRequest(id: taskgroup.id, reorderAt: indexStartFrom0 + 2);
+    // await api.updateTaskGroup(otherRequest);
 
-    final item = taskgroups.removeAt(0);
-    taskgroups.insert(indexStartFrom0 + 1, item);
+    // final item = taskgroups.removeAt(0);
+    // taskgroups.insert(indexStartFrom0 + 1, item);
 
     notifyListeners();
  }

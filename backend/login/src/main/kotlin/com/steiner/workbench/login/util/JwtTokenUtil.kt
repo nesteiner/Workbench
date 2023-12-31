@@ -14,6 +14,7 @@ import kotlin.collections.HashMap
 class JwtTokenUtil {
     companion object {
         private const val JWT_TOKEN_VALIDITY: Long = 24 * 7 * 60 * 60L
+        // private const val JWT_TOKEN_VALIDITY: Long = 60L
     }
 
     @Value("\${jwt.secret}")

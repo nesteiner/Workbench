@@ -19,12 +19,14 @@ enum ShowMode {
 }
 
 class DailyAttendanceState extends ChangeNotifier implements Api {
-  static final cron = Cron();
+  static Cron cron = Cron();
 
   final DailyAttendanceApi api;
   final FlutterLocalNotificationsPlugin plugin;
   final Map<da.Group, List<da.Task>> tasks = Map();
-
+  
+  /// 当天的所有任务
+  List<da.Task> tasksOfCurrentDay = [];
   ShowMode mode = ShowMode.persistence;
   Map<String, List<da.Task>> tasksOf7Days = Map();
   /// 这里不是可以选取 index 来使列表来代表当前的 task 吗
@@ -101,11 +103,12 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     tasks[task.group]?.removeWhere((element) => element.id == task.id);
     await api.deleteOne(task.id);
 
-    // donot change the currentTask
+    // ATTENTION: donot change the currentTask
     // currentTask = null;
 
-    plugin.cancel(task.id);
 
+    tasksOfCurrentDay.removeWhere((element) => element.id == task.id);
+    await restartNotificationOfCurrentDay();
     notifyListeners();
   }
 
@@ -142,13 +145,7 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
 
     currentTask = task1;
 
-    plugin.cancel(request.id);
-
-    for (final notifyTime in task1.notifyTimes) {
-      cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
-        plugin.show(task1.id, task1.name, task1.encouragement, null);
-      });
-    }
+    await restartNotificationOfCurrentDay();
 
     notifyListeners();
   }
@@ -182,22 +179,40 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
 
   Future<void> updateArchive(UpdateArchiveTaskRequest request) async {
     await api.updateArchive(request);
+    final task = await api.findOne(request.id);
 
-    for (final key in tasks.keys) {
-      final list = tasks[key];
-      final index = list?.indexWhere((element) => element.id == request.id) ?? -1;
+    for (final entry in tasks.entries) {
+      final key = entry.key;
+      final list = entry.value;
 
-      if (index != -1) {
-        list?.removeAt(index);
+      if (key == task.group) {
+        if (request.isarchive) {
+          list.removeWhere((element) => element.id == request.id);
+        } else {
+          list.insert(0, task);
+        }
+
         break;
       }
-    }
 
+    }
+    
+    final entry = tasksOf7Days.entries.last;
+    final list = entry.value;
+    
     if (request.isarchive) {
-      plugin.cancel(request.id);
+      list.removeWhere((element) => element.id == request.id);
+    } else {
+      final isAvailable = await api.isAvailable(request.id);
+      if (isAvailable) {
+        list.insert(0, task);
+      }
     }
-
+    
     currentTask = null;
+    
+    await restartNotificationOfCurrentDay();
+    
     notifyListeners();
   }
 
@@ -206,6 +221,7 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     tasksOf7Days = result;
     weekdays = tasksOf7Days.keys.toList();
     currentDay = weekdays.last;
+    tasksOfCurrentDay = await api.findAllOfCurrentDay();
 
     tasks.clear();
     for (final task in tasksOf7Days[currentDay]!) {
@@ -218,17 +234,8 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
 
     notifyListeners();
 
-    plugin.cancelAll();
-
-    final tasksOfCurrentDay = await api.findAllOfCurrentDay();
-    for (final task in tasksOfCurrentDay) {
-      for (final notifyTime in task.notifyTimes) {
-        cron.schedule(Schedule.parse("${notifyTime.minute} ${notifyTime.hour} * * *"), () {
-          plugin.show(task.id, task.name, task.encouragement, null);
-        });
-      }
-    }
-
+    await restartNotificationOfCurrentDay();
+    
     return true;
   }
 
@@ -275,7 +282,25 @@ class DailyAttendanceState extends ChangeNotifier implements Api {
     return await api.findOne(id);
   }
 
+  // 重启今天的所有通知
+  Future<void> restartNotificationOfCurrentDay() async {
+    await cron.close();
+    cron = Cron();
+    for (final task in tasksOfCurrentDay) {
+      for (final notifyTime in task.notifyTimes) {
+        cron.schedule(Schedule.parse(
+            "${notifyTime.minute} ${notifyTime.hour} * * *"), () {
+          plugin.show(task.id, task.name, task.encouragement, null);
+        });
+      }
+    }
+  }
+  
   void update() {
     notifyListeners();
+  }
+
+  Future<bool> isAvailable(int id) async {
+    return api.isAvailable(id);
   }
 }

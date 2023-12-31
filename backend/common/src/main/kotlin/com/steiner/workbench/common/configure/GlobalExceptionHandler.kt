@@ -12,6 +12,7 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 import java.io.IOException
 
 @RestControllerAdvice
@@ -65,6 +66,13 @@ class GlobalExceptionHandler {
     fun handleException(exception: Exception): Response.Err {
         val message = exception.message ?: "Internal exception occurs"
         exception.printStackTrace()
+        return Response.Err(message)
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleException(exception: MaxUploadSizeExceededException): Response.Err {
+        val message = "maximum upload size exceeded"
         return Response.Err(message)
     }
 }

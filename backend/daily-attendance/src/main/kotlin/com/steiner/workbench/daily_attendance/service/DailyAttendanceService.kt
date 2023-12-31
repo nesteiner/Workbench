@@ -392,7 +392,9 @@ class DailyAttendanceService {
                             val lastDate = taskEvent?.time?.toLocalDateTime(CURRENT_TIME_ZONE)?.date
 
                             val isScheduled: Boolean  = if (lastDate != null) {
-                                isSameDay(lastDate.plus(frequency.count, DateTimeUnit.DAY), currentDayLocalDate)
+                                (lastDate..currentDayLocalDate step frequency.count).count { date ->
+                                    isSameDay(date, currentDayLocalDate)
+                                } > 0
                             } else {
                                 (startTime..currentDayLocalDate step frequency.count).count { date ->
                                     isSameDay(date, currentDayLocalDate)
@@ -609,7 +611,62 @@ class DailyAttendanceService {
                 }
         }
     }
-    
+
+    fun isAvailableIgnoreArchive(id: Int): Boolean {
+        val currentDay = now()
+        val currentDayLocalDate = currentDay.toLocalDateTime(CURRENT_TIME_ZONE).date
+
+        return Tasks.select((Tasks.id eq id) and (Tasks.startTime lessEq currentDayLocalDate))
+            .filter {
+                when (val keepdays = it[Tasks.keepdays]) {
+                    is KeepDays.Forever -> true
+                    is KeepDays.Manual -> {
+                        val startTime = it[Tasks.startTime]
+                        val endTime = startTime.plus(keepdays.days, DateTimeUnit.DAY)
+
+                        endTime >= currentDayLocalDate
+                    }
+                }
+            }.firstOrNull {
+                val frequency = it[Tasks.frequency]
+
+                when (frequency) {
+                    is Frequency.Days -> {
+                        frequency.weekdays.contains(currentDayLocalDate.dayOfWeek)
+                    }
+
+                    is Frequency.CountInWeek -> {
+                        val count = frequency.count
+                        val events = findAllEventsOfCurrentWeek(id)
+
+                        val doneCount = events.count { _ ->
+                            it[Tasks.progress] == Progress.Done
+                        }
+
+                        doneCount < count
+                    }
+
+                    is Frequency.Interval -> {
+                        val taskEvent = findLastEventsUntilThisDay(it[Tasks.id].value, currentDayLocalDate)
+                        val startTime = it[Tasks.startTime]
+                        val lastDate = taskEvent?.time?.toLocalDateTime(CURRENT_TIME_ZONE)?.date
+
+                        val isScheduled: Boolean  = if (lastDate != null) {
+                            (lastDate..currentDayLocalDate step frequency.count).count { date ->
+                                isSameDay(date, currentDayLocalDate)
+                            } > 0
+                        } else {
+                            (startTime..currentDayLocalDate step frequency.count).count { date ->
+                                isSameDay(date, currentDayLocalDate)
+                            } > 0
+                        }
+
+                        isScheduled
+                    }
+                }
+            } != null
+    }
+
     private fun isSameDay(left: LocalDate, right: LocalDate): Boolean {
         return left.year == right.year && left.month == right.month && left.dayOfMonth == right.dayOfMonth
     }

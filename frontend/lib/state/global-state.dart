@@ -69,7 +69,8 @@ class GlobalState extends ChangeNotifier {
 
 
     final jwttoken = state.jwttoken!;
-    await loginApi.setToken(jwttoken);
+    await loginApi.
+    setToken(jwttoken);
 
     final todoListApi = TodoListApi(todolistUrl: state.todolistUrl, errorHandler: errorHandler);
     final todolistState = TodoListState(api: todoListApi);
@@ -297,6 +298,44 @@ class GlobalState extends ChangeNotifier {
           }
         }
 
+        break;
+
+      case DailyAttendanceArchive operation1:
+        final id = operation1.id;
+        final task = await dailyAttendanceState!.findOne(id);
+
+        for (final entry in dailyAttendanceState!.tasks.entries) {
+          final key = entry.key;
+          final list = entry.value;
+
+          if (key == task.group) {
+            if (operation1.archive) {
+              list.removeWhere((element) => element.id == task.id);
+            } else {
+              list.insert(0, task);
+            }
+
+            break;
+          }
+
+        }
+
+        final entry = dailyAttendanceState!.tasksOf7Days.entries.last;
+        final list = entry.value;
+
+        if (operation1.archive) {
+          list.removeWhere((element) => element.id == task.id);
+        } else {
+          final isAvailable = await dailyAttendanceState!.isAvailable(task.id);
+          if (isAvailable) {
+            list.insert(0, task);
+          }
+        }
+
+        dailyAttendanceState!.currentTask = null;
+
+        await dailyAttendanceState!.restartNotificationOfCurrentDay();
+        dailyAttendanceState!.update();
         break;
 
       case ClipboardPost _:

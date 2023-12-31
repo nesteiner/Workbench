@@ -69,7 +69,7 @@ class _TaskManageState extends State<TaskManage> with StateMixin, SingleTickerPr
                 return Selector<DailyAttendanceState, int>(
                   selector: (_, state) => tasksOfKeeping.length,
                   builder: (_, value, child) => ListView.builder(
-                    itemCount: tasksOfKeeping.length,
+                    itemCount: value,
                     itemBuilder: (context, index) {
                       return buildItem(context, tasksOfKeeping[index]);
                     },
@@ -94,7 +94,7 @@ class _TaskManageState extends State<TaskManage> with StateMixin, SingleTickerPr
                 return Selector<DailyAttendanceState, int>(
                   selector: (_, state) => tasksOfArchived.length,
                   builder: (_, value, child) => ListView.builder(
-                    itemCount: tasksOfArchived.length,
+                    itemCount: value,
                     itemBuilder: (context, index) {
                       return buildItem(context, tasksOfArchived[index]);
                     },
@@ -158,10 +158,15 @@ class _TaskManageState extends State<TaskManage> with StateMixin, SingleTickerPr
         children: [
           IconButton(
             onPressed: () async {
-              tasksOfKeeping.removeWhere((element) => element.id == task.id);
-              task.isarchived = true;
-              tasksOfArchived.add(task);
-              tasksOfArchived.sort();
+              // tasksOfKeeping.removeWhere((element) => element.id == task.id);
+              // task.isarchived = true;
+              // tasksOfArchived.add(task);
+              // tasksOfArchived.sort();
+
+              tasksOfArchived.removeWhere((element) => element.id == task.id);
+              task.isarchived = false;
+              tasksOfKeeping.add(task);
+              tasksOfKeeping.sort();
 
               final request = UpdateArchiveTaskRequest(id: task.id, isarchive: false);
               await dailyAttendanceState.updateArchive(request);
@@ -179,10 +184,14 @@ class _TaskManageState extends State<TaskManage> with StateMixin, SingleTickerPr
         children: [
           IconButton(
             onPressed: () async {
-              tasksOfArchived.removeWhere((element) => element.id == task.id);
-              task.isarchived = false;
-              tasksOfKeeping.add(task);
-              tasksOfKeeping.sort();
+              // tasksOfArchived.removeWhere((element) => element.id == task.id);
+              // task.isarchived = false;
+              // tasksOfKeeping.add(task);
+              // tasksOfKeeping.sort();
+              tasksOfKeeping.removeWhere((element) => element.id == task.id);
+              task.isarchived = true;
+              tasksOfArchived.add(task);
+              tasksOfArchived.sort();
 
               final request = UpdateArchiveTaskRequest(id: task.id, isarchive: true);
               await dailyAttendanceState.updateArchive(request);

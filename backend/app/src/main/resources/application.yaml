@@ -32,5 +32,8 @@ server:
 
 file:
   storage:
-    todolist-url: "/home/steienr/workspace/workbench/storage/todolist"
+    todolist-url: "/home/steiner/workspace/workbench/storage/todolist"
     daily-attendance-url: "/home/steiner/workspace/workbench/storage/daily-attendance"
+
+app:
+  initialize: false

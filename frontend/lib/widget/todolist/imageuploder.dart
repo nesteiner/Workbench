@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'package:path/path.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +40,7 @@ class ImageUploaderState extends State<ImageUploader> {
                 imagebyte = image;
 
                 final tempDirectory = await getTemporaryDirectory();
-                final path = "${tempDirectory.path}/tempimage";
+                final path = join(tempDirectory.path, "tempimage");
                 final file = File(path);
                 if (file.existsSync()) {
                   await file.delete();
@@ -48,9 +48,8 @@ class ImageUploaderState extends State<ImageUploader> {
 
                 await file.create();
                 await file.writeAsBytes(imagebyte);
-
                 setState(() {
-                  widget.image = Image.file(File(path), fit: BoxFit.cover, alignment: Alignment.topCenter,);
+                  widget.image = Image.memory(image, fit: BoxFit.cover, alignment: Alignment.topCenter,);
                 });
 
               },
@@ -68,7 +67,7 @@ class ImageUploaderState extends State<ImageUploader> {
               ),
 
               onPressed: () {
-                navigatorKey.currentState?.pop();
+                todolistNavigatorKey.currentState?.pop();
                 // Navigator.pop(context);
               },
 
@@ -86,7 +85,7 @@ class ImageUploaderState extends State<ImageUploader> {
 
               onPressed: () async {
                 controller.crop();
-                navigatorKey.currentState?.pop();
+                todolistNavigatorKey.currentState?.pop();
                 // Navigator.pop(context);
               },
 

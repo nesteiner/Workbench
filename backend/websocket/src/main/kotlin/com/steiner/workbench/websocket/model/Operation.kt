@@ -25,7 +25,6 @@ sealed class Operation {
     @SerialName("TaskGroup:Delete")
     class TaskGroupDelete(val taskprojectId: Int, val id: Int): Operation()
 
-
     @Serializable
     @SerialName("TaskGroup:Update")
     class TaskGroupUpdate(val taskprojectId: Int, val id: Int): Operation()
@@ -53,6 +52,14 @@ sealed class Operation {
     @Serializable
     @SerialName("DailyAttendance:Update")
     class DailyAttendanceUpdate(val id: Int): Operation()
+
+    @Serializable
+    @SerialName("DailyAttendance:Archive")
+    class DailyAttendanceArchive(val id: Int, val archive: Boolean): Operation()
+
+    @Serializable
+    @SerialName("DailyAttendance:Refresh")
+    object DailyAttendanceRefresh: Operation()
 
     @Serializable
     @SerialName("Clipboard:Post")

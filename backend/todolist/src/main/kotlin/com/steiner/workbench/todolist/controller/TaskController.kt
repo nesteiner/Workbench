@@ -37,7 +37,7 @@ class TaskController {
     fun insertOne(@RequestBody @Valid request: PostTaskRequest, bindingResult: BindingResult, @PathVariable("uid") uid: String): Response<Task> {
         val taskgroup = taskGroupService.findOne(request.parentid) ?: throw BadRequestException("no such task group with id ${request.parentid}")
         val result = taskService.insertOne(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskPost(taskgroup.parentid, taskgroup.id, result.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskPost(taskgroup.parentid, taskgroup.id, result.id))
 
         return Response.Ok("insert ok", result)
     }
@@ -47,7 +47,7 @@ class TaskController {
         val task = taskService.findOne(request.taskid) ?: throw BadRequestException("no such task with id ${request.taskid}")
         val taskgroup = taskGroupService.findOne(task.parentid)!!
         taskService.insertTag(request)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
 
         return Response.Ok("insert tag ok", Unit)
     }
@@ -57,7 +57,7 @@ class TaskController {
         val task = taskService.findOne(id) ?: throw BadRequestException("no such task with id $id")
         val taskgroup = taskGroupService.findOne(task.parentid)!!
         taskService.deleteOne(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskDelete(taskgroup.parentid, taskgroup.id, task.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskDelete(taskgroup.parentid, taskgroup.id, task.id))
 
         return Response.Ok("delete ok", Unit)
     }
@@ -67,7 +67,7 @@ class TaskController {
         val task = taskService.findOne(id) ?: throw BadRequestException("no such task with id $id")
         val taskgroup = taskGroupService.findOne(task.parentid)!!
         taskService.removeDeadline(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
 
         return Response.Ok("remove deadline ok", Unit)
     }
@@ -77,7 +77,7 @@ class TaskController {
         val task = taskService.findOne(taskid) ?: throw BadRequestException("no such task with id $taskid")
         val taskgroup = taskGroupService.findOne(task.parentid)!!
         taskService.removeTag(taskid, tagid)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
 
         return Response.Ok("remove tag ok", Unit)
     }
@@ -87,7 +87,7 @@ class TaskController {
         val task = taskService.findOne(id) ?: throw BadRequestException("no such task with id $id")
         val taskgroup = taskGroupService.findOne(task.parentid)!!
         taskService.removeNotifyTime(id)
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
 
         return Response.Ok("remove notify time ok", Unit)
     }
@@ -97,7 +97,7 @@ class TaskController {
         val result = taskService.updateOne(request)
         val task = taskService.findOne(request.id) ?: throw BadRequestException("no such task with id ${request.id}")
         val taskgroup = taskGroupService.findOne(task.parentid)!!
-        WebSocketEndpoint.notifyAll(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
+        WebSocketEndpoint.notifyFrom(uid, Operation.TaskUpdate(taskgroup.parentid, taskgroup.id, task.id))
 
         return Response.Ok("update ok", result)
     }

@@ -409,11 +409,11 @@ class TaskEdit extends StatelessWidget {
     return InkWell(
       onTap: () async {
         // final result = await navigatorKey.currentState?.push<Color?>(MaterialPageRoute(builder: (_) => ColorSelect()));
-        final result = await dailyAttendnaceNavigatorKey.currentState?.pushNamed<Color?>(dailyAttendanceRoutes["color-select"]!);
+        final result = await dailyAttendnaceNavigatorKey.currentState?.pushNamed(dailyAttendanceRoutes["color-select"]!);
 
         if (result != null) {
           setStateBackgroundColor(() {
-            backgroundColor = result;
+            backgroundColor = result as Color;
           });
 
           final icon0 = copyOfTask.icon;

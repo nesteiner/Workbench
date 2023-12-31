@@ -25,7 +25,7 @@ class WebSocketEndpoint {
         const val SERVER_NAME = "server"
 
         @JvmStatic
-        fun notifyAll(fromuid: String, operation: Operation) {
+        fun notifyFrom(fromuid: String, operation: Operation) {
             endpointMap.values.filter {
                 it.uid != fromuid
             }.forEach {
@@ -34,6 +34,18 @@ class WebSocketEndpoint {
                     touid = it.uid,
                     message = TransferMessage.Notification(operation)
                 )
+                it.session.asyncRemote.sendObject(data)
+            }
+        }
+
+        fun notifyAll(operation: Operation) {
+            endpointMap.values.forEach {
+                val data = TransferData(
+                    fromuid = SERVER_NAME,
+                    touid = it.uid,
+                    message = TransferMessage.Notification(operation)
+                )
+
                 it.session.asyncRemote.sendObject(data)
             }
         }

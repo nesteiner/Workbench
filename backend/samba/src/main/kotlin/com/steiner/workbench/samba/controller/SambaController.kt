@@ -6,9 +6,7 @@ import com.steiner.workbench.samba.request.LoginRequest
 import com.steiner.workbench.samba.util.SambaUtil
 import com.steiner.workbench.websocket.endpoint.WebSocketEndpoint
 import com.steiner.workbench.websocket.model.Operation
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import jcifs.smb1.smb1.SmbAuthException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,10 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.RandomAccessFile
-import java.net.URLConnection
 
 @RestController
 @RequestMapping("/{uid}/samba")
@@ -55,7 +49,7 @@ class SambaController {
             sambaUtil.deleteFile(path)
         }
 
-        WebSocketEndpoint.notifyAll(uid, Operation.SambaUpdate(file.parent))
+        WebSocketEndpoint.notifyFrom(uid, Operation.SambaUpdate(file.parent))
 
         return Response.Ok("delete ok", Unit)
     }
@@ -67,7 +61,7 @@ class SambaController {
             sambaUtil.createDirectory(path)
         }
 
-        WebSocketEndpoint.notifyAll(uid, Operation.SambaUpdate(sambafile.parent))
+        WebSocketEndpoint.notifyFrom(uid, Operation.SambaUpdate(sambafile.parent))
         return Response.Ok("create dir ok", Unit)
     }
 
@@ -78,7 +72,7 @@ class SambaController {
 
         sambaUtil.uploadFile(remotepath = path, filename = file.originalFilename ?: "untitled", inputStream = file.inputStream)
 
-        WebSocketEndpoint.notifyAll(uid, Operation.SambaUpdate(path))
+        WebSocketEndpoint.notifyFrom(uid, Operation.SambaUpdate(path))
         return Response.Ok("upload ok", Unit)
     }
 

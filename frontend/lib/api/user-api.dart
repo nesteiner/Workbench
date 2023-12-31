@@ -89,6 +89,15 @@ class UserApi {
     jwttoken = token1;
     // instance.options.headers["Authorization"] = token1;
 
+    try {
+      Response<Map<String, dynamic>> response = await instance.get(userUrl, options: Options(
+        headers: headers
+      ));
+
+      user = User.fromJson(response.data!["data"]);
+    } on DioException catch (exception) {
+      await errorHandler(exception);
+    }
 
   }
   

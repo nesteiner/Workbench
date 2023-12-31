@@ -72,7 +72,7 @@ class TaskWidgetState extends State<TaskWidget> {
     late List<Widget> children;
 
     if (widget.task.subtasks != null && widget.task.subtasks!.isNotEmpty) {
-      final attachSubTask = SizedBox(
+      final Widget attachSubTask = SizedBox(
         height: settings["widget.task.attach.height"],
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -102,7 +102,7 @@ class TaskWidgetState extends State<TaskWidget> {
     }
 
     if (!(widget.task.note?.isEmpty ?? true)) {
-      final noteAttach = Row(
+      final Widget noteAttach = Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -123,7 +123,7 @@ class TaskWidgetState extends State<TaskWidget> {
         child: Wrap(
           direction: Axis.horizontal,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: children,
+          children: children.map<Widget>((e) => e).toList(),
         ),
       );
     }
@@ -229,7 +229,7 @@ class TaskWidgetState extends State<TaskWidget> {
   
   List<Widget> buildTags(BuildContext context) {
     final tags = widget.task.tags ?? [];
-    return tags.map((e) => SizedBox(
+    return tags.map<Widget>((e) => SizedBox(
       height: settings["widget.task.attach.height"],
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -241,10 +241,10 @@ class TaskWidgetState extends State<TaskWidget> {
             decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(4)), color: e.color.withOpacity(1)),
           ),
 
-          SizedBox(width: 2,),
+          const SizedBox(width: 2,),
           Text(e.name, style: TextStyle(fontSize: settings["widget.task.attach.font-size"]),),
 
-          SizedBox(width: 2,)
+          const SizedBox(width: 2,)
         ],
       ),
     )).toList();

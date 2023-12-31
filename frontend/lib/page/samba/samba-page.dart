@@ -23,24 +23,20 @@ class SambaPage extends StatefulWidget {
 
 class _SambaPageState extends State<SambaPage> {
   GlobalState? _globalState;
-
   GlobalState get globalState => _globalState!;
-
   set globalState(GlobalState value) => _globalState ??= value;
 
   SambaState? _state;
-
   SambaState get state => _state!;
-
   set state(SambaState value) => _state ??= value;
 
   List<SambaFile> files = [];
 
   utils.SetStateCallback? _setStateFiles;
-
   utils.SetStateCallback get setStateFiles => _setStateFiles!;
-
   set setStateFiles(utils.SetStateCallback value) => _setStateFiles ??= value;
+
+  final errorTextNotifier = ValueNotifier("");
 
   @override
   Widget build(BuildContext context) {
@@ -129,16 +125,27 @@ class _SambaPageState extends State<SambaPage> {
             final disabledNotifier = ValueNotifier(true);
             showDialog(context: context, useRootNavigator: false, builder: (_) => AlertDialog(
               title: const Text("创建新文件夹"),
-              content: TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: "文件夹名",
-                  hintText: "输入文件夹名"
-                ),
+              content: ValueListenableBuilder(
+                valueListenable: errorTextNotifier,
+                builder: (_, value, child) => TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: "文件夹名",
+                    hintText: "输入文件夹名",
+                    errorText: value.isEmpty ? null : value
+                  ),
 
-                onChanged: (value) {
-                  disabledNotifier.value = files.any((element) => element.name == value) && controller.text.isNotEmpty;
-                },
+                  onChanged: (value) {
+                    disabledNotifier.value = files.any((element) => element.name == value) && controller.text.isEmpty && controller.text.contains(" ");
+                    if (controller.text.isEmpty) {
+                      errorTextNotifier.value = "文件夹名不能为空";
+                    } else if (controller.text.contains(" ")) {
+                      errorTextNotifier.value = "文件夹名不能有空格";
+                    } else {
+                      errorTextNotifier.value = "";
+                    }
+                  },
+                ),
               ),
 
               actions: [

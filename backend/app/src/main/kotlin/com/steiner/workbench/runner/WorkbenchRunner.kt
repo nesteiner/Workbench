@@ -28,13 +28,15 @@ import org.jetbrains.exposed.sql.insert
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-//@Component
-//@Transactional
+@ConditionalOnProperty(name = ["app.initialize"], havingValue = "true")
+@Component
+@Transactional
 class WorkbenchRunner: ApplicationRunner {
     @Autowired
     lateinit var dailyAttendanceService: DailyAttendanceService

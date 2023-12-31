@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @RestController
-@RequestMapping("/daily-attendance/icon")
+@RequestMapping("/{uid}/daily-attendance/icon")
 @Validated
 class IconController(val sdf: SimpleDateFormat = SimpleDateFormat("yyyyMMdd")) {
     companion object {
@@ -35,11 +35,18 @@ class IconController(val sdf: SimpleDateFormat = SimpleDateFormat("yyyyMMdd")) {
 
     @PostMapping("/upload")
     fun uploadImage(@RequestParam("file") image: MultipartFile): Response.Ok<ImageItem> {
-        val filename = image.originalFilename ?: "untitled"
-        val filepath = "$imagefolderPath/${UUID.randomUUID()}_${sdf.format(Date())}_${filename.replace(" ", "")}"
+        val filename = "${UUID.randomUUID().toString().slice(1..16)}_${image.originalFilename ?: "untitled"}"
+        val filepath = "$imagefolderPath/${UUID.randomUUID().toString().slice(1..16)}_${sdf.format(Date())}_${filename.replace(" ", "")}"
         val imageitem = iconService.insertIconImage(filename, filepath)
 
-        image.transferTo(File(filepath))
+        File(filepath).apply {
+            if (!exists()) {
+                createNewFile()
+            }
+
+            image.transferTo(this)
+        }
+
         return Response.Ok("update ok", imageitem)
     }
 

@@ -1,3 +1,4 @@
+import 'package:path/path.dart';
 import 'package:dio/dio.dart';
 import 'package:frontend/api/api.dart';
 import 'package:frontend/api/interceptor.dart';
@@ -185,5 +186,10 @@ class DailyAttendanceApi extends Api {
     final data = response.data!["data"];
 
     return data.map<da.Task>((e) => da.Task.fromJson(e)).toList();
+  }
+
+  Future<bool> isAvailable(int id) async {
+    Response<Map<String, dynamic>> response = await instance.get(join(dailyAttendanceUrl, "available", id.toString()));
+    return response.data!["data"];
   }
 }

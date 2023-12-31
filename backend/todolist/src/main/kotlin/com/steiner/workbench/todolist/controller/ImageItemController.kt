@@ -32,11 +32,18 @@ class ImageItemController(
 
     @PostMapping("/upload")
     fun uploadImage(@RequestParam("file") image: MultipartFile): Response<ImageItem> {
-        val filename = image.originalFilename ?: "untitled"
-        val filepath = "$imagefolderPath/${UUID.randomUUID()}_${sdf.format(Date())}_${filename.replace(" ", "")}"
+        val filename = "${UUID.randomUUID().toString().slice(1..16)}_${image.originalFilename ?: "untitled"}"
+        val filepath = "$imagefolderPath/${UUID.randomUUID().toString().slice(1..16)}_${sdf.format(Date())}_${filename.replace(" ", "")}"
         val imageitem = imageitemService.insertOne(filename, filepath)
 
-        image.transferTo(File(filepath))
+        File(filepath).apply {
+            if (!exists()) {
+                createNewFile()
+            }
+
+            image.transferTo(this)
+        }
+
         return Response.Ok("update ok", imageitem)
     }
 

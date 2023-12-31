@@ -1,6 +1,8 @@
 package com.steiner.workbench.daily_attendance.configure
 
 import com.steiner.workbench.daily_attendance.service.DailyAttendanceService
+import com.steiner.workbench.websocket.endpoint.WebSocketEndpoint
+import com.steiner.workbench.websocket.model.Operation
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,5 +24,6 @@ class ScheduleConfigure {
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Shanghai")
     fun refreshTasks() {
         dailyAttendanceService.refreshDataDaily()
+        WebSocketEndpoint.notifyAll(Operation.DailyAttendanceRefresh)
     }
 }
