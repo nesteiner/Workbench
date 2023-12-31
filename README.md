@@ -40,35 +40,51 @@
 
 ## 第一次进入应用
 
-[hello](./docs/第一次加载应用.mp4)  
+
+
+https://github.com/nesteiner/Workbench/assets/46296608/bb7299f5-dcd4-46ac-b16c-286a0d0b6828
+
 
 
 <a id="org5bd64b0"></a>
 
 ## 主页
 
-[主页](./docs/主页.mp4)  
+
+
+https://github.com/nesteiner/Workbench/assets/46296608/9fcc38ed-eab5-42fb-a2c2-e9030e6ee02c
+
+
 
 
 <a id="org9fba1b3"></a>
 
 ## 待办清单
 
-[todolist](./docs/todolist.mp4)  
+
+https://github.com/nesteiner/Workbench/assets/46296608/074e6bf1-f5e9-4d19-bbdc-13618af70c0a
+
 
 
 <a id="org2491012"></a>
 
 ## 习惯打卡
 
-[daily-attendance](./docs/daily-attendance.mp4)  
+
+https://github.com/nesteiner/Workbench/assets/46296608/f265d144-f1a7-4665-b868-64837f31689e
+
 
 
 <a id="org9cc1681"></a>
 
 ## samba 文件共享
 
-[samba](./docs/samba.mp4)  
+
+
+https://github.com/nesteiner/Workbench/assets/46296608/a6e5fc65-cc04-4807-966a-4eec6beffe92
+
+
+
 
 
 <a id="org80977ea"></a>
