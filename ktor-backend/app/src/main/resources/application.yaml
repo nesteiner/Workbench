@@ -1,0 +1,11 @@
+ktor:
+    application:
+        modules:
+            - com.steiner.workbench.app.MainKt.module
+    deployment:
+        port: 8080
+
+app:
+  initialize: true
+  storage:
+      image-url: "/home/steiner/workspace/workench/storage/images"
